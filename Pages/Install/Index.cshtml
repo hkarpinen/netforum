@@ -1,0 +1,37 @@
+﻿@page
+@model NETForum.Pages.Install.IndexModel
+
+@{
+    ViewData["Title"] = "Install NETForum";
+}
+
+<h2>Installation</h2>
+<p>Welcome to the installation of NETForum. Below you will create your admin user on the site.</p>
+<p>This user will allow you to administer the site.</p>
+
+<h3>Create Your Admin Account!</h3>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+<form method="post">
+    <div class="form-group">
+        <label asp-for="Form.Username">Username</label>
+        <input asp-for="Form.Username" class="form-control" />
+        <span asp-validation-for="Form.Username" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Form.Email">Email</label>
+        <input asp-for="Form.Email" type="email" class="form-control" />
+        <span asp-validation-for="Form.Email" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Form.Password">Password</label>
+        <input asp-for="Form.Password" type="password" class="form-control" />
+        <span asp-validation-for="Form.Password" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Form.ConfirmPassword">Confirm Password</label>
+        <input asp-for="Form.ConfirmPassword" type="password" class="form-control" />
+        <span asp-validation-for="Form.ConfirmPassword" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Register</button>
+</form>

@@ -1,0 +1,77 @@
+@using NETForum.Helpers
+@using NETForum.Pages.Shared.Components.UserPhoto
+@model IEnumerable<NETForum.Models.Post>
+
+@foreach(var post in Model)
+{
+    var latestReply = post.Replies.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
+    
+    <div class="post-list-item">
+        <div class="d-flex justify-content-between p-1">
+            <div class="d-flex gap-3 align-items-center">
+                <span class="text-secondary">
+                    @if(post.Author != null)
+                    {
+                        @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                        {
+                            PhotoUrl = post.Author.ProfileImageUrl,
+                            UserName = post.Author.UserName,
+                        })
+                    }
+                </span>
+                <a 
+                    class="d-flex flex-column text-decoration-none text-black"
+                   asp-page="/Posts/Details"
+                   asp-route-id="@post.Id"
+                >
+                    <p class="m-0 post-title">@post.Title</p>
+                    <small class="m-0 post-content">@HtmlHelpers.TruncateHtml(post.Content, 100)</small>
+                </a>
+            </div>
+            <div class="d-flex justify-content-between align-items-center gap-5">
+                <div class="d-flex flex-column align-items-center">
+                    <p class="m-0 text-primary">Views</p>
+                    <p class="m-0">@post.ViewCount.ToString()</p>
+                </div>
+                <div class="d-flex flex-column align-items-center">
+                    <p class="m-0 text-primary">Replies</p>
+                    <p class="m-0">@post.ReplyCount.ToString()</p>
+                </div>
+                @if (post.Replies.Any())
+                {
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex flex-column">
+                            <a 
+                                asp-page="/Posts/Details"
+                                asp-route-id="@post.Id"
+                            >
+                                @if(latestReply is { Author: not null })
+                                {
+                                    @latestReply.Author.UserName
+                                }
+                            </a>
+                            <p class="m-0">@DateHelpers.FormatDatetime(post.CreatedAt)</p>
+                        </div>
+                        <span class="text-secondary">
+                            @if (latestReply is { Author: not null })
+                            {
+                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                                {
+                                    PhotoUrl = latestReply.Author.ProfileImageUrl,
+                                    UserName = latestReply.Author.UserName,
+                                    Size = 35
+                                })
+                            }
+                        </span>
+                    </div>
+                }
+                else
+                {
+                    <div>
+                        <p>Be the first to reply!</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,38 @@
+﻿@page
+@model NETForum.Pages.Admin.RolesModel
+
+@{
+    ViewData["Title"] = "Manage Roles";
+}
+
+<h2 class="mt-2">Manage Roles</h2>
+<hr />
+<a class="btn btn-primary" asp-page="/Roles/Create">Create Role</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Normalized Name</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if(Model.Roles.Items.Any())
+        {
+            @foreach (var role in Model.Roles.Items)
+                
+            {
+                <tr>
+                    <td>@role.Name</td>
+                    <td>@role.Description</td>
+                    <td>@role.NormalizedName</td>
+                    <td><a asp-page="/roles/edit" asp-route-id="@role.Id">Edit</a></td>
+                    <td><a asp-page="/roles/delete" asp-route-id="@role.Id">Delete</a></td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

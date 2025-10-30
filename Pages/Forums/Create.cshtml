@@ -1,0 +1,63 @@
+﻿@page
+@model NETForum.Pages.Forums.CreateModel
+
+@{
+    ViewData["Title"] = "Create Forum";
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<div class="row mt-2">
+    <div class="col">
+        <div class="p-4 border rounded-0">
+            <h2>Create Forum</h2>
+            <hr />
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <form method="post">
+                <div class="form-group">
+                    <label asp-for="Form.Name">Name</label>
+                    <input asp-for="Form.Name" class="form-control" />
+                    <span asp-validation-for="Form.Name" class="text-danger"></span>
+                </div>
+                <div class="form-group mt-2">
+                    <div class="form-check">
+                        <label asp-for="Form.Published">Published</label>
+                        <input asp-for="Form.Published" class="form-check-input" type="checkbox" />
+                        <span class="text-danger" asp-validation-for="Form.Published"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Form.CategoryId">Category Id</label>
+                    <select asp-for="Form.CategoryId" class="form-select">
+                        <option value="" disabled selected>Select A Parent Forum</option>
+                        @foreach(var category in Model.Form.AvailableCategories)
+                        {
+                            <option value="@category.Value">@category.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Form.ParentForumId">Parent Forum</label>
+                    <select asp-for="Form.ParentForumId" class="form-select">
+                        @if (Model.Form.AvailableParentForums != null)
+                        {
+                            <option value="" disabled selected>Select A Parent Forum</option>
+                            @foreach (var forum in Model.Form.AvailableParentForums)
+                            {
+                                <option value="@forum.Value">@forum.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Form.Description">Description</label>
+                    <input asp-for="Form.Description" class="form-control" />
+                    <span class="text-danger" asp-validation-for="Form.Description"></span>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Create</button>
+            </form>
+        </div>
+    </div>
+</div>

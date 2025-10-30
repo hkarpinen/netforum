@@ -1,0 +1,48 @@
+﻿@page "/Forums/{id:int}"
+@using NETForum.Pages.Shared.Components.ForumList
+
+@model NETForum.Pages.Forums.DetailsModel
+
+@{
+    ViewData["Title"] = "Forum Details";
+}
+
+@section Breadcrumbs {
+    @await Component.InvokeAsync("Breadcrumbs", Model.BreadcrumbItems)
+}
+
+<div class="row mt-2">
+    <div class="col">
+        <div class="d-flex">
+            <a asp-page="/Posts/Create" asp-route-forumId="@Model.ForumId" class="btn btn-secondary">Create Post</a>
+        </div>
+    </div>
+</div>
+<div class="row mt-2">
+    <div class="col">
+        @await Component.InvokeAsync("ForumList", new ForumListOptions()
+        {
+            ForumListTitle = "Subforums",
+            ForumItems = Model.SubForumItems
+         })
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header shadow bg-primary text-white">
+                Posts
+            </div>
+            <div class="card-body">
+                @if (Model.Posts.Any())
+                {
+                    @await Component.InvokeAsync("PostList", Model.Posts)
+                }
+                else
+                {
+                    <p class="m-0">No posts yet! Be the first :)</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

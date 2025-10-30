@@ -1,0 +1,61 @@
+﻿@using NETForum.Helpers
+@using NETForum.Pages.Shared.Components.ForumList
+@using NETForum.Pages.Shared.Components.UserPhoto
+@model ForumListViewModel
+
+@if(Model.Forums.Any())
+{
+    <div class="card shadow">
+        <div class="card-header shadow bg-primary text-white">
+            @Model.Title
+        </div>
+        <div class="card-body">
+            @foreach (var forumListItem in Model.Forums)
+            {
+                <div class="d-flex justify-content-between p-1">
+                    <div class="d-flex gap-3 align-items-center">
+                        <span class="text-secondary forum-icon">
+                            <partial name="_ExternalSVG" model="@("forum_svg")" />
+                        </span>
+                        <a class="d-flex flex-column text-decoration-none text-black" asp-page="/Forums/Details" asp-route-id="@forumListItem.Forum.Id">
+                            <p class="m-0 text-primary forum-name">@forumListItem.Forum.Name</p>
+                            <small class="m-0 forum-description">@forumListItem.Forum.Description</small>
+                        </a>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div class="d-flex flex-column align-items-center">
+                            <p class="m-0 text-primary">Posts</p>
+                            <p class="m-0 text-secondary">@forumListItem.PostCount.ToString()</p>
+                        </div>
+                        <div class="d-flex flex-column align-items-center">
+                            <p class="m-0 text-primary">Replies</p>
+                            <p class="m-0 text-secondary">@forumListItem.RepliesCount.ToString()</p>
+                        </div>
+                        @if (forumListItem.LastPost != null)
+                        {
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="text-secondary account-icon">
+                                    @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel(){
+                                        PhotoUrl = forumListItem.LastPost.Author.ProfileImageUrl,
+                                        UserName = forumListItem.LastPost.Author.UserName
+                                    })
+                                </span>
+                                <div class="d-flex flex-column">
+                                    <a 
+                                        asp-page="/Posts/Details" 
+                                        asp-route-id="@forumListItem.LastPost.Id"
+                                        class="text-tertiary"
+                                    >
+                                        @forumListItem.LastPost.Title
+                                    </a>
+                                    <small class="m-0">@DateHelpers.FormatDatetime(forumListItem.LastUpdated)</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+}

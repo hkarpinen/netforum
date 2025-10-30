@@ -1,0 +1,10 @@
+﻿@model string
+@{
+    var webRootPath = ViewContext.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootPath;
+    var svgPath = webRootPath + "/" + Model + ".svg";
+}
+
+@if (File.Exists(svgPath))
+{
+    @Html.Raw(File.ReadAllText(svgPath))
+}

@@ -1,0 +1,61 @@
+﻿@using NETForum.Models.Components;
+
+@model JsTreeScriptsModel
+
+<script src="~/lib/jstree/jstree.min.js"></script>
+
+<!-- Have JsTree handle the tree style and events -->
+<script>
+    var changedNodes = [];
+
+    $(document).ready(function() {
+        $('#@Model.TreeId').jstree({
+            'plugins': ['dnd'],
+            'core': {
+                'check_callback': true,
+                'expand_selected_onload': true
+            }
+        });
+        $('#@Model.TreeId').jstree("open_all");
+    });
+
+    // TODO: This stuff needs to be moved the /Manage/Forums page into a different script. 
+    // Handle a node moving.
+    $('#@Model.TreeId').on('move_node.jstree', function (e, data) {
+        var movedNodeId = data.node.id.replace('forum-', '');
+        var newParentId = data.parent === '#' ? null : data.parent.replace('forum-', '');
+
+        // Remove any existing entry for this node
+        changedNodes = changedNodes.filter(item => item.forumId !== movedNodeId);
+
+        // Add the new change
+        changedNodes.push({
+            forumId: movedNodeId,
+            newParentId: newParentId
+        });
+
+        // Show save button if changes exist
+        if (changedNodes.length > 0) {
+            $('#save-hierarchy').prop('disabled', false);
+        }
+
+        console.log('Pending changes:', changedNodes);
+    });
+
+    // Save all hierarchy changes
+    $('#save-hierarchy').on('click', function() {
+        if (changedNodes.length === 0) return;
+
+        $.post('/Admin/Forums?handler=UpdateHierarchyBatch', {
+            changes: changedNodes
+        })
+        .done(function() {
+            changedNodes = []; // Clear the list
+            $('#save-hierarchy').hide();
+            alert('Hierarchy saved successfully');
+        })
+        .fail(function() {
+            alert('Error saving hierarchy');
+        });
+    });
+</script>

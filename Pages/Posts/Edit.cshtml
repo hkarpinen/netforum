@@ -1,0 +1,56 @@
+﻿@page "/Posts/{id:int}/Edit"
+@using NETForum.Pages.Shared.Components.TinyMceEditor
+@model NETForum.Pages.Posts.EditModel
+
+@{
+    ViewData["Title"] = "Edit Post - " + Model.Form.Title;
+    var mceEditorModel = new TinyMceEditorModel()
+    {
+        EditorId = "post-content"
+    };
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @await Component.InvokeAsync("TinyMceEditor", mceEditorModel)
+}
+
+<div class="row mt-2">
+    <div class="col">
+        <div class="p-4 border rounded-0">
+            <h2>Edit Post</h2>
+            <hr />
+            <form method="post">
+                <div class="form-group">
+                    <input type="hidden"
+                           asp-for="Form.ForumId"
+                           class="form-control" />
+                </div>
+                <div class="form-group">
+                    <input type="hidden"
+                           asp-for="Form.AuthorId"
+                           class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="Form.Title">Title</label>
+                    <input asp-for="Form.Title"
+                           class="form-control"
+                           type="text" />
+                    <span class="text-danger" asp-validation-for="Form.Title"></span>
+                </div>
+                <div class="form-group mt-2">
+                    <div class="form-check">
+                        <label asp-for="Form.Published">Published</label>
+                        <input asp-for="Form.Published" class="form-check-input" type="checkbox" />
+                        <span class="text-danger" asp-validation-for="Form.Published"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Form.Content">Content</label>
+                    <textarea asp-for="Form.Content" class="form-control" id="post-content" rows="10"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>

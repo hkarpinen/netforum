@@ -1,0 +1,36 @@
+﻿dot@page
+@model NETForum.Pages.Account.Login.LoginModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="row mt-2">
+    <div class="col">
+        <div class="p-4 border rounded-1">
+            <h2 class="text-secondary">Login</h2>
+            <hr />
+            <form method="post" class="mb-3">
+                <div class="form-group mb-2">
+                    <div class="form-check">
+                        <label asp-for="Form.RememberMe">Remember Me</label>
+                        <input asp-for="Form.RememberMe" class="form-check-input" type="checkbox" />
+                        <span class="text-danger" asp-validation-for="Form.RememberMe"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Form.Username">Username</label>
+                    <input asp-for="Form.Username" type="text" class="form-control" />
+                    <span asp-validation-for="Form.Username" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Form.Password"></label>
+                    <input asp-for="Form.Password" type="password" class="form-control" />
+                    <span class="text-danger" asp-validation-for="Form.Password"></span>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Sign In</button>
+            </form>
+            <a asp-page="/Register" class="text-secondary">Not Registered? Sign up now.</a>
+        </div>
+    </div>
+</div>

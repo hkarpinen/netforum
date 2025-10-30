@@ -1,0 +1,43 @@
+﻿@page
+@model NETForum.Pages.Admin.UsersModel
+
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<h2 class="mt-2">Manage users here</h2>
+<hr />
+<a class="btn btn-primary" asp-page="/Users/Create">Create User</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">UserName</th>
+            <th scope="col">Email</th>
+            <th scope="col">Created At</th>
+            <th scope="col">Email Confirmed</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if(Model.Users != null)
+        {
+            @foreach(var user in Model.Users)
+            {
+                <tr>
+                    <td>
+                        <input type="checkbox" class="form-check-input" />
+                    </td>
+                    <td>@user.UserName</td>
+                    <td>@user.Email</td>
+                    <td>@user.CreatedAt</td>
+                    <td>@user.EmailConfirmed</td>
+                    <td><a asp-page="/users/edit" asp-route-id="@user.Id">Edit</a></td>
+                    <td><a asp-page="/users/delete" asp-route-id="@user.Id">Delete</a></td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

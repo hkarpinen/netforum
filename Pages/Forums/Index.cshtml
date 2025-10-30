@@ -1,0 +1,123 @@
+﻿@page
+@using NETForum.Helpers
+@using NETForum.Pages.Shared.Components.ForumList
+@using NETForum.Pages.Shared.Components.UserPhoto
+@model NETForum.Pages.Forums.IndexModel
+
+@{
+    ViewData["Title"] = "Forums";
+    var groupedByCategory = Model.RootForumItems.Where(f => f.Forum.CategoryId != null).GroupBy(f => f.Forum.Category);
+}
+
+<div class="row mt-2">
+    <div class="col-md-8 col-sm-12">
+        @await Component.InvokeAsync("ForumList", new ForumListOptions()
+        {
+            ForumListTitle = "Uncategorized Forums",
+            ForumItems = Model.RootForumItems.Where(f => f.Forum.CategoryId == null)
+        })
+        @foreach(var categoryGroup in groupedByCategory)
+        {
+            <div class="mt-2">
+                @await Component.InvokeAsync("ForumList", new ForumListOptions()
+                {
+                    ForumListTitle = categoryGroup.Key.Name,
+                    ForumItems = categoryGroup
+                })
+            </div>
+        }
+    </div>
+    <div class="col-md-4 col-sm-12">
+        <div class="d-flex flex-column gap-3">
+            <div class="card shadow">
+                <div class="card-header shadow bg-primary text-white">
+                    Online Members
+                </div>
+                <div class="card-body">
+                    TODO: Load Online Members
+                </div>
+            </div>
+            <div class="card shadow">
+                <div class="card-header shadow bg-primary text-white">
+                    Latest Posts
+                </div>
+                <div class="card-body">
+                    @if(Model.LatestPosts != null)
+                    {
+                        @if(Model.LatestPosts.Count() > 0)
+                        {
+                            @foreach (var post in Model.LatestPosts)
+                            {
+                                <div class="latest-post">
+                                    <div class="d-flex gap-3 align-items-center">
+                                        <span class="text-secondary account-icon">
+                                            @if(post.Author != null) {
+                                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                                                {
+                                                    PhotoUrl = post.Author.ProfileImageUrl,
+                                                    UserName = post.Author.UserName
+                                                })
+                                            }
+                                        </span>
+                                        <div class="d-flex justify-content-between flex-grow-1">
+                                            <div class="d-flex flex-column">
+                                                <a asp-page="/Posts/Details"
+                                                   asp-route-id="@post.Id"
+                                                   class="text-tertiary">
+                                                    @post.Title
+                                                </a>
+                                                <small>@DateHelpers.FormatDatetime(post.UpdatedAt)</small>
+                                            </div>
+                                            @if (post.Author != null)
+                                            {
+                                                <p class="m-0">@post.Author.UserName</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        } 
+                        else
+                        {
+                            <p class="m-0">Found no posts!</p>    
+                        }
+                    }
+                </div>
+            </div>
+            <div class="card shadow">
+                <div class="card-header shadow bg-primary text-white">
+                    Latest Resources
+                </div>
+                <div class="card-body">
+                    TODO: Load latest resources
+                </div>
+            </div>
+            <div class="card shadow">
+                <div class="card-header shadow bg-primary text-white">
+                    Forum Statistics
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <p class="text-primary">Posts:</p>
+                        <p class="text-secondary">@Model.TotalPostCount.ToString()</p>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <p class="text-primary">Replies:</p>
+                        <p class="text-secondary">@Model.TotalReplyCount.ToString()</p>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <p class="text-primary">Members:</p>
+                        <p class="text-secondary">@Model.TotalMemberCount.ToString()</p>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <p class="text-primary">Newest Member:</p>
+                        @if(Model.NewestUser != null)
+                        {
+                            <a class="text-secondary">@Model.NewestUser.UserName</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

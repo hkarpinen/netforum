@@ -1,0 +1,77 @@
+﻿@page
+@model NETForum.Pages.Posts.IndexModel
+
+@{
+    ViewData["Title"] = "Posts";
+}
+
+<form method="get">
+    <div class="d-flex gap-3 align-items-end">
+        <div class="form-group">
+            <label asp-for="Published">Published Status</label>
+            <select asp-for="Published" class="form-select">
+                <option value="">All</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label asp-for="ForumId">Forum</label>
+            <select asp-for="ForumId" class="form-select">
+                <option value="" selected disabled>Select A Forum</option>
+                @foreach (var forum in Model.ForumSelectListItems)
+                {
+                    <option value="@forum.Value">@forum.Text</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label asp-for="AuthorName">Author</label>
+            <input asp-for="AuthorName" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Title">Title</label>
+            <input asp-for="Title" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label asp-for="ContentSearch">Content</label>
+            <input asp-for="ContentSearch" class="form-control" />
+        </div>
+        <button class="btn btn-primary" style="height: fit-content" type="submit">Filter</button>
+    </div>
+</form>
+
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header shadow bg-primary text-white">
+                Posts
+            </div>
+            <div class="card-body">
+                @await Component.InvokeAsync("PostList", Model.Posts.Items)
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex mt-3">
+    <p>Page @Model.Posts.PageNumber of @Model.Posts.TotalPages</p>
+    <div class="d-flex justify-content-center mt-3">
+        <a asp-page="/Posts/Index"
+           asp-route-PageNumber="@(Model.Posts.PageNumber - 1)"
+           asp-route-published="@(Model.Published)"
+           asp-route-forumId="@(Model.ForumId)"
+           asp-route-authorName="@(Model.AuthorName)"
+           asp-route-title="@(Model.Title)"
+           asp-route-contentSearch="@(Model.ContentSearch)"
+           class="btn btn-outline-primary me-2 @(Model.Posts.HasPreviousPage ? "" : "disabled")">Previous</a>
+        <a asp-page="/Posts/Index"
+           asp-route-PageNumber="@(Model.Posts.PageNumber + 1)"
+           asp-route-published="@(Model.Published)"
+           asp-route-forumId="@(Model.ForumId)"
+           asp-route-authorName="@(Model.AuthorName)"
+           asp-route-title="@(Model.Title)"
+           asp-route-contentSearch="@(Model.ContentSearch)"
+           class="btn btn-outline-primary @(Model.Posts.HasNextPage ? "" : "disabled")">Next</a>
+    </div>
+</div>

@@ -1,0 +1,55 @@
+﻿@page
+@model NETForum.Pages.Users.CreateModel
+
+@{
+    ViewData["Title"] = "Create User";
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<h2>Create User</h2>
+<hr />
+<form method="post">
+    <div class="form-group">
+        <label asp-for="Form.Username">Username</label>
+        <input asp-for="Form.Username" class="form-control" />
+        <span asp-validation-for="Form.Username" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Form.Email">Email</label>
+        <input asp-for="Form.Email" type="email" class="form-control" />
+        <span asp-validation-for="Form.Email" class="text-danger"></span>
+    </div>
+    <div class="selected-rows">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th scope="col">Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var availableRole in Model.Form.AvailableRoles)
+                {
+                    var isSelected = Model.Form.SelectedRoleNames.ToList().Contains(availableRole.Value);
+                    <tr>
+                        <td>
+                            <!-- Setting Name to Form.SelectedRoleIDs allows .NET to bind the checkbox values to the list. -->
+                            <input 
+                                name="Form.SelectedRoleIds"
+                                value="@availableRole.Value"
+                                checked="@isSelected"
+                                type="checkbox" 
+                            />
+                        </td>
+                        <td>@availableRole.Text</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    
+    <button type="submit" class="btn btn-primary mt-2">Register</button>
+</form>

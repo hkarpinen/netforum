@@ -1,0 +1,44 @@
+@page "/Members/{username}"
+@using NETForum.Pages.Shared.Components.UserPhoto
+@model NETForum.Pages.Members.ViewModel
+
+@{
+    ViewData["Title"] = "Member - " + Model.User.UserName;
+}
+
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-header p-2 shadow bg-primary text-white">
+                <div class="d-flex align-items-center gap-2">
+                    @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                    {
+                        PhotoUrl = @Model.User.ProfileImageUrl,
+                        UserName = @Model.User.UserName
+                    })
+                    <p class="m-0 align-self-center">@Model.User.UserName</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <p>Joined At: @Model.User.CreatedAt</p>
+                @if (Model.User.UserProfile != null)
+                {
+                    <div class="user-profile">
+                        @if (Model.User.UserProfile.Bio != null)
+                        {
+                            <p>Bio: @Model.User.UserProfile.Bio</p>
+                        }
+                        @if (Model.User.UserProfile.Location != null)
+                        {
+                            <p>Location: @Model.User.UserProfile.Location</p>
+                        }
+                        @if (Model.User.UserProfile.DateOfBirth != null)
+                        {
+                            <p>Date of Birth: @Model.User.UserProfile.DateOfBirth?.ToString("MMMM dd, yyyy")</p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

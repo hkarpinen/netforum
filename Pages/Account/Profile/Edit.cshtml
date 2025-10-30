@@ -1,0 +1,48 @@
+@page
+@model NETForum.Pages.Account.Profile.EditModel
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<div class="row mt-2">
+    <div class="col">
+        <div class="p-4 border rounded-0">
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <h2 class="text-secondary">Edit Profile</h2>
+            <hr />
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label asp-for="UserProfileForm.ProfileImage">Profile Image</label>
+                    <input asp-for="UserProfileForm.ProfileImage" type="file" class="form-control" accept="image/*"/>
+                    <span asp-validation-for="UserProfileForm.ProfileImage" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="UserProfileForm.Bio" class="form-label">Bio</label>
+                    <textarea asp-for="UserProfileForm.Bio" class="form-control"></textarea>
+                    <span asp-validation-for="UserProfileForm.Bio" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="UserProfileForm.Signature" class="form-label">Signature</label>
+                    <textarea asp-for="UserProfileForm.Signature" class="form-control"></textarea>
+                    <span asp-validation-for="UserProfileForm.Signature" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="UserProfileForm.Location">Location</label>
+                    <input asp-for="UserProfileForm.Location" class="form-control" />
+                    <span asp-validation-for="UserProfileForm.Location" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="UserProfileForm.DateOfBirth">Date of Birth</label>
+                    <input asp-for="UserProfileForm.DateOfBirth" type="date" class="form-control" />
+                    <span asp-validation-for="UserProfileForm.DateOfBirth" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Register</button>
+            </form>
+        </div>
+    </div>
+</div>

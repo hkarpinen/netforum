@@ -1,0 +1,90 @@
+﻿@page
+@model NETForum.Pages.Admin.Forums.IndexModel
+
+@{
+    ViewData["Title"] = "Manage Forums";
+}
+
+<form method="get">
+    <div class="d-flex gap-3 align-items-end">
+        <div class="form-group">
+            <label asp-for="Published">Published Status</label>
+            <select asp-for="Published" class="form-select">
+                <option value="">All</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label asp-for="CategoryId">Category</label>
+            <select asp-for="CategoryId" class="form-select">
+                <option value="" selected disabled>Select A Category</option>
+                @foreach (var category in Model.CategoryListItems)
+                {
+                    <option value="@category.Value">@category.Text</option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label asp-for="ParentForumId">Parent Forum</label>
+            <select asp-for="ParentForumId" class="form-select">
+                <option value="" selected disabled>Select A Parent Forum</option>
+                @foreach (var forum in Model.ParentForumListItems)
+                {
+                    <option value="@forum.Value">@forum.Text</option>
+                }
+            </select>
+        </div>
+        <button class="btn btn-primary" style="height: fit-content" type="submit">Filter</button>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped mt-2">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Created At</th>
+        <th>Category</th>
+        <th>Parent Forum</th>
+        <th>Published</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+        @foreach (var forum in Model.Forums.Items)
+        {
+            <tr>
+                <td>@forum.Name</td>
+                <td>@forum.CreatedAt.ToShortDateString()</td>
+                <td>@forum.Category?.Name</td>
+                <td>@forum.ParentForum?.Name</td>
+                <td>@forum.Published</td>
+                <td>
+                    <a class="btn-link" href="/Forums/@forum.Id/Edit">Edit</a>
+                    <a class="btn-link" href="/Forums/@forum.Id/Delete">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<div class="d-flex mt-3">
+    <p>Page @Model.Forums.PageNumber of @Model.Forums.TotalPages</p>
+    
+    <div class="d-flex justify-content-center mt-3">
+        <a asp-page="/Admin/Forums/Index"
+           asp-route-PageNumber="@(Model.Forums.PageNumber - 1)"
+           asp-route-published="@Request.Query["published"]"
+           asp-route-categoryId="@Request.Query["categoryId"]"
+           asp-route-parentForumId="@Request.Query["parentForumId"]"
+           class="btn btn-outline-primary me-2 @(!Model.Forums.HasPreviousPage ? "disabled" : "")">Previous</a>
+
+        <a asp-page="/Admin/Forums/Index"
+           asp-route-PageNumber="@(Model.Forums.PageNumber + 1)"
+           asp-route-published="@Request.Query["published"]"
+           asp-route-categoryId="@Request.Query["categoryId"]"
+           asp-route-parentForumId="@Request.Query["parentForumId"]"
+           class="btn btn-outline-primary ms-2 @(!Model.Forums.HasNextPage ? "disabled" : "")">Next</a>
+    </div>
+</div>

@@ -1,0 +1,48 @@
+﻿@page
+@using NETForum.Models.Components
+@model NETForum.Pages.Admin.Forums.HierarchyModel
+@{
+    ViewData["Title"] = "Manage Forums Hierarchy";
+    var jsTreeModel = new JsTreeScriptsModel()
+    {
+        TreeId = "forums-tree"
+    };
+
+    void RenderForumsRecursive(int? parentId)
+    {
+        var forums = Model.Forums.Where(f => f.ParentForumId == parentId);
+        foreach (var forum in forums)
+        {
+            <li id="forum-@forum.Id">
+                @forum.Name
+                @{
+                    var children = Model.Forums.Where(f => f.ParentForumId == forum.Id);
+                    if (children.Any())
+                    {
+                        <ul>
+                            @{
+                                RenderForumsRecursive(forum.Id);
+                            }
+                        </ul>
+                    }
+                }
+            </li>
+        }
+    }
+}
+
+@section Scripts {
+    <partial name="_JsTreeScripts" model="@jsTreeModel" />
+}
+
+<h2 class="mt-2">Manage Forums</h2>
+
+@if (Model.Forums != null)
+{
+    <div id="forums-tree">
+        <ul>
+            @{ RenderForumsRecursive(null); }
+        </ul>
+    </div>
+    <button disabled class="btn btn-primary" id="save-hierarchy">Save Changes</button>
+}

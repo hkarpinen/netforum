@@ -1,0 +1,14 @@
+﻿@using NETForum.Helpers
+@model UserPhotoViewModel
+
+@if (!string.IsNullOrEmpty(Model.PhotoUrl))
+{
+    <img src="@Model.PhotoUrl" alt="@Model.UserName" class="rounded-circle" width="@Model.Size" height="@Model.Size" />
+}
+else
+{
+    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+         style="width: @Model.Size.ToString()px; height: @Model.Size.ToString()px; background: white;">
+        <small class="fw-bold">@UserHelpers.GetInitials(Model.UserName)</small>
+    </div>
+}

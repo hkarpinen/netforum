@@ -1,0 +1,116 @@
+﻿@page "/Posts/{id:int}"
+@using NETForum.Helpers
+@using NETForum.Models.Components
+@using NETForum.Pages.Shared.Components.TinyMceEditor
+@using NETForum.Pages.Shared.Components.UserPhoto
+@model NETForum.Pages.Posts.DetailModel
+
+@{
+    ViewData["Title"] = Model.Post.Title;
+    var mceEditorModel = new TinyMceEditorModel()
+    {
+        EditorId = "post-reply"
+    };
+
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @await Component.InvokeAsync("TinyMceEditor", mceEditorModel)
+}
+
+@section Breadcrumbs {
+    @await Component.InvokeAsync("Breadcrumbs", Model.ForumBreadcrumbs)
+}
+
+<div class="row mt-2">
+    <div class="col">
+        <div class="shadow rounded-1">
+            <div id="original-post">
+                <div class="card rounded-bottom-0">
+                    <div class="card-header shadow bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="m-0">@Model.Post.Title</p>
+                            @if(Model.UserIsAuthor)
+                            {
+                                var url = "/Posts/" + Model.Post.Id +  "/Edit";
+                                <a href="@url" class="edit-icon text-white">
+                                    @await Html.PartialAsync("_ExternalSVG", "edit_icon")
+                                </a>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center pb-2">
+                            <div class="d-flex gap-2">
+                                @if(Model.Post.Author != null)
+                                {
+                                    @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                                    {
+                                        PhotoUrl = Model.Post.Author.ProfileImageUrl,
+                                        UserName = Model.Post.Author.UserName
+                                    })
+                                    <div class="d-flex flex-column">
+                                        <a href="/Members/@Model.Post.Author.UserName" class="text-tertiary">@Model.Post.Author.UserName</a>
+                                        <small class="m-0">@DateHelpers.FormatDatetime(Model.Post.CreatedAt)</small>
+                                    </div>
+                                }
+                            </div>
+                            @await Component.InvokeAsync("UserStats", Model.Post.AuthorId)
+                        </div>
+                        <div id="original-post-content">
+                            @Html.Raw(Model.Post.Content)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="post-replies">
+                @foreach (var reply in Model.Replies)
+                {
+                    <div class="post-reply border p-3">
+                        <div id="post-user-block" div class="d-flex justify-content-between align-items-center pb-2">
+                            <div class="d-flex gap-2 align-items-center">
+                                @if(reply.Author != null)
+                                {
+                                    @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                                    {
+                                        PhotoUrl = reply.Author.ProfileImageUrl,
+                                        UserName = reply.Author.UserName
+                                    })
+                                    <div class="d-flex flex-column">
+                                        <a class="text-tertiary">@reply.Author.UserName</a>
+                                        <small class="m-0">@DateHelpers.FormatDatetime(reply.CreatedAt)</small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div id="reply-content">
+                            @Html.Raw(reply.Content)
+                        </div>
+                    </div>
+                }
+            </div>
+            <div id="reply-form" class="p-3 border rounded-bottom-2">
+                @if (User.Identity is { IsAuthenticated: true })
+                {
+                    <form method="post" asp-page-handler="AddReply">
+                        <!-- Hidden Input -->
+                        <input type="hidden" asp-for="ReplyForm.PostId" />
+                        <input type="hidden" asp-for="ReplyForm.AuthorId" />
+                        <input type="hidden" asp-for="ReplyForm.AuthorName" />
+
+                        <div class="form-group">
+                            <textarea asp-for="ReplyForm.Content" class="form-control" id="post-reply" rows="10"></textarea>
+                            <span class="text-danger" asp-validation-for="ReplyForm.Content"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2">Add Reply</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login/Index">Login or register to reply!</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
