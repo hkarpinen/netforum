@@ -1,0 +1,17 @@
+﻿$color-primary: #012340;
+$color-secondary: #024873;
+$color-tertiary: #0378A6;
+$color-quaternary: #F2F2F2;
+
+$theme-colors: ( 
+    "primary": $color-primary, 
+    "secondary": $color-secondary, 
+    "success": $color-primary, 
+    "info": $color-quaternary, 
+    "tertiary": $color-tertiary, 
+    "danger": red, 
+    "light": #e9ecef, 
+    "dark": #212529 
+);
+
+@import "../lib/bootstrap/scss/bootstrap.scss";
