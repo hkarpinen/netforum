@@ -1,40 +1,36 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using NETForum.Data;
 using NETForum.Models;
-using NETForum.Pages.Replies;
+using NETForum.Pages.Posts;
 
 namespace NETForum.Services
 {
     public interface IReplyService
     {
-        Task<IEnumerable<Reply>> GetRepliesAsync(int postId);
+        Task<IEnumerable<PostReply>> GetRepliesAsync(int postId);
         Task<int> GetTotalReplyCountAsync();
         Task<int> GetTotalReplyCountAsync(int authorId);
-        Task<EntityEntry<Reply>> AddReplyAsync(int postId, Reply reply);
+        Task<EntityEntry<PostReply>> AddReplyAsync(int postId, int authorId, CreatePostReplyDto inputModel);
     }
 
-    public class ReplyService(AppDbContext context) : IReplyService
+    public class ReplyService(AppDbContext context, IMapper mapper) : IReplyService
     {
-        public async Task<IEnumerable<Reply>> GetRepliesAsync(int postId)
+        public async Task<IEnumerable<PostReply>> GetRepliesAsync(int postId)
         {
             return await context.Replies
                 .Where(r => r.PostId == postId)
                 .ToListAsync();
         }
 
-        public async Task<EntityEntry<Reply>> AddReplyAsync(int postId, Reply reply)
+        public async Task<EntityEntry<PostReply>> AddReplyAsync(int postId, int userId, CreatePostReplyDto inputModel)
         {
-            /* var result = await context.Replies
-                .AddAsync(new Reply()
-                {
-                    PostId = replyForm.PostId,
-                    AuthorId = replyForm.AuthorId,
-                    Content = replyForm.Content,
-                    CreatedAt = DateTime.Now,
-                    LastUpdatedAt = DateTime.Now
-                }); */
-            var result = await context.Replies.AddAsync(reply);
+            var postReply = mapper.Map<PostReply>(inputModel);
+            postReply.PostId = postId;
+            postReply.AuthorId = userId;
+            
+            var result = await context.Replies.AddAsync(postReply);
             await context.SaveChangesAsync();
             return result;
         }

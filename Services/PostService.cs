@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using NETForum.Data;
 using NETForum.Extensions;
@@ -17,12 +18,12 @@ namespace NETForum.Services
         Task<int> GetTotalPostCountAsync();
         Task<int> GetTotalPostCountAsync(int authorid);
         Task<Post?> GetPostAsync(int id);
-        Task<EntityEntry<Post>> CreatePostAsync(Post post);
+        Task<EntityEntry<Post>> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto);
         Task<IEnumerable<Post>> GetLatestPostsAsync(int limit);
         Task<PagedResult<Post>> GetPostsPagedAsync(int pageNumber, int pageSize, PostSearchCriteria postSearchCriteria);
     }
 
-    public class PostService(AppDbContext context) : IPostService
+    public class PostService(AppDbContext context, IMapper mapper, IUserService userService) : IPostService
     {
         public async Task<IEnumerable<Post>> GetPostsAsync(int forumId)
         {
@@ -34,8 +35,14 @@ namespace NETForum.Services
                 .ToListAsync();
         }
         
-        public async Task<EntityEntry<Post>> CreatePostAsync(Post post)
+        public async Task<EntityEntry<Post>> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto)
         {
+                var author = userService.GetUserAsync(username);
+                if(author == null) throw new Exception("User not found");
+                
+                var post = mapper.Map<Post>(createPostDto);
+                post.AuthorId = author.Id;
+                post.ForumId = forumId;
                 var result = await context.Posts.AddAsync(post);
                 await context.SaveChangesAsync();
                 return result;
@@ -101,6 +108,8 @@ namespace NETForum.Services
             }
             else
             {
+                // TODO: this is wrong. if the post isn't found we should return a boolean false.
+                // TODO: Update this method to return a Task<bool> where false represents a failure.
                 throw new NotImplementedException();
             }
         }

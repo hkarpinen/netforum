@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using NETForum.Data;
@@ -16,15 +17,15 @@ namespace NETForum.Services
         Task<IEnumerable<Forum>> GetForumsAsync();
         Task<IEnumerable<ForumListItemModel>> GetRootForumListItemsAsync();
         Task<Forum?> GetForumByIdAsync(int id);
-        Task UpdateForum(Forum forum);
+        Task<bool> UpdateForum(EditForumDto editForumDto);
         Task<IEnumerable<ForumListItemModel>> GetForumListItemsAsync(int parentForumId);
         Task<IEnumerable<BreadcrumbItemModel>> GetForumBreadcrumbItems(int forumId);
         Task<IEnumerable<SelectListItem>> GetSelectListItemsAsync();
-        Task<EntityEntry<Forum>> CreateForumAsync(Forum forum);
+        Task<EntityEntry<Forum>> CreateForumAsync(CreateForumDto createForumDto);
         Task<PagedResult<Forum>> GetForumsPagedAsync(int pageNumber, int pageSize, ForumSearchCriteria searchCriteria);
     }
 
-    public class ForumService(AppDbContext context) : IForumService
+    public class ForumService(AppDbContext context, IMapper mapper) : IForumService
     {
         public async Task<IEnumerable<Forum>> GetForumsAsync()
         {
@@ -55,9 +56,14 @@ namespace NETForum.Services
             return await context.Forums.FirstOrDefaultAsync(f => f.Id == id);
         }
 
-        public async Task UpdateForum(Forum forum)
+        public async Task<bool> UpdateForum(EditForumDto editForumDto)
         {
+            var forum = await context.Forums.FindAsync(editForumDto.Id);
+            if (forum == null) return false;
+            
+            mapper.Map(editForumDto, forum);
             await context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<IEnumerable<SelectListItem>> GetSelectListItemsAsync()
@@ -70,8 +76,9 @@ namespace NETForum.Services
                 }).ToListAsync();
         }
 
-        public async Task<EntityEntry<Forum>> CreateForumAsync(Forum forum) 
+        public async Task<EntityEntry<Forum>> CreateForumAsync(CreateForumDto createForumDto) 
         {
+            var forum = mapper.Map<Forum>(createForumDto);
             var result = context.Forums.Add(forum);
             await context.SaveChangesAsync();
             return result;

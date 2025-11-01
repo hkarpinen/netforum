@@ -29,24 +29,19 @@ namespace NETForum.Services
         {
             List<int>? userRoles = null;
             var user = await userManager.FindByNameAsync(username);
-            if (user != null)
-            {
-                var roleNames = await userManager.GetRolesAsync(user);
-                if (roleNames != null)
-                {
-                    userRoles = await dbContext.Roles
-                        .Where(r => !string.IsNullOrEmpty(r.Name) && roleNames.Contains(r.Name))
-                        .Select(r => r.Id)
-                        .ToListAsync();
-                }
-            }
+            if (user == null) return userRoles;
+            var roleNames = await userManager.GetRolesAsync(user);
+            userRoles = await dbContext.Roles
+                .Where(r => !string.IsNullOrEmpty(r.Name) && roleNames.Contains(r.Name))
+                .Select(r => r.Id)
+                .ToListAsync();
             return userRoles;
         }
 
         public async Task<IEnumerable<string>> GetUserRoleNamesAsync(int id)
         {
             IList<string>? result = null;
-            User? user = await userService.GetUserAsync(id);
+            var user = await userService.GetUserAsync(id);
             if(user != null)
             {
                 result = await userManager.GetRolesAsync(user);

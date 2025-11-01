@@ -8,22 +8,22 @@ namespace NETForum.Services;
 
 public interface IUserProfileService
 {
-    Task<EntityEntry<UserProfile>> AddUserProfileAsync(UserProfileForm userProfileForm);
+    Task<EntityEntry<UserProfile>> AddUserProfileAsync(UserProfileDto userProfileDto);
     Task<UserProfile?> GetUserProfileAsync(int userId);
-    Task<bool> UpdateUserProfileAsync(UserProfileForm userProfileForm);
+    Task<bool> UpdateUserProfileAsync(UserProfileDto userProfileDto);
 }
 
 public class UserProfileService(AppDbContext context) : IUserProfileService
 {
-    public async Task<EntityEntry<UserProfile>> AddUserProfileAsync(UserProfileForm userProfileForm)
+    public async Task<EntityEntry<UserProfile>> AddUserProfileAsync(UserProfileDto userProfileDto)
     {
         var userProfile = new UserProfile
         {
-            UserId = userProfileForm.UserId,
-            Bio = userProfileForm.Bio,
-            Signature = userProfileForm.Signature,
-            Location = userProfileForm.Location,
-            DateOfBirth = userProfileForm.DateOfBirth,
+            UserId = userProfileDto.UserId,
+            Bio = userProfileDto.Bio,
+            Signature = userProfileDto.Signature,
+            Location = userProfileDto.Location,
+            DateOfBirth = userProfileDto.DateOfBirth,
             LastUpdated = DateTime.UtcNow
         };
 
@@ -38,17 +38,17 @@ public class UserProfileService(AppDbContext context) : IUserProfileService
             .FirstOrDefaultAsync(up => up.UserId == userId);
     }
     
-    public async Task<bool> UpdateUserProfileAsync(UserProfileForm userProfileForm)
+    public async Task<bool> UpdateUserProfileAsync(UserProfileDto userProfileDto)
     {
         var userProfile = await context.UserProfiles
-            .FirstOrDefaultAsync(up => up.UserId == userProfileForm.UserId);
+            .FirstOrDefaultAsync(up => up.UserId == userProfileDto.UserId);
 
         if (userProfile == null) return false;
 
-        userProfile.Bio = userProfileForm.Bio;
-        userProfile.Signature = userProfileForm.Signature;
-        userProfile.Location = userProfileForm.Location;
-        userProfile.DateOfBirth = userProfileForm.DateOfBirth;
+        userProfile.Bio = userProfileDto.Bio;
+        userProfile.Signature = userProfileDto.Signature;
+        userProfile.Location = userProfileDto.Location;
+        userProfile.DateOfBirth = userProfileDto.DateOfBirth;
         userProfile.LastUpdated = DateTime.UtcNow;
 
         context.UserProfiles.Update(userProfile);

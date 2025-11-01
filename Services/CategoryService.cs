@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using NETForum.Data;
 using NETForum.Extensions;
 using NETForum.Models;
+using NETForum.Pages.Category;
 using NETForum.Services.Criteria;
 
 namespace NETForum.Services
@@ -11,16 +13,17 @@ namespace NETForum.Services
     public interface ICategoryService
     {
         Task<IEnumerable<SelectListItem>> GetCategorySelectListItems();
-        Task<EntityEntry<Category>> AddCategoryAsync(Category category);
+        Task<EntityEntry<Category>> AddCategoryAsync(CreateCategoryDto createCategoryDto);
         Task<Category?>GetCategoryByIdAsync(int id);
         Task DeleteCategoryByIdAsync(int id);
         Task<PagedResult<Category>> GetCategoriesPagedAsync(int pageNumber, int pageSize, CategorySearchCriteria categorySearchCriteria);
     }
 
-    public class CategoryService(AppDbContext context) : ICategoryService
+    public class CategoryService(AppDbContext context, IMapper mapper) : ICategoryService
     {
-        public async Task<EntityEntry<Category>> AddCategoryAsync(Category category)
+        public async Task<EntityEntry<Category>> AddCategoryAsync(CreateCategoryDto createCategoryDto)
         {
+            var category = mapper.Map<Category>(createCategoryDto);
             var result = await context.Categories.AddAsync(category);
             await context.SaveChangesAsync();
             return result;

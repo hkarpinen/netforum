@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
@@ -14,15 +15,16 @@ namespace NETForum.Services
         Task<IEnumerable<Role>> GetRolesAsync();
         Task<IEnumerable<SelectListItem>> GetSelectItemsAsync();
         Task<Role?> GetRoleAsync(int id);
-        Task<IdentityResult> CreateRoleAsync(Role role);
+        Task<IdentityResult> CreateRoleAsync(CreateRoleDto createRoleDto);
         Task<IdentityResult?> DeleteRoleAsync(int id);
-        Task<IdentityResult?> UpdateRoleAsync(Role role);
+        Task<IdentityResult?> UpdateRoleAsync(EditRoleDto editRoleDto);
         Task<PagedResult<Role>> GetRolesPagedAsync(int pageNumber, int pageSize, RoleSearchCriteria roleSearchCriteria);
     }
 
     public class RoleService(
         AppDbContext context,
-        RoleManager<Role> roleManager)
+        RoleManager<Role> roleManager,
+        IMapper mapper)
         : IRoleService
     {
         public async Task<PagedResult<Role>> GetRolesPagedAsync(int pageNumber, int pageSize, RoleSearchCriteria roleSearchCriteria)
@@ -69,8 +71,9 @@ namespace NETForum.Services
                 .ToListAsync();
         }
 
-        public async Task<IdentityResult> CreateRoleAsync(Role role)
+        public async Task<IdentityResult> CreateRoleAsync(CreateRoleDto createRoleDto)
         {
+            var role = mapper.Map<Role>(createRoleDto);
             return await roleManager.CreateAsync(role);
         }
 
@@ -81,8 +84,11 @@ namespace NETForum.Services
             return await roleManager.DeleteAsync(role);
         }
 
-        public async Task<IdentityResult?> UpdateRoleAsync(Role role)
+        public async Task<IdentityResult?> UpdateRoleAsync(EditRoleDto editRoleDto)
         {
+            var role = await GetRoleAsync(editRoleDto.Id);
+            if(role == null) return null;
+            mapper.Map(editRoleDto, role);
             var result = await roleManager.UpdateAsync(role);
             return result;
         }
