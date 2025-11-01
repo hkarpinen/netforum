@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NETForum.Models;
 using NETForum.Services;
 
 namespace NETForum.Pages.Shared.Components.UserProfile
@@ -10,38 +9,18 @@ namespace NETForum.Pages.Shared.Components.UserProfile
         IFileStorageService fileStorageService)
         : ViewComponent
     {
-        public async Task <IViewComponentResult> InvokeAsync(
-            
-        ) {
-            if(User.Identity == null)
-            {
-                return View();
-            }
-
-            if(User.Identity.Name == null)
-            {
-                return View();
-            }
-
-            User? user = await userService.GetUserAsync(User.Identity.Name);
-
-            if(user == null)
-            {
-                return View();
-            }
-            
-            string? photoUrl = null;
-            if (!string.IsNullOrEmpty(user.ProfileImageUrl))
-            {
-                photoUrl = fileStorageService.GetFileUrl(user.ProfileImageUrl);
-            }
-
+        public async Task <IViewComponentResult> InvokeAsync() {
+            if (User.Identity?.Name == null) return View();
+            var user = await userService.GetUserAsync(User.Identity.Name);
+            if (user == null) return View();
             var model = new UserProfileViewModel()
             {
                 Id = user.Id,
-                DisplayName = user.UserName ?? string.Empty,
+                Username = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
-                ProfilePhotoUrl = photoUrl,
+                ProfilePhotoUrl = !string.IsNullOrEmpty(user.ProfileImageUrl) ? 
+                    fileStorageService.GetFileUrl(user.ProfileImageUrl) 
+                    : null,
                 RoleNames = await userRoleService.GetUserRoleNamesAsync(user.Id)
             };
 
