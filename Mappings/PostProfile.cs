@@ -40,7 +40,7 @@ public class PostProfile : Profile
             .ForMember(dest => dest.IsLocked, opt => opt.MapFrom(src => src.IsLocked))
             .ForMember(dest => dest.Published, opt => opt.MapFrom(src => src.Published));
         
-        CreateMap<CreatePostReplyDto, PostReply>()
+        CreateMap<CreatePostReplyDto, Reply>()
             .ForMember(dest => dest.Content, opt => opt.MapFrom(src => src.Content))
             .ForMember(dest => dest.CreatedAt,  opt => opt.MapFrom(src => DateTime.UtcNow))
             .ForMember(dest => dest.LastUpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
