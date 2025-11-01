@@ -2,7 +2,7 @@
 
 namespace NETForum.Pages.Account.Profile
 {
-    public class UserProfileForm
+    public class UserProfileDto
     {
         [Required]
         public int UserId { get; set; }
