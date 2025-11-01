@@ -1,6 +1,6 @@
 ﻿namespace NETForum.Models
 {
-    public class PostReply
+    public class Reply
     {
         public int Id { get; set; }
         public int PostId { get; set; }

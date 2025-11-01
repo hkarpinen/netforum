@@ -23,6 +23,7 @@
     @await Component.InvokeAsync("Breadcrumbs", Model.ForumBreadcrumbs)
 }
 
+<div asp-validation-summary="All" class="text-danger"></div>
 <div class="row mt-2">
     <div class="col">
         <div class="shadow rounded-1">
@@ -94,14 +95,9 @@
                 @if (User.Identity is { IsAuthenticated: true })
                 {
                     <form method="post" asp-page-handler="AddReply">
-                        <!-- Hidden Input -->
-                        <input type="hidden" asp-for="ReplyForm.PostId" />
-                        <input type="hidden" asp-for="ReplyForm.AuthorId" />
-                        <input type="hidden" asp-for="ReplyForm.AuthorName" />
-
                         <div class="form-group">
-                            <textarea asp-for="ReplyForm.Content" class="form-control" id="post-reply" rows="10"></textarea>
-                            <span class="text-danger" asp-validation-for="ReplyForm.Content"></span>
+                            <textarea asp-for="CreatePostReplyDto.Content" class="form-control" id="post-reply" rows="10"></textarea>
+                            <span class="text-danger" asp-validation-for="CreatePostReplyDto.Content"></span>
                         </div>
                         <button type="submit" class="btn btn-primary mt-2">Add Reply</button>
                     </form>

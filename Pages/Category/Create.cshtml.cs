@@ -1,7 +1,6 @@
 using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Extensions;
 using NETForum.Services;
 
 namespace NETForum.Pages.Category
@@ -9,7 +8,7 @@ namespace NETForum.Pages.Category
     public class CreateModel(ICategoryService categoryService) : PageModel
     {
         [BindProperty]
-        public CategoryForm Form { get; set; } = new();
+        public CreateCategoryDto CreateCategoryDto { get; set; } = new();
 
         public void OnGet()
         {
@@ -22,8 +21,7 @@ namespace NETForum.Pages.Category
             
             try
             {
-                var newCategory = Form.ToNewCategory();
-                await categoryService.AddCategoryAsync(newCategory);
+                await categoryService.AddCategoryAsync(CreateCategoryDto);
                 return RedirectToPage("/Admin/Forums/Index");
             } 
             catch(UniqueConstraintException ex)
@@ -31,7 +29,7 @@ namespace NETForum.Pages.Category
                 switch (ex.ConstraintName.Split("_").Last())
                 {
                     case "Name":
-                        var error = $"Name '{Form.Name}' is already taken";
+                        var error = $"Name '{CreateCategoryDto.Name}' is already taken";
                         ModelState.AddModelError("", error);
                         break;
                 }

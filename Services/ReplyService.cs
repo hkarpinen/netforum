@@ -9,24 +9,24 @@ namespace NETForum.Services
 {
     public interface IReplyService
     {
-        Task<IEnumerable<PostReply>> GetRepliesAsync(int postId);
+        Task<IEnumerable<Reply>> GetRepliesAsync(int postId);
         Task<int> GetTotalReplyCountAsync();
         Task<int> GetTotalReplyCountAsync(int authorId);
-        Task<EntityEntry<PostReply>> AddReplyAsync(int postId, int authorId, CreatePostReplyDto inputModel);
+        Task<EntityEntry<Reply>> AddReplyAsync(int postId, int authorId, CreatePostReplyDto inputModel);
     }
 
     public class ReplyService(AppDbContext context, IMapper mapper) : IReplyService
     {
-        public async Task<IEnumerable<PostReply>> GetRepliesAsync(int postId)
+        public async Task<IEnumerable<Reply>> GetRepliesAsync(int postId)
         {
             return await context.Replies
                 .Where(r => r.PostId == postId)
                 .ToListAsync();
         }
 
-        public async Task<EntityEntry<PostReply>> AddReplyAsync(int postId, int userId, CreatePostReplyDto inputModel)
+        public async Task<EntityEntry<Reply>> AddReplyAsync(int postId, int userId, CreatePostReplyDto inputModel)
         {
-            var postReply = mapper.Map<PostReply>(inputModel);
+            var postReply = mapper.Map<Reply>(inputModel);
             postReply.PostId = postId;
             postReply.AuthorId = userId;
             

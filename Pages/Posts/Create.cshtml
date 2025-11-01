@@ -26,34 +26,33 @@
                 <form method="post">
                     <div class="form-group">
                         <!-- Hidden Inputs: Values are assigned in OnGet() -->
-                        <input type="hidden" asp-for="Form.ForumId" />
-                        <input type="hidden" asp-for="Form.AuthorId" />
-                        <input type="hidden" asp-for="Form.AuthorName" />
-                        <input type="hidden" asp-for="Form.IsLocked" />
+                        <input type="hidden" asp-for="CreatePostDto.ForumId" />
+                        <input type="hidden" asp-for="CreatePostDto.AuthorId" />
+                        <input type="hidden" asp-for="CreatePostDto.IsLocked" />
                     </div>
                     <div class="form-group">
-                        <label asp-for="Form.Title">Title</label>
-                        <input asp-for="Form.Title" class="form-control" type="text" />
-                        <span class="text-danger" asp-validation-for="Form.Title"></span>
+                        <label asp-for="CreatePostDto.Title">Title</label>
+                        <input asp-for="CreatePostDto.Title" class="form-control" type="text" />
+                        <span class="text-danger" asp-validation-for="CreatePostDto.Title"></span>
                     </div>
                     <div class="form-group mt-2">
                         <div class="form-check">
-                            <label asp-for="Form.IsPinned">Pinned</label>
-                            <input asp-for="Form.IsPinned" class="form-check-input" type="checkbox" />
-                            <span class="text-danger" asp-validation-for="Form.IsPinned"></span>
+                            <label asp-for="CreatePostDto.IsPinned">Pinned</label>
+                            <input asp-for="CreatePostDto.IsPinned" class="form-check-input" type="checkbox" />
+                            <span class="text-danger" asp-validation-for="CreatePostDto.IsPinned"></span>
                         </div>
                     </div>
                     <div class="form-group mt-2">
                         <div class="form-check">
-                            <label asp-for="Form.Published">Published</label>
-                            <input asp-for="Form.Published" class="form-check-input" type="checkbox" />
-                            <span class="text-danger" asp-validation-for="Form.Published"></span>
+                            <label asp-for="CreatePostDto.Published">Published</label>
+                            <input asp-for="CreatePostDto.Published" class="form-check-input" type="checkbox" />
+                            <span class="text-danger" asp-validation-for="CreatePostDto.Published"></span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label asp-for="Form.Content">Content</label>
-                        <textarea asp-for="Form.Content" class="form-control" id="thread-content" rows="10"></textarea>
-                        <span class="text-danger" asp-validation-for="Form.Content"></span>
+                        <label asp-for="CreatePostDto.Content">Content</label>
+                        <textarea asp-for="CreatePostDto.Content" class="form-control" id="thread-content" rows="10"></textarea>
+                        <span class="text-danger" asp-validation-for="CreatePostDto.Content"></span>
                     </div>
                     <button type="submit" class="btn btn-primary mt-2">Create</button>
                 </form>

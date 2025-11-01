@@ -1,47 +1,36 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Extensions;
 using NETForum.Services;
 
 namespace NETForum.Pages.Posts
 {
     [Authorize(Roles = "Admin,Member")]
-    public class CreateModel(
-        IUserService userService,
-        IPostService postService) : PageModel
+    public class CreateModel(IPostService postService) : PageModel
     {
         [BindProperty]
-        public PostForm Form { get; set; } = new();
+        public CreatePostDto CreatePostDto { get; set; } = new();
 
-        private async Task PopulateForm(int forumId)
+        public async Task<IActionResult> OnPostAsync(int forumId)
         {
-            var user = await userService.GetUserAsync(User.Identity!.Name!);
-            Form.ForumId = forumId;
-            Form.AuthorId = user.Id;
-            Form.AuthorName = user.UserName;
-            Form.IsLocked = false;
-            Form.IsPinned = false;
-        }
-
-        public async Task OnGetAsync(int forumId)
-        {
-            await PopulateForm(forumId);
-        }
-
-        public async Task<IActionResult> OnPostAsync()
-        {
-            await PopulateForm(Form.ForumId);   
+            // If the form state is invalid, show validation errors.
             if (!ModelState.IsValid)
             {
                 return Page();
             }
 
+            // Handle case where username is null.
+            var username = User.Identity?.Name;
+            if (username == null)
+            {
+                ModelState.AddModelError(string.Empty, "You must have a user name to post.");
+                return Page();
+            }
+
+            // Create the post and catch any exceptions
             try
             {
-                var newPost = Form.ToNewPost();
-                
-                var result = await postService.CreatePostAsync(newPost);
+                var result = await postService.CreatePostAsync(username, forumId, CreatePostDto);
                 return RedirectToPage("/Posts/Details", new { id = result.Entity.Id });
             }
             catch(Exception ex)

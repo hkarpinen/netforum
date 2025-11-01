@@ -5,15 +5,12 @@ using NETForum.Models;
 
 namespace NETForum.Pages.Account.Login
 {
-    public class LoginModel(
-        SignInManager<User> signInManager,
-        UserManager<User> userManager)
+    public class IndexModel(
+        SignInManager<User> signInManager)
         : PageModel
     {
-        private readonly UserManager<User> _userManager = userManager;
-
         [BindProperty]
-        public LoginFormModel Form { get; set; } = new();
+        public UserLoginDto UserLoginDto { get; set; } = new();
 
         public IActionResult OnGet()
         {
@@ -34,9 +31,9 @@ namespace NETForum.Pages.Account.Login
             }
 
             var result = await signInManager.PasswordSignInAsync(
-                Form.Username,
-                Form.Password,
-                isPersistent: Form.RememberMe,
+                UserLoginDto.Username,
+                UserLoginDto.Password,
+                isPersistent: UserLoginDto.RememberMe,
                 lockoutOnFailure: false
             );
 

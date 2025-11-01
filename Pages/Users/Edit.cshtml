@@ -3,7 +3,7 @@
 @model NETForum.Pages.Users.EditModel
 
 @{
-    ViewData["Title"] = "Edit User - " + Model.Form.Username;
+    ViewData["Title"] = "Edit User - " + Model.EditUserDto.Username;
 }
 
 @section Scripts {
@@ -14,14 +14,14 @@
 <hr />
 <form method="post">
     <div class="form-group">
-        <label asp-for="Form.Username">Username: @Model.Form.Username</label>
-        <input asp-for="Form.Username" value="@Model.Form.Username" hidden class="form-control" />
-        <span asp-validation-for="Form.Username" class="text-danger"></span>
+        <label asp-for="EditUserDto.Username">Username: @Model.EditUserDto.Username</label>
+        <input asp-for="EditUserDto.Username" value="@Model.EditUserDto.Username" hidden class="form-control" />
+        <span asp-validation-for="EditUserDto.Username" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label asp-for="Form.Email">Email: @Model.Form.Email</label>
-        <input asp-for="Form.Email" type="email" value="@Model.Form.Email" hidden class="form-control" />
-        <span asp-validation-for="Form.Email" class="text-danger"></span>
+        <label asp-for="EditUserDto.Email">Email: @Model.EditUserDto.Email</label>
+        <input asp-for="EditUserDto.Email" type="email" value="@Model.EditUserDto.Email" hidden class="form-control" />
+        <span asp-validation-for="EditUserDto.Email" class="text-danger"></span>
     </div>
     <div class="selected-rows">
         <table class="table">
@@ -32,9 +32,9 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var availableRole in Model.Form.AvailableRoles)
+                @foreach (var availableRole in Model.AllRoles)
                 {
-                    var isSelected = Model.Form.SelectedRoleNames.ToList().Contains(availableRole.Value);
+                    var isSelected = Model.SelectedRoles.ToList().Contains(availableRole.Value);
                     <tr>
                         <td>
                             <!-- Setting Name to Form.SelectedRoleIDs allows .NET to bind the checkbox values to the list. -->

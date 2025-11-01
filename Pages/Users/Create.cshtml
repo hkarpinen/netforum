@@ -13,14 +13,14 @@
 <hr />
 <form method="post">
     <div class="form-group">
-        <label asp-for="Form.Username">Username</label>
-        <input asp-for="Form.Username" class="form-control" />
-        <span asp-validation-for="Form.Username" class="text-danger"></span>
+        <label asp-for="CreateUserDto.Username">Username</label>
+        <input asp-for="CreateUserDto.Username" class="form-control" />
+        <span asp-validation-for="CreateUserDto.Username" class="text-danger"></span>
     </div>
     <div class="form-group">
-        <label asp-for="Form.Email">Email</label>
-        <input asp-for="Form.Email" type="email" class="form-control" />
-        <span asp-validation-for="Form.Email" class="text-danger"></span>
+        <label asp-for="CreateUserDto.Email">Email</label>
+        <input asp-for="CreateUserDto.Email" type="email" class="form-control" />
+        <span asp-validation-for="CreateUserDto.Email" class="text-danger"></span>
     </div>
     <div class="selected-rows">
         <table class="table">
@@ -31,16 +31,14 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach(var availableRole in Model.Form.AvailableRoles)
+                @foreach(var availableRole in Model.Roles)
                 {
-                    var isSelected = Model.Form.SelectedRoleNames.ToList().Contains(availableRole.Value);
                     <tr>
                         <td>
                             <!-- Setting Name to Form.SelectedRoleIDs allows .NET to bind the checkbox values to the list. -->
                             <input 
                                 name="Form.SelectedRoleIds"
                                 value="@availableRole.Value"
-                                checked="@isSelected"
                                 type="checkbox" 
                             />
                         </td>

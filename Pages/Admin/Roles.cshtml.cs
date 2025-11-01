@@ -10,7 +10,7 @@ namespace NETForum.Pages.Admin
     [Authorize(Roles = "Admin")]
     public class RolesModel(IRoleService roleService) : PageModel
     {
-        public PagedResult<Role> Roles { get; set; }
+        public PagedResult<Role> Roles { get; set; } = new();
         
         [BindProperty(SupportsGet = true)]
         public int PageNumber { get; set; } = 1;

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NETForum.Extensions;
 using NETForum.Models;
+using NETForum.Models.DTOs;
 using NETForum.Services;
 
 namespace NETForum.Pages.Users
@@ -16,7 +17,9 @@ namespace NETForum.Pages.Users
         private readonly IUserService _userService;
 
         [BindProperty]
-        public UserForm Form { get; set; } = new();
+        public CreateUserDto CreateUserDto { get; set; } = new();
+        
+        public IEnumerable<SelectListItem> Roles { get; set; }  = new List<SelectListItem>();
 
         public CreateModel(
             IRoleService roleService,
@@ -29,13 +32,12 @@ namespace NETForum.Pages.Users
         
         public async Task OnGetAsync()
         {
-            Form.AvailableRoles = await _roleService.GetSelectItemsAsync();
+            Roles = await _roleService.GetSelectItemsAsync();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var newUser = Form.ToNewUser();
-            var result = await _userService.CreateUserAsync(newUser);
+            var result = await _userService.CreateUserAsync(CreateUserDto);
             if (result.Succeeded) return RedirectToPage("/Admin/Users");
             
             // Handle errors

@@ -17,34 +17,34 @@
             <div asp-validation-summary="All" class="text-danger"></div>
             <form method="post">
                 <div class="form-group">
-                    <label asp-for="Form.Name">Name</label>
-                    <input asp-for="Form.Name" class="form-control" />
-                    <span asp-validation-for="Form.Name" class="text-danger"></span>
+                    <label asp-for="CreateForumDto.Name">Name</label>
+                    <input asp-for="CreateForumDto.Name" class="form-control" />
+                    <span asp-validation-for="CreateForumDto.Name" class="text-danger"></span>
                 </div>
                 <div class="form-group mt-2">
                     <div class="form-check">
-                        <label asp-for="Form.Published">Published</label>
-                        <input asp-for="Form.Published" class="form-check-input" type="checkbox" />
-                        <span class="text-danger" asp-validation-for="Form.Published"></span>
+                        <label asp-for="CreateForumDto.Published">Published</label>
+                        <input asp-for="CreateForumDto.Published" class="form-check-input" type="checkbox" />
+                        <span class="text-danger" asp-validation-for="CreateForumDto.Published"></span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label asp-for="Form.CategoryId">Category Id</label>
-                    <select asp-for="Form.CategoryId" class="form-select">
+                    <label asp-for="CreateForumDto.CategoryId">Category Id</label>
+                    <select asp-for="CreateForumDto.CategoryId" class="form-select">
                         <option value="" disabled selected>Select A Parent Forum</option>
-                        @foreach(var category in Model.Form.AvailableCategories)
+                        @foreach(var category in Model.Categories)
                         {
                             <option value="@category.Value">@category.Text</option>
                         }
                     </select>
                 </div>
                 <div class="form-group">
-                    <label asp-for="Form.ParentForumId">Parent Forum</label>
-                    <select asp-for="Form.ParentForumId" class="form-select">
-                        @if (Model.Form.AvailableParentForums != null)
+                    <label asp-for="CreateForumDto.ParentForumId">Parent Forum</label>
+                    <select asp-for="CreateForumDto.ParentForumId" class="form-select">
+                        @if (Model.ParentForums != null)
                         {
                             <option value="" disabled selected>Select A Parent Forum</option>
-                            @foreach (var forum in Model.Form.AvailableParentForums)
+                            @foreach (var forum in Model.ParentForums)
                             {
                                 <option value="@forum.Value">@forum.Text</option>
                             }
@@ -52,9 +52,9 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label asp-for="Form.Description">Description</label>
-                    <input asp-for="Form.Description" class="form-control" />
-                    <span class="text-danger" asp-validation-for="Form.Description"></span>
+                    <label asp-for="CreateForumDto.Description">Description</label>
+                    <input asp-for="CreateForumDto.Description" class="form-control" />
+                    <span class="text-danger" asp-validation-for="CreateForumDto.Description"></span>
                 </div>
                 <button type="submit" class="btn btn-primary mt-2">Create</button>
             </form>

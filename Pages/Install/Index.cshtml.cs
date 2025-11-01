@@ -13,7 +13,7 @@ namespace NETForum.Pages.Install
         : PageModel
     {
         [BindProperty]
-        public RegisterForm Form { get; set; } = new();
+        public UserRegistrationDto Form { get; set; } = new();
 
         public void OnGet()
         {

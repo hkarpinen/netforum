@@ -1,25 +1,26 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Identity;
-using NETForum.Extensions;
 using NETForum.Models;
 using NETForum.Pages.Account.Profile;
 using NETForum.Services;
 
 namespace NETForum.Pages.Account.Register
 {
-    public class RegisterModel(
+    public class IndexModel(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
-        UserService userService,
-        IUserProfileService userProfileService)
+        IUserService userService,
+        IUserProfileService userProfileService,
+        IMapper mapper)
         : PageModel
     {
         [BindProperty]
-        public RegisterForm Form { get; set; } = new();
+        public UserRegistrationDto UserRegistrationDto { get; set; } = new();
         
         [BindProperty]
-        public UserProfileForm UserProfileForm { get; set; } = new();
+        public UserProfileDto UserProfileDto { get; set; } = new();
 
         public void OnGet()
         {
@@ -28,9 +29,9 @@ namespace NETForum.Pages.Account.Register
         public async Task<IActionResult> OnPostAsync()
         {
             // Create the user and display any errors
-            var user = Form.ToNewUser();
+            var user = mapper.Map<User>(UserRegistrationDto);
             
-            var userCreateResult = await userManager.CreateAsync(user, Form.Password);
+            var userCreateResult = await userManager.CreateAsync(user, UserRegistrationDto.Password);
             if(!userCreateResult.Succeeded)
             {
                 foreach (var error in userCreateResult.Errors)
@@ -55,13 +56,13 @@ namespace NETForum.Pages.Account.Register
             try
             {
                 var createdUser = await userManager.FindByNameAsync(user.UserName!);
-                UserProfileForm.UserId = createdUser!.Id;
-                await userProfileService.AddUserProfileAsync(UserProfileForm);
+                UserProfileDto.UserId = createdUser!.Id;
+                await userProfileService.AddUserProfileAsync(UserProfileDto);
                 
                 // If profile image was provided, update the user's profile image
-                if (UserProfileForm.ProfileImage != null)
+                if (UserProfileDto.ProfileImage != null)
                 {
-                    await userService.UpdateUserProfileImageAsync(createdUser.Id, UserProfileForm.ProfileImage);
+                    await userService.UpdateUserProfileImageAsync(createdUser.Id, UserProfileDto.ProfileImage);
                 }
                 
                 // Sign in the new user and redirect.

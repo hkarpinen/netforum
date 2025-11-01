@@ -1,23 +1,23 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Extensions;
 using NETForum.Services;
 
 namespace NETForum.Pages.Roles
 {
     [Authorize(Roles = "Admin")]
-    public class EditModel(IRoleService roleService) : PageModel
+    public class EditModel(IRoleService roleService, IMapper mapper) : PageModel
     {
         [BindProperty]
-        public RoleForm Form { get; set; } = new();
+        public EditRoleDto EditRoleDto { get; set; } = new();
 
         public async Task OnGetAsync(int id)
         {
             var role = await roleService.GetRoleAsync(id);
             if(role != null)
             {
-                Form = role.ToForm();
+                EditRoleDto = mapper.Map<EditRoleDto>(role);
             }
         }
 
@@ -26,9 +26,7 @@ namespace NETForum.Pages.Roles
             var role = await roleService.GetRoleAsync(id);
             if (role == null) return NotFound();
             
-            var result = await roleService.UpdateRoleAsync(
-                Form.MapToRole(role)    
-            );
+            var result = await roleService.UpdateRoleAsync(EditRoleDto);
             
             // TODO: An error occurred, NotFound() is not the correct object to return here.
             if (result == null) return NotFound();

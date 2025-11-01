@@ -42,9 +42,7 @@
                     Latest Posts
                 </div>
                 <div class="card-body">
-                    @if(Model.LatestPosts != null)
-                    {
-                        @if(Model.LatestPosts.Count() > 0)
+                    @if(Model.LatestPosts.Any())
                         {
                             @foreach (var post in Model.LatestPosts)
                             {
@@ -81,7 +79,6 @@
                         {
                             <p class="m-0">Found no posts!</p>    
                         }
-                    }
                 </div>
             </div>
             <div class="card shadow">
