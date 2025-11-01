@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
 using NETForum.Extensions;
 using NETForum.Models;
-using NETForum.Pages.Users;
+using NETForum.Models.DTOs;
+
 using NETForum.Services.Criteria;
 
 namespace NETForum.Services
@@ -13,12 +15,10 @@ namespace NETForum.Services
         Task<IEnumerable<User>> GetUsersAsync();
         Task<User?> GetUserAsync(int id);
         Task<User?> GetUserAsync(string userName);
-        Task<IdentityResult> UpdateUserAsync(User user);
         Task<IdentityResult?> UpdateUserRolesAsync(User user, IEnumerable<string> selectedRoleNames);
         Task<bool> UpdateUserProfileImageAsync(int userId, IFormFile file);
-        Task<IdentityResult> CreateUserAsync(User user);
+        Task<IdentityResult> CreateUserAsync(CreateUserDto dto);
         Task<IdentityResult?> DeleteUserAsync(int id);
-        Task<UserForm?> GetUserFormModelAsync(int id);
         Task<User?> GetNewestUserAsync();
         Task<int> GetTotalUserCountAsync();
         Task<DateTime> GetUserJoinedDate(int id);
@@ -28,7 +28,8 @@ namespace NETForum.Services
     public class UserService(
         AppDbContext dbContext, 
         UserManager<User> userManager,
-        IFileStorageService fileStorageService
+        IFileStorageService fileStorageService,
+        IMapper mapper
     ) : IUserService {
         public async Task<IdentityResult> UpdateUserAsync(User user)
         {
@@ -118,14 +119,9 @@ namespace NETForum.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<IdentityResult> CreateUserAsync(User user)
+        public async Task<IdentityResult> CreateUserAsync(CreateUserDto dto)
         {
-            /* var user = new User()
-            {
-                UserName = userForm.Username,
-                Email = userForm.Email,
-                EmailConfirmed = false
-            };*/
+            var user = mapper.Map<User>(dto);
             return await userManager.CreateAsync(user);
         }
 
@@ -139,18 +135,7 @@ namespace NETForum.Services
             }
             return result;
         }
-
-        public async Task<UserForm?> GetUserFormModelAsync(int id)
-        {
-            return await dbContext.Users
-                .Where(u => u.Id == id)
-                .Select(u => new UserForm
-                {
-                    Username = u.UserName ?? string.Empty,
-                    Email = u.Email ?? string.Empty
-                }).FirstOrDefaultAsync();
-        }
-
+        
         public async Task<User?> GetNewestUserAsync()
         {
             return await dbContext.Users
