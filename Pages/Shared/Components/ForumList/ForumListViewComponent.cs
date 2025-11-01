@@ -13,7 +13,7 @@ namespace NETForum.Pages.Shared.Components.ForumList
     {
         public IViewComponentResult Invoke(ForumListOptions forumListOptions)
         {
-            ForumListViewModel forumListViewModel = new ForumListViewModel
+            var forumListViewModel = new ForumListViewModel
             {
                 Title = forumListOptions.ForumListTitle,
                 Forums = forumListOptions.ForumItems
