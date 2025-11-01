@@ -17,6 +17,6 @@
 
         // Navigation properties
         public User? Author { get; set; }
-        public IEnumerable<Reply> Replies { get; set; } = new List<Reply>();
+        public IEnumerable<PostReply> Replies { get; set; } = new List<PostReply>();
     }
 }
