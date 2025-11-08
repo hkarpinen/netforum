@@ -1,11 +1,10 @@
 using System.Reflection;
-using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
-using NETForum.Mappings;
 using NETForum.Middleware;
-using NETForum.Models;
+using NETForum.Models.Entities;
+using NETForum.Repositories;
 using NETForum.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +37,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // Add DI classes
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IForumRepository, ForumRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IReplyRepository, ReplyRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();
