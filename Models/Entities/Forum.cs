@@ -1,4 +1,4 @@
-﻿namespace NETForum.Models
+﻿namespace NETForum.Models.Entities
 {
     public class Forum
     {
