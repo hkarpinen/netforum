@@ -1,6 +1,6 @@
-namespace NETForum.Services.Criteria;
+namespace NETForum.Repositories.Filters;
 
-public class RoleSearchCriteria
+public class RoleFilterOptions
 {
     public required string? Name { get; set; }
     public required string? Description { get; set; }

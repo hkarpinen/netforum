@@ -1,41 +1,39 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using NETForum.Data;
-using NETForum.Extensions;
-using NETForum.Models;
 using NETForum.Models.DTOs;
-
-using NETForum.Services.Criteria;
+using NETForum.Models.Entities;
+using NETForum.Repositories;
+using NETForum.Repositories.Filters;
 
 namespace NETForum.Services
 {
     public interface IUserService
     {
-        Task<IEnumerable<User>> GetUsersAsync();
+        Task<IReadOnlyCollection<User>> GetUsersAsync();
         Task<User?> GetUserAsync(int id);
         Task<User?> GetUserAsync(string userName);
-        Task<IdentityResult?> UpdateUserRolesAsync(User user, IEnumerable<string> selectedRoleNames);
+        Task<IdentityResult?> UpdateUserRolesAsync(User user, List<string> selectedRoleNames);
         Task<bool> UpdateUserProfileImageAsync(int userId, IFormFile file);
         Task<IdentityResult> CreateUserAsync(CreateUserDto dto);
-        Task<IdentityResult?> DeleteUserAsync(int id);
+        Task DeleteUserAsync(int id);
         Task<User?> GetNewestUserAsync();
         Task<int> GetTotalUserCountAsync();
         Task<DateTime> GetUserJoinedDate(int id);
-        Task<PagedResult<User>> GetUsersPagedAsync(int pageNumber, int pageSize, UserSearchCriteria userSearchCriteria);
+        Task<PagedResult<User>> GetUsersPagedAsync(
+            int pageNumber, 
+            int pageSize, 
+            UserFilterOptions userFilterOptions,
+            string? sortBy,
+            bool ascending
+        );
     }
 
     public class UserService(
-        AppDbContext dbContext, 
         UserManager<User> userManager,
         IFileStorageService fileStorageService,
-        IMapper mapper
+        IMapper mapper,
+        IUserRepository userRepository
     ) : IUserService {
-        public async Task<IdentityResult> UpdateUserAsync(User user)
-        {
-            var result = await userManager.UpdateAsync(user);
-            return result;
-        }
 
         public async Task<bool> UpdateUserProfileImageAsync(int userId, IFormFile file)
         {
@@ -48,8 +46,11 @@ namespace NETForum.Services
             // Save the new profile image
             await using var stream = file.OpenReadStream();
             var profileImagePath = await fileStorageService.SaveFileAsync(stream, file.FileName);
-            user.ProfileImageUrl = profileImagePath;
-            await UpdateUserAsync(user);
+
+            await userRepository.UpdateAsync(userId, trackedEntity =>
+            {
+                trackedEntity.ProfileImageUrl = profileImagePath;
+            });
             
             // Delete the old profile image if it exists
             if (oldProfileImageUrl != null) 
@@ -60,35 +61,31 @@ namespace NETForum.Services
             return true;
         }
 
-        public async Task<PagedResult<User>> GetUsersPagedAsync(int pageNumber, int pageSize, UserSearchCriteria userSearchCriteria)
+        public async Task<PagedResult<User>> GetUsersPagedAsync(
+            int pageNumber, 
+            int pageSize, 
+            UserFilterOptions userFilterOptions,
+            string? sortBy,
+            bool ascending)
         {
-            var query = dbContext.Users
-                .WhereUsername(userSearchCriteria.Username)
-                .WhereEmail(userSearchCriteria.Email)
-                .OrderByField(userSearchCriteria.SortBy, userSearchCriteria.Ascending);
-            
-            var totalCount = await query.CountAsync();
-            var posts = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Include(u => u.UserProfile)
-                .ToListAsync();
-
-            return new PagedResult<User>()
+            var repositoryPagedQueryOptions = new PagedRepositoryQueryOptions<UserFilterOptions>()
             {
-                Items = posts,
-                TotalCount = totalCount,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
+                SortBy = sortBy,
+                Ascending = ascending,
+                Filter = userFilterOptions,
+                Navigations = ["UserProfile"]
             };
+            return await userRepository.GetAllPagedAsync(repositoryPagedQueryOptions);
         }
 
-        public async Task<IEnumerable<User>> GetUsersAsync() {
-            return await dbContext.Users
-                .ToListAsync();
+        public async Task<IReadOnlyCollection<User>> GetUsersAsync() {
+            var repositoryQueryOptions = new RepositoryQueryOptions<UserFilterOptions>();
+            return await userRepository.GetAllAsync(repositoryQueryOptions);
         }
 
-        public async Task<IdentityResult?> UpdateUserRolesAsync(User user, IEnumerable<string> selectedRoleNames)
+        public async Task<IdentityResult?> UpdateUserRolesAsync(User user, List<string> selectedRoleNames)
         {
             var currentRoles = await userManager.GetRolesAsync(user);
             
@@ -104,19 +101,17 @@ namespace NETForum.Services
             return result;
         }
 
+        // TODO: Rename to GetUserByIdAsync()
         public async Task<User?> GetUserAsync(int id)
         {
-            return await dbContext.Users
-                .Where(u => u.Id == id)
-                .FirstOrDefaultAsync();
+            return await userRepository.GetByIdAsync(id);
         }
 
         public async Task<User?> GetUserAsync(string userName)
         {
-            return await dbContext.Users
-                .Where(u => u.UserName == userName)
-                .Include(u => u.UserProfile)
-                .FirstOrDefaultAsync();
+            var navigations = new[] { "UserProfile" };
+            var user = await userRepository.GetByUsernameAsync(userName, navigations);
+            return user;
         }
 
         public async Task<IdentityResult> CreateUserAsync(CreateUserDto dto)
@@ -125,36 +120,24 @@ namespace NETForum.Services
             return await userManager.CreateAsync(user);
         }
 
-        public async Task<IdentityResult?> DeleteUserAsync(int id)
+        public async Task DeleteUserAsync(int id)
         {
-            IdentityResult? result = null;
-            User? user = await GetUserAsync(id);
-            if(user != null)
-            {
-                result = await userManager.DeleteAsync(user);
-            }
-            return result;
+            await userRepository.DeleteByIdAsync(id);
         }
         
         public async Task<User?> GetNewestUserAsync()
         {
-            return await dbContext.Users
-                .OrderByDescending(u => u.CreatedAt)
-                .FirstOrDefaultAsync();
+            return await userRepository.GetNewestUserAsync();
         }
 
         public async Task<int> GetTotalUserCountAsync()
         {
-            return await dbContext.Users
-                .CountAsync();
+            return await userRepository.CountTotalUsersAsync();
         }
 
         public async Task<DateTime> GetUserJoinedDate(int id)
         {
-            return await dbContext.Users
-                .Where(u => u.Id == id)
-                .Select(u => u.CreatedAt)
-                .FirstOrDefaultAsync();
+            return await userRepository.GetUserJoinedDateAsync(id);
         }
     }
 }

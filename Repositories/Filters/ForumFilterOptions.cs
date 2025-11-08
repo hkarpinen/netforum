@@ -1,12 +1,10 @@
-﻿namespace NETForum.Services.Criteria
+﻿namespace NETForum.Repositories.Filters
 {
-    public class ForumSearchCriteria
+    public class ForumFilterOptions
     {
         public string? Name {  get; set; }
         public int? CategoryId { get; set; }
         public int? ParentForumId { get; set; }
         public bool? Published { get; set; }
-        public string SortBy { get; set; }
-        public bool Ascending { get; set; } = true;
     }
 }

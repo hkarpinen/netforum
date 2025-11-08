@@ -1,6 +1,6 @@
-namespace NETForum.Services.Criteria;
+namespace NETForum.Repositories.Filters;
 
-public class PostSearchCriteria
+public class PostFilterOptions
 {
     public int? ForumId { get; set; }
     public int? AuthorId { get; set; }
@@ -9,6 +9,4 @@ public class PostSearchCriteria
     public bool? Published { get; set; }
     public string? Title { get; set; }
     public string? Content { get; set; }
-    public string SortBy { get; set; }
-    public bool Ascending { get; set; } = true;
 }
