@@ -1,87 +1,78 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using NETForum.Data;
-using NETForum.Extensions;
-using NETForum.Models;
-using NETForum.Pages.Category;
-using NETForum.Services.Criteria;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
+using NETForum.Repositories;
+using NETForum.Repositories.Filters;
 
 namespace NETForum.Services
 {
     public interface ICategoryService
     {
         Task<IEnumerable<SelectListItem>> GetCategorySelectListItems();
-        Task<EntityEntry<Category>> AddCategoryAsync(CreateCategoryDto createCategoryDto);
+        Task<Category> AddCategoryAsync(CreateCategoryDto createCategoryDto);
         Task<Category?>GetCategoryByIdAsync(int id);
+        Task UpdateCategoryAsync(EditCategoryDto editCategoryDto);
         Task DeleteCategoryByIdAsync(int id);
-        Task<PagedResult<Category>> GetCategoriesPagedAsync(int pageNumber, int pageSize, CategorySearchCriteria categorySearchCriteria);
+        Task<PagedResult<Category>> GetCategoriesWithForumsPagedAsync(int pageNumber, int pageSize, CategoryFilterOptions categoryFilterOptions);
     }
 
-    public class CategoryService(AppDbContext context, IMapper mapper) : ICategoryService
+    /// <summary>
+    /// Service for managing Category operations.
+    /// </summary>
+    /// <param name="mapper">An instance of AutoMapper that supports automatic type mapping.</param>
+    /// <param name="categoryRepository">The repository for Category data access</param>
+    public class CategoryService(IMapper mapper, ICategoryRepository categoryRepository) : ICategoryService
     {
-        public async Task<EntityEntry<Category>> AddCategoryAsync(CreateCategoryDto createCategoryDto)
+        public async Task<Category> AddCategoryAsync(CreateCategoryDto createCategoryDto)
         {
             var category = mapper.Map<Category>(createCategoryDto);
-            var result = await context.Categories.AddAsync(category);
-            await context.SaveChangesAsync();
+            var result = await categoryRepository.AddAsync(category);
             return result;
+        }
+
+        public async Task UpdateCategoryAsync(EditCategoryDto editCategoryDto)
+        {
+            await categoryRepository.UpdateAsync(editCategoryDto.Id, category =>
+            {
+                mapper.Map(editCategoryDto, category);
+            });
         }
 
         public async Task<IEnumerable<SelectListItem>> GetCategorySelectListItems()
         {
-            return await context.Categories
-                .Select(c => new SelectListItem
-                {
-                    Text = c.Name,
-                    Value = c.Id.ToString()
-                }).ToListAsync();
+            var criteria = new RepositoryQueryOptions<CategoryFilterOptions>();
+            var categoryList = await categoryRepository.GetAllAsync(criteria);
+            return categoryList.Select(c => new SelectListItem
+            {
+                Text = c.Name,
+                Value = c.Id.ToString()
+            });
         }
 
         public async Task<Category?> GetCategoryByIdAsync(int id)
         {
-            return await context.Categories
-                .Where(c => c.Id == id)
-                .FirstOrDefaultAsync();
+            return await categoryRepository.GetByIdAsync(id);
         }
 
         public async Task DeleteCategoryByIdAsync(int id)
         {
-            var category = await context.Categories
-                .Where(c  => c.Id == id)
-                .FirstOrDefaultAsync();
-            if (category != null)
-            {
-                context.Categories.Remove(category);
-                await context.SaveChangesAsync();
-            }
+            await categoryRepository.DeleteByIdAsync(id);
         }
-
-        public async Task<PagedResult<Category>> GetCategoriesPagedAsync(
+        
+        public async Task<PagedResult<Category>> GetCategoriesWithForumsPagedAsync(
             int pageNumber, 
             int pageSize,
-            CategorySearchCriteria categorySearchCriteria
+            CategoryFilterOptions categoryFilterOptions
         ) {
-            var query = context.Categories
-                .WhereName(categorySearchCriteria.Name)
-                .WherePublished(categorySearchCriteria.Published)
-                .OrderByField(categorySearchCriteria.SortBy, categorySearchCriteria.Ascending);
-            
-            var totalCount = await query.CountAsync();
-            var categories = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Include(c => c.Forums)
-                .ToListAsync();
-
-            return new PagedResult<Category>
+            var queryOptions = new PagedRepositoryQueryOptions<CategoryFilterOptions>
             {
-                Items = categories,
-                TotalCount = totalCount,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
+                Filter = categoryFilterOptions,
+                Navigations = ["Forums"]
             };
+            return await categoryRepository.GetAllPagedAsync(queryOptions);
         }
     }
 }

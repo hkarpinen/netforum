@@ -1,9 +1,8 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using NETForum.Data;
-using NETForum.Models;
-using NETForum.Pages.Posts;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
+using NETForum.Repositories;
 
 namespace NETForum.Services
 {
@@ -12,40 +11,35 @@ namespace NETForum.Services
         Task<IEnumerable<Reply>> GetRepliesAsync(int postId);
         Task<int> GetTotalReplyCountAsync();
         Task<int> GetTotalReplyCountAsync(int authorId);
-        Task<EntityEntry<Reply>> AddReplyAsync(int postId, int authorId, CreatePostReplyDto inputModel);
+        Task<Reply> AddReplyAsync(int postId, int authorId, CreatePostReplyDto inputModel);
     }
 
-    public class ReplyService(AppDbContext context, IMapper mapper) : IReplyService
+    public class ReplyService(AppDbContext context, IMapper mapper, IReplyRepository replyRepository) : IReplyService
     {
         public async Task<IEnumerable<Reply>> GetRepliesAsync(int postId)
         {
-            return await context.Replies
-                .Where(r => r.PostId == postId)
-                .ToListAsync();
+            return await replyRepository.GetRepliesByPostAsync(postId);
         }
 
-        public async Task<EntityEntry<Reply>> AddReplyAsync(int postId, int userId, CreatePostReplyDto inputModel)
+        public async Task<Reply> AddReplyAsync(int postId, int userId, CreatePostReplyDto inputModel)
         {
             var postReply = mapper.Map<Reply>(inputModel);
             postReply.PostId = postId;
             postReply.AuthorId = userId;
             
-            var result = await context.Replies.AddAsync(postReply);
+            var result = await replyRepository.AddAsync(postReply);
             await context.SaveChangesAsync();
             return result;
         }
 
         public async Task<int> GetTotalReplyCountAsync()
         {
-            return await context.Replies
-                .CountAsync();
+            return await replyRepository.GetTotalReplyCountAsync();
         }
 
         public async Task<int> GetTotalReplyCountAsync(int authorId)
         {
-            return await context.Replies
-                .Where(r => r.AuthorId == authorId)
-                .CountAsync();
+            return await replyRepository.GetTotalReplyCountByAuthorAsync(authorId);
         }
     }
 }

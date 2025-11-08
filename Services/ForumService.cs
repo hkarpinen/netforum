@@ -1,14 +1,11 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using NETForum.Data;
-using NETForum.Extensions;
-using NETForum.Models;
-using NETForum.Pages.Forums;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
 using NETForum.Pages.Shared.Components.Breadcrumbs;
 using NETForum.Pages.Shared.Components.ForumList;
-using NETForum.Services.Criteria;
+using NETForum.Repositories;
+using NETForum.Repositories.Filters;
 
 namespace NETForum.Services
 {
@@ -21,116 +18,114 @@ namespace NETForum.Services
         Task<IEnumerable<ForumListItemModel>> GetForumListItemsAsync(int parentForumId);
         Task<IEnumerable<BreadcrumbItemModel>> GetForumBreadcrumbItems(int forumId);
         Task<IEnumerable<SelectListItem>> GetSelectListItemsAsync();
-        Task<EntityEntry<Forum>> CreateForumAsync(CreateForumDto createForumDto);
-        Task<PagedResult<Forum>> GetForumsPagedAsync(int pageNumber, int pageSize, ForumSearchCriteria searchCriteria);
+        Task<Forum> CreateForumAsync(CreateForumDto createForumDto);
+        Task<PagedResult<Forum>> GetForumsPagedAsync(
+            int pageNumber, 
+            int pageSize, 
+            ForumFilterOptions filterOptions,
+            string? sortBy,
+            bool ascending
+        );
     }
 
-    public class ForumService(AppDbContext context, IMapper mapper) : IForumService
+    public class ForumService(IForumRepository forumRepository, IMapper mapper) : IForumService
     {
         public async Task<IEnumerable<Forum>> GetForumsAsync()
         {
-            return await context.Forums.ToListAsync();
+            var options = new RepositoryQueryOptions<ForumFilterOptions>();
+            return await forumRepository.GetAllAsync(options);
         }
 
         public async Task<IEnumerable<ForumListItemModel>> GetRootForumListItemsAsync()
         {
-            return await context.Forums
-                .Where(f => f.ParentForumId == null)
-                .Include(f => f.Category)
-                .Include(f => f.Posts)
-                .ThenInclude(p => p.Replies)
-                .Select(f => new ForumListItemModel
-                {
-                    Forum = f,
-                    PostCount = f.Posts.Count(),
-                    RepliesCount = f.Posts.Sum(p => p.Replies.Count()),
-                    LastPost = f.Posts.OrderByDescending(p => p.CreatedAt).FirstOrDefault(),
-                    LastUpdated = f.Posts.Any()
-                        ? f.Posts.Max(p => p.CreatedAt)
-                        : f.CreatedAt
-                }).ToListAsync();
+            var rootForumsNavigations = new[]
+            {
+                "Category",
+                "Posts.Replies"
+            };
+            var rootForums = await forumRepository.GetAllRootForumsAsync(rootForumsNavigations);
+            return rootForums.Select(rf => new ForumListItemModel
+            {
+                Forum = rf,
+                PostCount = rf.Posts.Count,
+                RepliesCount = rf.Posts.Sum(p => p.Replies.Count()),
+                LastPost = rf.Posts.OrderByDescending(p => p.CreatedAt).FirstOrDefault(),
+                
+                // TODO: Created at is not the right date to use here?
+                LastUpdated = rf.Posts.Count != 0 ? rf.Posts.Max(p => p.UpdatedAt) : rf.CreatedAt
+            });
+
         }
 
         public async Task<Forum?> GetForumByIdAsync(int id)
         {
-            return await context.Forums.FirstOrDefaultAsync(f => f.Id == id);
+            return await forumRepository.GetByIdAsync(id);
         }
 
         public async Task<bool> UpdateForum(EditForumDto editForumDto)
         {
-            var forum = await context.Forums.FindAsync(editForumDto.Id);
-            if (forum == null) return false;
+            try
+            {
+                await forumRepository.UpdateAsync(editForumDto.Id, trackedForum =>
+                {
+                    mapper.Map(editForumDto, trackedForum);
+                });
+            }
+            catch (KeyNotFoundException exception)
+            {
+                // TODO: Need to setup logging for this. Log to external file or service maybe?
+                return false;
+            }
             
-            mapper.Map(editForumDto, forum);
-            await context.SaveChangesAsync();
+            // Update succeeded.
             return true;
+
         }
 
         public async Task<IEnumerable<SelectListItem>> GetSelectListItemsAsync()
         {
-            return await context.Forums
-                .Select(f => new SelectListItem()
-                {
-                    Value = f.Id.ToString(),
-                    Text = f.Name
-                }).ToListAsync();
+            var forumFilterOptions = new RepositoryQueryOptions<ForumFilterOptions>();
+            var allForums = await forumRepository.GetAllAsync(forumFilterOptions);
+            return allForums.Select(f => new SelectListItem
+            {
+                Value = f.Id.ToString(),
+                Text = f.Name
+            });
         }
 
-        public async Task<EntityEntry<Forum>> CreateForumAsync(CreateForumDto createForumDto) 
+        // TODO: Rename method to AddForumAsync() for consistency.
+        public async Task<Forum> CreateForumAsync(CreateForumDto createForumDto) 
         {
             var forum = mapper.Map<Forum>(createForumDto);
-            var result = context.Forums.Add(forum);
-            await context.SaveChangesAsync();
+            var result = await forumRepository.AddAsync(forum);
             return result;
         }
 
+        // TODO: Rename method to GetChildForumListItemsWithPostsAndReplies()
         public async Task<IEnumerable<ForumListItemModel>> GetForumListItemsAsync(int parentForumId)
         {
-            return await context.Forums
-                .Where(f => f.ParentForumId == parentForumId)
-                .Include(f => f.Posts)
-                .ThenInclude(p => p.Replies)
-                .Select(f => new ForumListItemModel
-                {
-                    Forum = f,
-                    PostCount = f.Posts.Count(),
-                    RepliesCount = f.Posts.Sum(p => p.Replies.Count()),
-                    LastPost = f.Posts.OrderByDescending(p => p.CreatedAt).FirstOrDefault(),
-                    LastUpdated = f.Posts.Any()
-                        ? f.Posts.Max(p => p.CreatedAt)
-                        : f.CreatedAt
-                }).ToListAsync();
+            var forums = await forumRepository.GetForumPostsWithReplies(parentForumId);
+            return forums.Select(f => new ForumListItemModel
+            {
+                Forum = f,
+                PostCount = f.Posts.Count,
+                RepliesCount = f.Posts.Sum(p => p.Replies.Count()),
+                LastPost = f.Posts.OrderByDescending(p => p.CreatedAt).FirstOrDefault(),
+                LastUpdated = f.Posts.Count != 0 ? f.Posts.Max(p => p.UpdatedAt) : f.CreatedAt
+            });
         }
-
-        public async Task<IEnumerable<ForumListItemModel>> GetForumListItemsAsync()
-        {
-            return await context.Forums
-                .Include(f => f.Posts)
-                .ThenInclude(p => p.Replies)
-                .Select(f => new ForumListItemModel
-                {
-                    Forum = f,
-                    PostCount = f.Posts.Count(),
-                    RepliesCount = f.Posts.Sum(p => p.Replies.Count()),
-                    LastPost = f.Posts.OrderByDescending(p => p.CreatedAt).FirstOrDefault(),
-                    LastUpdated = f.Posts.Any()
-                        ? f.Posts.Max(p => p.CreatedAt)
-                        : f.CreatedAt
-                }).ToListAsync();
-        }
-
+        
         public async Task<IEnumerable<BreadcrumbItemModel>> GetForumBreadcrumbItems(int forumId)
         {
             // Recursively find parent forums
             Stack<Forum> stack = new();
-            var forum = await context.Forums.FirstOrDefaultAsync(f => f.Id == forumId);
-
+            var forum = await forumRepository.GetByIdAsync(forumId);
             while (forum != null)
             {
                 stack.Push(forum);
-                if (forum.ParentForumId != null)
+                if (forum.ParentForumId.HasValue)
                 {
-                    forum = await context.Forums.FirstOrDefaultAsync(f => f.Id == forum.ParentForumId);
+                    forum = await forumRepository.GetByIdAsync(forum.ParentForumId.Value);
                 }
                 else
                 {
@@ -147,30 +142,26 @@ namespace NETForum.Services
             });
         }
 
-        public async Task<PagedResult<Forum>> GetForumsPagedAsync(int pageNumber, int pageSize, ForumSearchCriteria searchCriteria)
-        {
-            var query = context.Forums
-                .WhereName(searchCriteria.Name)
-                .WhereCategory(searchCriteria.CategoryId)
-                .WhereParentForum(searchCriteria.ParentForumId)
-                .WherePublished(searchCriteria.Published)
-                .OrderByField(searchCriteria.SortBy, searchCriteria.Ascending);
-
-            var totalCount = await query.CountAsync();
-            var forums = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Include(f => f.Category)
-                .Include(f => f.ParentForum)
-                .ToListAsync();
-
-            return new PagedResult<Forum>
+        // TODO: Rename method to GetForumsPagedWithCategoryAndParentForumAsync()
+        // TODO: Might be better to create a repository method that does this, then manually building query options.
+        public async Task<PagedResult<Forum>> GetForumsPagedAsync(
+            int pageNumber, 
+            int pageSize, 
+            ForumFilterOptions filterOptions,
+            string? sortBy,
+            bool ascending
+        ) {
+            var repositoryPagedQueryOptions = new PagedRepositoryQueryOptions<ForumFilterOptions>()
             {
-                Items = forums,
-                TotalCount = totalCount,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
+                Filter = filterOptions,
+                Navigations = ["Category", "ParentForum"],
+                SortBy = sortBy,
+                Ascending = ascending
             };
+
+            return await forumRepository.GetAllPagedAsync(repositoryPagedQueryOptions);
         }
     }
 }

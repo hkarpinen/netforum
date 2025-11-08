@@ -1,12 +1,9 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using NETForum.Data;
-using NETForum.Extensions;
-using NETForum.Models;
 using NETForum.Models.Components;
-using NETForum.Pages.Posts;
-using NETForum.Services.Criteria;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
+using NETForum.Repositories;
+using NETForum.Repositories.Filters;
 
 namespace NETForum.Services
 {
@@ -18,24 +15,31 @@ namespace NETForum.Services
         Task<int> GetTotalPostCountAsync();
         Task<int> GetTotalPostCountAsync(int authorid);
         Task<Post?> GetPostAsync(int id);
-        Task<EntityEntry<Post>> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto);
+        Task<Post> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto);
         Task<IEnumerable<Post>> GetLatestPostsAsync(int limit);
-        Task<PagedResult<Post>> GetPostsPagedAsync(int pageNumber, int pageSize, PostSearchCriteria postSearchCriteria);
+        Task<PagedResult<Post>> GetPostsPagedAsync(
+            int pageNumber, 
+            int pageSize, 
+            PostFilterOptions postFilterOptions,
+            string? sortBy,
+            bool ascending
+        );
     }
 
-    public class PostService(AppDbContext context, IMapper mapper, IUserService userService) : IPostService
+    public class PostService(IMapper mapper, IUserService userService, IPostRepository postRepository) : IPostService
     {
         public async Task<IEnumerable<Post>> GetPostsAsync(int forumId)
         {
-            return await context.Posts
-                .Where(p => p.ForumId == forumId)
-                .Include(p => p.Author)
-                .Include(p => p.Replies)
-                .ThenInclude(r => r.Author)
-                .ToListAsync();
+            var navigations = new[]
+            {
+                "Author",
+                "Replies.Author"
+            };
+            return await postRepository.GetPostsInForumAsync(forumId, navigations);
         }
         
-        public async Task<EntityEntry<Post>> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto)
+        // TODO: Rename method to AddForumAsync() for consistency
+        public async Task<Post> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto)
         {
                 var author = userService.GetUserAsync(username);
                 if(author == null) throw new Exception("User not found");
@@ -43,121 +47,93 @@ namespace NETForum.Services
                 var post = mapper.Map<Post>(createPostDto);
                 post.AuthorId = author.Id;
                 post.ForumId = forumId;
-                var result = await context.Posts.AddAsync(post);
-                await context.SaveChangesAsync();
+                
+                var result = await postRepository.AddAsync(post);
                 return result;
         }
 
+        // TODO: Rename to GetPostWithAuthorAndRepliesAsync
         public async Task<Post?> GetPostAsync(int id)
         {
-            return await context.Posts
-                .Where(p => p.Id == id)
-                .Include(p => p.Author)
-                .Include(p => p.Replies)
-                .FirstOrDefaultAsync();
+            var navigations = new[]
+            {
+                "Author",
+                "Replies"
+            };
+            return await postRepository.GetByIdAsync(id, navigations);
         }
 
+        // TODO: Rename to GetLatestPostsWithAuthorAsync
         public async Task<IEnumerable<Post>> GetLatestPostsAsync(int limit)
         {
-            return await context.Posts
-                .Include(p => p.Author)
-                .OrderByDescending(p => p.UpdatedAt)
-                .Take(limit)
-                .ToListAsync();
+            var navigations = new[] {  "Author" };
+            return await postRepository.GetLatestPostsAsync(limit, navigations);
         }
 
         public async Task<IEnumerable<PostListItem>> GetPostListItemsAsync(int forumId)
         {
-            return await context.Posts
-                .Where(p => p.ForumId == forumId)
-                .Include(p => p.Author)
-                .Include(p => p.Replies)
-                .ThenInclude(r => r.Author)
-                .Select(p => new PostListItem
-                {
-                    Id = p.Id,
-                    ForumId = p.ForumId,
-                    AuthorId = p.AuthorId,
-                    Author = p.Author,
-                    IsPinned = p.IsPinned,
-                    IsLocked = p.IsLocked,
-                    Published = p.Published,
-                    Title = p.Title,
-                    Content = p.Content,
-                    CreatedAt = p.CreatedAt,
-                    UpdatedAt = p.UpdatedAt,
-                    ViewCount = p.ViewCount,
-                    LastReply = p.Replies
-                        .OrderByDescending(r => r.CreatedAt)
-                        .FirstOrDefault() 
-                })
-                .ToListAsync();
+            var navigations = new[] {  "Author", "Replies.Author" };
+            var posts = await postRepository.GetPostsInForumAsync(forumId, navigations);
+            return posts.Select(p => new PostListItem()
+            {
+                Id = p.Id,
+                // TODO: Author ID is stored on Author, doesn't need to be here twice.
+                ForumId = p.ForumId,
+                AuthorId = p.AuthorId,
+                Author = p.Author,
+                IsPinned = p.IsPinned,
+                IsLocked = p.IsLocked,
+                Published = p.Published,
+                Title = p.Title,
+                Content = p.Content,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                ViewCount = p.ViewCount,
+                LastReply = p.Replies.OrderByDescending(r => r.CreatedAt).FirstOrDefault()
+            });
         }
 
         public async Task IncrementViewCountAsync(int postId)
         {
-            Post? post = null;
-            post = await context.Posts
-                .Where(p => p.Id == postId)
-                .FirstOrDefaultAsync();
-            if(post != null)
+            try
             {
-                post.ViewCount = post.ViewCount + 1;
-                context.Posts.Update(post);
-                await context.SaveChangesAsync();
+                await postRepository.UpdateAsync(postId, trackedPost => { trackedPost.ViewCount++; });
             }
-            else
+            catch (KeyNotFoundException exception)
             {
-                // TODO: this is wrong. if the post isn't found we should return a boolean false.
-                // TODO: Update this method to return a Task<bool> where false represents a failure.
-                throw new NotImplementedException();
+                // TODO: Need to setup logging for this. 
             }
         }
 
         public async Task<int> GetTotalPostCountAsync()
         {
-            return await context.Posts
-                .CountAsync();
+            return await postRepository.GetTotalPostCountAllTime();
         }
 
+        // TODO: Rename to GetTotalPostCountByAuthorAsync()
         public async Task<int> GetTotalPostCountAsync(int authorid)
         {
-            return await context.Posts
-                .Where(p => p.AuthorId == authorid)
-                .CountAsync();
+            return await postRepository.GetTotalPostCountByAuthorAsync(authorid);
         }
         
         public async Task<PagedResult<Post>> GetPostsPagedAsync(
             int pageNumber, 
             int pageSize,
-            PostSearchCriteria postSearchCriteria
+            PostFilterOptions postFilterOptions,
+            string? sortBy,
+            bool ascending
         )
         {
-            var query = context.Posts
-                .WhereForum(postSearchCriteria.ForumId)
-                .WhereAuthor(postSearchCriteria.AuthorId)
-                .WherePinned(postSearchCriteria.Pinned)
-                .WhereLocked(postSearchCriteria.Locked)
-                .WherePublished(postSearchCriteria.Published)
-                .WhereTitle(postSearchCriteria.Title)
-                .WhereContent(postSearchCriteria.Content)
-                .OrderByField(postSearchCriteria.SortBy, postSearchCriteria.Ascending);
-            
-            var totalCount = await query.CountAsync();
-            var posts = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Include(p => p.Author)
-                .Include(p => p.Replies)
-                .ToListAsync();
-
-            return new PagedResult<Post>
+            var repositoryPagedQueryOptions = new PagedRepositoryQueryOptions<PostFilterOptions>()
             {
-                Items = posts,
-                TotalCount = totalCount,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
+                Filter = postFilterOptions,
+                Navigations = ["Author", "Replies"],
+                SortBy = sortBy,
+                Ascending = ascending
             };
+            return await postRepository.GetAllPagedAsync(repositoryPagedQueryOptions);
         }
     }
 }

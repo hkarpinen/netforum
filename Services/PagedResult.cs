@@ -1,8 +1,8 @@
 ﻿namespace NETForum.Services
 {
-    public class PagedResult<T>
+    public class PagedResult<TEntity>
     {
-        public IEnumerable<T> Items { get; set; } = new List<T>();
+        public IReadOnlyCollection<TEntity> Items { get; set; } = new List<TEntity>();
         public int TotalCount { get; set; }
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
