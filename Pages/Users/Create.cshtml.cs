@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using NETForum.Extensions;
-using NETForum.Models;
 using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
 using NETForum.Services;
 
 namespace NETForum.Pages.Users
@@ -18,6 +17,9 @@ namespace NETForum.Pages.Users
 
         [BindProperty]
         public CreateUserDto CreateUserDto { get; set; } = new();
+        
+        [BindProperty]
+        public IEnumerable<string> SelectedRoles { get; set; } = new List<string>();
         
         public IEnumerable<SelectListItem> Roles { get; set; }  = new List<SelectListItem>();
 
@@ -37,8 +39,18 @@ namespace NETForum.Pages.Users
 
         public async Task<IActionResult> OnPostAsync()
         {
+            if (!ModelState.IsValid) return Page();
             var result = await _userService.CreateUserAsync(CreateUserDto);
-            if (result.Succeeded) return RedirectToPage("/Admin/Users");
+            
+            // If adding the user succeeded, update the roles for the user.
+            if (result.Succeeded)
+            {
+                var user = await _userService.GetUserAsync(CreateUserDto.Username);
+                if (user != null)
+                {
+                    await _userService.UpdateUserRolesAsync(user, SelectedRoles.ToList());
+                }
+            }
             
             // Handle errors
             foreach (var error in result.Errors)

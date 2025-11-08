@@ -19,6 +19,7 @@ namespace NETForum.Pages.Users
         [BindProperty]
         public EditUserDto EditUserDto { get; set; } = new();
 
+        [BindProperty]
         public IEnumerable<string> SelectedRoles { get; set; } = new List<string>();
         public IEnumerable<SelectListItem> AllRoles { get; set; } = new List<SelectListItem>();
         
@@ -39,7 +40,7 @@ namespace NETForum.Pages.Users
         {
             var user = await userService.GetUserAsync(id);
             if (user == null) return NotFound();
-            await userService.UpdateUserRolesAsync(user, SelectedRoles);
+            await userService.UpdateUserRolesAsync(user, SelectedRoles.ToList());
             return RedirectToPage("/Admin/Users");
         }
     }
