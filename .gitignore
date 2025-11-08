@@ -6,6 +6,9 @@ git ## Ignore Visual Studio temporary files, build results, and
 # dotenv files
 .env
 
+appsettings.*.json
+wwwroot/uploads
+
 # User-specific files
 *.rsuser
 *.suo
