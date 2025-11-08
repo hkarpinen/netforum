@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace NETForum.Pages.Posts
+namespace NETForum.Models.DTOs
 {
     public class CreatePostReplyDto
     {

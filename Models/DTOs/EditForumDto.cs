@@ -1,4 +1,4 @@
-namespace NETForum.Pages.Forums;
+namespace NETForum.Models.DTOs;
 
 public class EditForumDto
 {

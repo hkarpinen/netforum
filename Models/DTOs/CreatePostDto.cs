@@ -1,4 +1,4 @@
-namespace NETForum.Pages.Posts;
+namespace NETForum.Models.DTOs;
 
 public class CreatePostDto
 {

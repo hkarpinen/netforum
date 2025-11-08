@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace NETForum.Pages.Account.Register;
+namespace NETForum.Models.DTOs;
 
 public class UserRegistrationDto
 {

@@ -1,4 +1,4 @@
-namespace NETForum.Pages.Category;
+namespace NETForum.Models.DTOs;
 
 public class EditCategoryDto
 {

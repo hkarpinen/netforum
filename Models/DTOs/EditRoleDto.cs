@@ -1,4 +1,4 @@
-namespace NETForum.Pages.Roles;
+namespace NETForum.Models.DTOs;
 
 public class EditRoleDto
 {
