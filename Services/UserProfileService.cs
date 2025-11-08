@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using NETForum.Data;
-using NETForum.Models;
-using NETForum.Pages.Account.Profile;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
 
 namespace NETForum.Services;
 

@@ -1,6 +1,6 @@
 using AutoMapper;
-using NETForum.Models;
-using NETForum.Pages.Roles;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
 
 namespace NETForum.Mappings;
 

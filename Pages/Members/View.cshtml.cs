@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Models;
+using NETForum.Models.Entities;
 using NETForum.Services;
 
 namespace NETForum.Pages.Members;

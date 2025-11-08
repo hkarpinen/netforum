@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using NETForum.Data;
-using NETForum.Models;
+using NETForum.Models.Entities;
 
 namespace NETForum.Services
 {

@@ -1,4 +1,6 @@
-﻿namespace NETForum.Models.Components
+﻿using NETForum.Models.Entities;
+
+namespace NETForum.Models.Components
 {
     public class PostListItem : Post
     {

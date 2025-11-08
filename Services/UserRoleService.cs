@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
-using NETForum.Models;
+using NETForum.Models.Entities;
 
 namespace NETForum.Services
 {

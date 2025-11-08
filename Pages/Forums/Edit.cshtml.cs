@@ -3,8 +3,7 @@ using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using NETForum.Extensions;
-using NETForum.Models;
+using NETForum.Models.DTOs;
 using NETForum.Services;
 
 namespace NETForum.Pages.Forums;

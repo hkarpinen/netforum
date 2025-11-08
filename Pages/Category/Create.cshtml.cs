@@ -1,6 +1,7 @@
 using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Models.DTOs;
 using NETForum.Services;
 
 namespace NETForum.Pages.Category

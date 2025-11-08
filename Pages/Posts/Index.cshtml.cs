@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using NETForum.Models;
+using NETForum.Models.Entities;
+using NETForum.Repositories.Filters;
 using NETForum.Services;
-using NETForum.Services.Criteria;
 
 namespace NETForum.Pages.Posts
 {
@@ -54,22 +54,16 @@ namespace NETForum.Pages.Posts
                 }
             }
             
-            Posts = await postService.GetPostsPagedAsync(
-                PageNumber,
-                PageSize,
-                new PostSearchCriteria
-                {
-                    ForumId = ForumId,
-                    AuthorId = authorId,
-                    Pinned = Pinned,
-                    Locked = Locked,
-                    Published = Published,
-                    Title = Title,
-                    Content = ContentSearch,
-                    SortBy = "created",
-                    Ascending = false
-                }
-            );
+            Posts = await postService.GetPostsPagedAsync(PageNumber, PageSize, new PostFilterOptions()
+            {
+                ForumId = ForumId,
+                AuthorId = authorId,
+                Pinned = Pinned,
+                Locked = Locked,
+                Published = Published,
+                Title = Title,
+                Content = ContentSearch
+            }, "created", false);
             return Page();
         }
     }

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Models;
+using NETForum.Models.Entities;
+using NETForum.Repositories.Filters;
 using NETForum.Services;
-using NETForum.Services.Criteria;
 
 namespace NETForum.Pages.Admin
 {
@@ -26,11 +26,11 @@ namespace NETForum.Pages.Admin
 
         public async Task OnGet()
         {
-            Roles = await roleService.GetRolesPagedAsync(PageNumber, PageSize, new RoleSearchCriteria()
+            Roles = await roleService.GetRolesPagedAsync(PageNumber, PageSize, new RoleFilterOptions()
             {
                 Name = Name,
                 Description = Description
-            });
+            }, "name", true);
         }
     }
 }

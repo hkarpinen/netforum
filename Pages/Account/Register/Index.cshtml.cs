@@ -2,8 +2,8 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Identity;
-using NETForum.Models;
-using NETForum.Pages.Account.Profile;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
 using NETForum.Services;
 
 namespace NETForum.Pages.Account.Register

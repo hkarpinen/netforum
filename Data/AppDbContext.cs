@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data.Configurations;
-using NETForum.Models;
+using NETForum.Models.Entities;
 
 namespace NETForum.Data
 {

@@ -1,9 +1,9 @@
-using NETForum.Pages.Category;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
 
 namespace NETForum.Mappings;
 
 using AutoMapper;
-using Models;
 
 public class CategoryProfile : Profile
 {

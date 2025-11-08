@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Models.DTOs;
 using NETForum.Services;
 
 namespace NETForum.Pages.Roles
@@ -26,6 +27,7 @@ namespace NETForum.Pages.Roles
             var role = await roleService.GetRoleAsync(id);
             if (role == null) return NotFound();
             
+            EditRoleDto.Id = id;
             var result = await roleService.UpdateRoleAsync(EditRoleDto);
             
             // TODO: An error occurred, NotFound() is not the correct object to return here.

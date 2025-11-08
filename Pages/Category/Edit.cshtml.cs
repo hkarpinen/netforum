@@ -1,7 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Extensions;
+using NETForum.Models.DTOs;
 using NETForum.Services;
 
 namespace NETForum.Pages.Category;

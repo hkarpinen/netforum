@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using NETForum.Models;
+using NETForum.Models.Entities;
 
 namespace NETForum.Data.Configurations
 {

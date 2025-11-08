@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Models;
-using NETForum.Pages.Account.Register;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
 
 namespace NETForum.Pages.Install
 {

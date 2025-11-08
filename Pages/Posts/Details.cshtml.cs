@@ -1,7 +1,7 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Models;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
 using NETForum.Pages.Shared.Components.Breadcrumbs;
 using NETForum.Services;
 

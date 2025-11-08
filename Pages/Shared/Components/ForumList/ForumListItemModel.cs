@@ -1,4 +1,4 @@
-﻿using NETForum.Models;
+﻿using NETForum.Models.Entities;
 
 namespace NETForum.Pages.Shared.Components.ForumList
 {

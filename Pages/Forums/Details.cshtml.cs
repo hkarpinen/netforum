@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Models;
+using NETForum.Models.Entities;
 using NETForum.Pages.Shared.Components.Breadcrumbs;
 using NETForum.Pages.Shared.Components.ForumList;
 using NETForum.Services;

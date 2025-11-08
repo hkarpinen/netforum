@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Services;
 
 namespace NETForum.Pages
 {
@@ -16,14 +15,5 @@ namespace NETForum.Pages
         {
             return RedirectToPage("/Forums/Index");
         }
-
-        /* public void OnGet()
-        {
-            if(User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                UserIsAuthenticated = true;
-                UserIsAdmin = User.IsInRole("Admin");
-            }
-        }*/
     }
 }
