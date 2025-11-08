@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using NETForum.Data;
-using NETForum.Extensions;
-using NETForum.Models;
-using NETForum.Pages.Roles;
-using NETForum.Services.Criteria;
+using NETForum.Models.DTOs;
+using NETForum.Models.Entities;
+using NETForum.Repositories;
+using NETForum.Repositories.Filters;
 
 namespace NETForum.Services
 {
@@ -18,57 +16,61 @@ namespace NETForum.Services
         Task<IdentityResult> CreateRoleAsync(CreateRoleDto createRoleDto);
         Task<IdentityResult?> DeleteRoleAsync(int id);
         Task<IdentityResult?> UpdateRoleAsync(EditRoleDto editRoleDto);
-        Task<PagedResult<Role>> GetRolesPagedAsync(int pageNumber, int pageSize, RoleSearchCriteria roleSearchCriteria);
+        Task<PagedResult<Role>> GetRolesPagedAsync(
+            int pageNumber, 
+            int pageSize, 
+            RoleFilterOptions roleFilterOptions,
+            string? sortBy,
+            bool ascending
+        );
     }
 
     public class RoleService(
-        AppDbContext context,
         RoleManager<Role> roleManager,
-        IMapper mapper)
+        IMapper mapper,
+        IRoleRepository roleRepository)
         : IRoleService
     {
-        public async Task<PagedResult<Role>> GetRolesPagedAsync(int pageNumber, int pageSize, RoleSearchCriteria roleSearchCriteria)
-        {
-            var query = context.Roles
-                .WhereName(roleSearchCriteria.Name)
-                .WhereDescription(roleSearchCriteria.Description);
-
-            var totalItems = await query.CountAsync();
-            var roles = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return new PagedResult<Role>
+        public async Task<PagedResult<Role>> GetRolesPagedAsync(
+            int pageNumber, 
+            int pageSize, 
+            RoleFilterOptions roleFilterOptions,
+            string? sortBy,
+            bool ascending
+        ) {
+            var repositoryPagedQueryOptions = new PagedRepositoryQueryOptions<RoleFilterOptions>()
             {
-                Items = roles,
-                TotalCount = totalItems,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
+                Filter = roleFilterOptions,
+                SortBy = sortBy,
+                Ascending = ascending
             };
+            return await roleRepository.GetAllPagedAsync(repositoryPagedQueryOptions);
         }
 
+        // TODO: Rename to GetAllRolesAsync()
         public async Task<IEnumerable<Role>> GetRolesAsync()
         {
-            return await context.Roles.ToListAsync();
+            var queryOptions = new RepositoryQueryOptions<RoleFilterOptions>();
+            return await roleRepository.GetAllAsync(queryOptions);
         }
 
         public async Task<Role?> GetRoleAsync(int id)
         {
-            return await context.Roles
-                .Where(r => r.Id == id)
-                .FirstOrDefaultAsync();
+            return await roleRepository.GetByIdAsync(id);
         }
 
         public async Task<IEnumerable<SelectListItem>> GetSelectItemsAsync()
         {
-            return await context.Roles
-                .Select(r => new SelectListItem
-                {
-                    Value = r.Name,
-                    Text = r.Name
-                })
-                .ToListAsync();
+            var queryOptions = new RepositoryQueryOptions<RoleFilterOptions>();
+            var allRoles = await roleRepository.GetAllAsync(queryOptions);
+            return allRoles.Select(r => new SelectListItem
+            {
+                // TODO: Value should be the ID, not the Name value.
+                Value = r.Name,
+                Text = r.Name
+            });
         }
 
         public async Task<IdentityResult> CreateRoleAsync(CreateRoleDto createRoleDto)
