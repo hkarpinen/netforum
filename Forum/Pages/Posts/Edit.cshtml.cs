@@ -16,7 +16,7 @@ namespace NETForum.Pages.Posts
         public async Task<IActionResult> OnGetAsync(int id)
         {
             // Fake data for the form, need to use a service to fetch real data.
-            var post = await postService.GetPostAsync(id);
+            var post = await postService.GetPostWithAuthorAndRepliesAsync(id);
             if (post == null) return NotFound();
             
             // Handle scenario where username is null.

@@ -9,12 +9,12 @@ namespace NETForum.Services
 {
     public interface IPostService
     {
-        Task<IEnumerable<Post>> GetPostsAsync(int forumId);
+        Task<IReadOnlyCollection<Post>> GetPostsAsync(int forumId);
         Task IncrementViewCountAsync(int postId);
         Task<IEnumerable<PostListItem>> GetPostListItemsAsync(int forumId);
         Task<int> GetTotalPostCountAsync();
         Task<int> GetTotalPostCountAsync(int authorid);
-        Task<Post?> GetPostAsync(int id);
+        Task<Post?> GetPostWithAuthorAndRepliesAsync(int id);
         Task<Post> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto);
         Task<IEnumerable<Post>> GetLatestPostsAsync(int limit);
         Task<PagedResult<Post>> GetPostsPagedAsync(
@@ -28,7 +28,7 @@ namespace NETForum.Services
 
     public class PostService(IMapper mapper, IUserService userService, IPostRepository postRepository) : IPostService
     {
-        public async Task<IEnumerable<Post>> GetPostsAsync(int forumId)
+        public async Task<IReadOnlyCollection<Post>> GetPostsAsync(int forumId)
         {
             var navigations = new[]
             {
@@ -51,9 +51,8 @@ namespace NETForum.Services
                 var result = await postRepository.AddAsync(post);
                 return result;
         }
-
-        // TODO: Rename to GetPostWithAuthorAndRepliesAsync
-        public async Task<Post?> GetPostAsync(int id)
+        
+        public async Task<Post?> GetPostWithAuthorAndRepliesAsync(int id)
         {
             var navigations = new[]
             {

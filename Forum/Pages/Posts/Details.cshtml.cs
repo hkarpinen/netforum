@@ -33,7 +33,7 @@ namespace NETForum.Pages.Posts
             var authenticatedUser = await userService.GetUserAsync(User.Identity.Name);
             if (authenticatedUser == null) return false;
             AuthenticatedUser = authenticatedUser;
-            var post = await postService.GetPostAsync(postId);
+            var post = await postService.GetPostWithAuthorAndRepliesAsync(postId);
             if (post == null) return false;
             Post = post;
             Replies = await replyService.GetRepliesAsync(Post.Id);

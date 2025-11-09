@@ -8,11 +8,11 @@ namespace NETForum.Repositories;
 public class PostRepository(AppDbContext context) : BaseRepository<Post, PostFilterOptions>(context),
     IPostRepository
 {
-    public override Task<Post?> GetByIdAsync(int id, params string[] includes)
+    public override async Task<Post?> GetByIdAsync(int id, params string[] includes)
     {
         var query = _dbSet.AsQueryable();
         ApplyIncludes(query, includes);
-        return query.FirstOrDefaultAsync(p => p.Id == id);
+        return await query.FirstOrDefaultAsync(p => p.Id == id);
     }
 
     protected override IQueryable<Post> ApplyFilter(IQueryable<Post> query, PostFilterOptions filter)
