@@ -11,7 +11,7 @@ public class DateHelperTests
         var dateTime = DateTime.Today.AddHours(15).AddMinutes(30);
         var result = DateHelpers.ToRelativeDatetimeString(dateTime);
         result.Should().StartWith("Today at");
-        result.Should().Contain("3:30");
+        result.Should().Contain(dateTime.ToShortTimeString());
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class DateHelperTests
         var dateTime = DateTime.Today.AddDays(-1).AddHours(15).AddMinutes(30);
         var result = DateHelpers.ToRelativeDatetimeString(dateTime);
         result.Should().StartWith("Yesterday at");
-        result.Should().Contain("3:30");
+        result.Should().Contain(dateTime.ToShortTimeString());
     }
     
     [Fact]
