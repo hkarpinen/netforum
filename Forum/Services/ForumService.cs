@@ -15,10 +15,10 @@ namespace NETForum.Services
         Task<IEnumerable<ForumListItemModel>> GetRootForumListItemsAsync();
         Task<Forum?> GetForumByIdAsync(int id);
         Task<bool> UpdateForum(EditForumDto editForumDto);
-        Task<IEnumerable<ForumListItemModel>> GetForumListItemsAsync(int parentForumId);
+        Task<IEnumerable<ForumListItemModel>> GetChildForumListItemsWithPostsAndRepliesAsync(int parentForumId);
         Task<IEnumerable<BreadcrumbItemModel>> GetForumBreadcrumbItems(int forumId);
         Task<IEnumerable<SelectListItem>> GetSelectListItemsAsync();
-        Task<Forum> CreateForumAsync(CreateForumDto createForumDto);
+        Task<Forum> AddForumAsync(CreateForumDto createForumDto);
         Task<PagedResult<Forum>> GetForumsPagedAsync(
             int pageNumber, 
             int pageSize, 
@@ -94,17 +94,17 @@ namespace NETForum.Services
         }
 
         // TODO: Rename method to AddForumAsync() for consistency.
-        public async Task<Forum> CreateForumAsync(CreateForumDto createForumDto) 
+        public async Task<Forum> AddForumAsync(CreateForumDto createForumDto) 
         {
             var forum = mapper.Map<Forum>(createForumDto);
             var result = await forumRepository.AddAsync(forum);
             return result;
         }
-
-        // TODO: Rename method to GetChildForumListItemsWithPostsAndReplies()
-        public async Task<IEnumerable<ForumListItemModel>> GetForumListItemsAsync(int parentForumId)
+        
+        public async Task<IEnumerable<ForumListItemModel>> GetChildForumListItemsWithPostsAndRepliesAsync(int parentForumId)
         {
-            var forums = await forumRepository.GetForumPostsWithReplies(parentForumId);
+            var navigations = new[] { "Posts.Replies" };
+            var forums = await forumRepository.GetChildForumsAsync(parentForumId, navigations);
             return forums.Select(f => new ForumListItemModel
             {
                 Forum = f,

@@ -59,7 +59,7 @@ public class PostServiceTests
     }
     
     [Fact]
-    public async Task CreatePostAsync_WithValidData_ReturnsNewPost()
+    public async Task AddPostAsync_WithValidData_ReturnsNewPost()
     {
         var forumId = 1;
         var username = "testuser";
@@ -93,7 +93,7 @@ public class PostServiceTests
             .Setup(r => r.AddAsync(mappedPost))
             .ReturnsAsync(createdPost);
         
-        var result = await _systemUnderTest.CreatePostAsync(username, forumId, createPostDto);
+        var result = await _systemUnderTest.AddPostAsync(username, forumId, createPostDto);
         
         result.Should().NotBeNull();
         result.Id.Should().Be(createdPost.Id);
@@ -108,7 +108,29 @@ public class PostServiceTests
     }
     
     [Fact]
-    public async Task CreatePostAsync_WithNoAuthor_ThrowsException()
+    public async Task AddPostAsync_WithNoAuthorId_ThrowsException()
+    {
+        var forumId = 1;
+        var username = "testuser";
+        
+        var author = new User { Id = 1, UserName = username };
+        
+        var createPostDto = new CreatePostDto
+        {
+            Title = "New Post",
+            Content = "New Content"
+        };
+        
+        _mockUserService
+            .Setup(s => s.GetUserAsync(username))
+            .ReturnsAsync(author);
+        
+        await Assert.ThrowsAsync<NullReferenceException>(async () => 
+            await _systemUnderTest.AddPostAsync(username, forumId, createPostDto));
+    }
+
+    [Fact]
+    public async Task AddPostAsync_WithNonExistingAuthor_ThrowsException()
     {
         var forumId = 1;
         var username = "testuser";
@@ -122,8 +144,8 @@ public class PostServiceTests
             .Setup(s => s.GetUserAsync(username))
             .ReturnsAsync((User)null);
         
-        await Assert.ThrowsAsync<NullReferenceException>(async () => 
-            await _systemUnderTest.CreatePostAsync(username, forumId, createPostDto));
+        await Assert.ThrowsAsync<Exception>(async () =>
+            await _systemUnderTest.AddPostAsync(username, forumId, createPostDto));
     }
     
     [Fact]
@@ -171,5 +193,44 @@ public class PostServiceTests
             .ReturnsAsync(0);
         var result = await _systemUnderTest.GetTotalPostCountAsync();
         result.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetLatestPostsWithAuthorAsync_WithLimit_ReturnsLatestPostsWithAuthor()
+    {
+        var author = new User { Id = 1, UserName = "testuser" };
+        
+        var posts = new List<Post>()
+        {
+            new() { Title = "Test Post 1", Content = "Content 1", Author = author },
+            new() { Title = "Test Post 2", Content = "Content 2", Author = author },
+            new() { Title = "Test Post 3", Content =  "Content 3", Author = author }
+        };
+        var navigations = new[] { "Author" };
+        var limit = 3;
+        
+        _mockPostRepository
+            .Setup(r => r.GetLatestPostsAsync(limit, navigations))
+            .ReturnsAsync(posts);
+
+        var result =await _systemUnderTest.GetLatestPostsWithAuthorAsync(limit);
+        
+        result.Should().NotBeNull();
+        result.Should().HaveCount(limit);
+        result.Should().BeEquivalentTo(posts);
+    }
+    
+    [Fact]
+    public async Task GetTotalPostCountByAuthorAsync_WithValidAuthorId_ReturnsTotalPostCount()
+    {
+        var totalPostCount = 50;
+        var authorId = 1;
+        
+        _mockPostRepository
+            .Setup(r => r.GetTotalPostCountByAuthorAsync(authorId))
+            .ReturnsAsync(totalPostCount);
+        
+        var result = await _systemUnderTest.GetTotalPostCountByAuthorAsync(authorId);
+        result.Should().Be(totalPostCount);
     }
 }

@@ -64,7 +64,7 @@
                                                    class="text-tertiary">
                                                     @post.Title
                                                 </a>
-                                                <small>@DateHelpers.FormatDatetime(post.UpdatedAt)</small>
+                                                <small>@DateHelpers.ToRelativeDatetimeString(post.UpdatedAt)</small>
                                             </div>
                                             @if (post.Author != null)
                                             {

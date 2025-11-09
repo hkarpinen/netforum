@@ -5,7 +5,7 @@ namespace NETForum.Helpers
 {
     public static class HtmlHelpers
     {
-        public static string TruncateHtml(string html, int maxLength)
+        public static string StripAndTruncateHtml(string html, int maxLength)
         {
             var doc = new HtmlDocument();
             doc.LoadHtml(html);

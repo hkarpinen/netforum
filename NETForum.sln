@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NETForum", "Forum\NETForum.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NETForum.UnitTests", "NETForum.UnitTests\NETForum.UnitTests.csproj", "{88FE285B-8BB2-40D4-875F-22D515F2B2E9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NETForum.IntegrationTests", "NETForum.IntegrationTests\NETForum.IntegrationTests.csproj", "{76DFFFFC-4BA1-4A95-A48F-9EDDCE9866B8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{88FE285B-8BB2-40D4-875F-22D515F2B2E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88FE285B-8BB2-40D4-875F-22D515F2B2E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{88FE285B-8BB2-40D4-875F-22D515F2B2E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76DFFFFC-4BA1-4A95-A48F-9EDDCE9866B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76DFFFFC-4BA1-4A95-A48F-9EDDCE9866B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76DFFFFC-4BA1-4A95-A48F-9EDDCE9866B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76DFFFFC-4BA1-4A95-A48F-9EDDCE9866B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

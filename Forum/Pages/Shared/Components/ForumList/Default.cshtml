@@ -47,7 +47,7 @@
                                     >
                                         @forumListItem.LastPost.Title
                                     </a>
-                                    <small class="m-0">@DateHelpers.FormatDatetime(forumListItem.LastUpdated)</small>
+                                    <small class="m-0">@DateHelpers.ToRelativeDatetimeString(forumListItem.LastUpdated)</small>
                                 </div>
                             </div>
                         }

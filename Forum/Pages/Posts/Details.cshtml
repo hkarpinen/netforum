@@ -52,7 +52,7 @@
                                     })
                                     <div class="d-flex flex-column">
                                         <a href="/Members/@Model.Post.Author.UserName" class="text-tertiary">@Model.Post.Author.UserName</a>
-                                        <small class="m-0">@DateHelpers.FormatDatetime(Model.Post.CreatedAt)</small>
+                                        <small class="m-0">@DateHelpers.ToRelativeDatetimeString(Model.Post.CreatedAt)</small>
                                     </div>
                                 }
                             </div>
@@ -79,7 +79,7 @@
                                     })
                                     <div class="d-flex flex-column">
                                         <a class="text-tertiary">@reply.Author.UserName</a>
-                                        <small class="m-0">@DateHelpers.FormatDatetime(reply.CreatedAt)</small>
+                                        <small class="m-0">@DateHelpers.ToRelativeDatetimeString(reply.CreatedAt)</small>
                                     </div>
                                 }
                             </div>

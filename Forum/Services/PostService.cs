@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using NETForum.Models.Components;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Repositories;
@@ -10,13 +9,11 @@ namespace NETForum.Services
     public interface IPostService
     {
         Task<IReadOnlyCollection<Post>> GetPostsAsync(int forumId);
-        Task IncrementViewCountAsync(int postId);
-        Task<IEnumerable<PostListItem>> GetPostListItemsAsync(int forumId);
         Task<int> GetTotalPostCountAsync();
-        Task<int> GetTotalPostCountAsync(int authorid);
+        Task<int> GetTotalPostCountByAuthorAsync(int authorId);
         Task<Post?> GetPostWithAuthorAndRepliesAsync(int id);
-        Task<Post> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto);
-        Task<IEnumerable<Post>> GetLatestPostsAsync(int limit);
+        Task<Post> AddPostAsync(string username, int forumId, CreatePostDto createPostDto);
+        Task<IReadOnlyCollection<Post>> GetLatestPostsWithAuthorAsync(int limit);
         Task<PagedResult<Post>> GetPostsPagedAsync(
             int pageNumber, 
             int pageSize, 
@@ -38,10 +35,9 @@ namespace NETForum.Services
             return await postRepository.GetPostsInForumAsync(forumId, navigations);
         }
         
-        // TODO: Rename method to AddForumAsync() for consistency
-        public async Task<Post> CreatePostAsync(string username, int forumId, CreatePostDto createPostDto)
+        public async Task<Post> AddPostAsync(string username, int forumId, CreatePostDto createPostDto)
         {
-                var author = userService.GetUserAsync(username);
+                var author = await userService.GetUserAsync(username);
                 if(author == null) throw new Exception("User not found");
                 
                 var post = mapper.Map<Post>(createPostDto);
@@ -61,58 +57,21 @@ namespace NETForum.Services
             };
             return await postRepository.GetByIdAsync(id, navigations);
         }
-
-        // TODO: Rename to GetLatestPostsWithAuthorAsync
-        public async Task<IEnumerable<Post>> GetLatestPostsAsync(int limit)
+        
+        public async Task<IReadOnlyCollection<Post>> GetLatestPostsWithAuthorAsync(int limit)
         {
             var navigations = new[] {  "Author" };
             return await postRepository.GetLatestPostsAsync(limit, navigations);
-        }
-
-        public async Task<IEnumerable<PostListItem>> GetPostListItemsAsync(int forumId)
-        {
-            var navigations = new[] {  "Author", "Replies.Author" };
-            var posts = await postRepository.GetPostsInForumAsync(forumId, navigations);
-            return posts.Select(p => new PostListItem()
-            {
-                Id = p.Id,
-                // TODO: Author ID is stored on Author, doesn't need to be here twice.
-                ForumId = p.ForumId,
-                AuthorId = p.AuthorId,
-                Author = p.Author,
-                IsPinned = p.IsPinned,
-                IsLocked = p.IsLocked,
-                Published = p.Published,
-                Title = p.Title,
-                Content = p.Content,
-                CreatedAt = p.CreatedAt,
-                UpdatedAt = p.UpdatedAt,
-                ViewCount = p.ViewCount,
-                LastReply = p.Replies.OrderByDescending(r => r.CreatedAt).FirstOrDefault()
-            });
-        }
-
-        public async Task IncrementViewCountAsync(int postId)
-        {
-            try
-            {
-                await postRepository.UpdateAsync(postId, trackedPost => { trackedPost.ViewCount++; });
-            }
-            catch (KeyNotFoundException exception)
-            {
-                // TODO: Need to setup logging for this. 
-            }
         }
 
         public async Task<int> GetTotalPostCountAsync()
         {
             return await postRepository.GetTotalPostCountAllTime();
         }
-
-        // TODO: Rename to GetTotalPostCountByAuthorAsync()
-        public async Task<int> GetTotalPostCountAsync(int authorid)
+        
+        public async Task<int> GetTotalPostCountByAuthorAsync(int authorId)
         {
-            return await postRepository.GetTotalPostCountByAuthorAsync(authorid);
+            return await postRepository.GetTotalPostCountByAuthorAsync(authorId);
         }
         
         public async Task<PagedResult<Post>> GetPostsPagedAsync(

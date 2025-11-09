@@ -22,7 +22,7 @@ namespace NETForum.Pages.Forums
         public async Task OnGetAsync()
         {
             RootForumItems = await forumService.GetRootForumListItemsAsync();
-            LatestPosts = await postService.GetLatestPostsAsync(5);
+            LatestPosts = await postService.GetLatestPostsWithAuthorAsync(5);
             TotalPostCount = await postService.GetTotalPostCountAsync();
             NewestUser = await userService.GetNewestUserAsync();
             TotalMemberCount = await userService.GetTotalUserCountAsync();

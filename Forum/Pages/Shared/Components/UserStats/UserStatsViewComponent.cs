@@ -11,7 +11,7 @@ namespace NETForum.Pages.Shared.Components.UserStats
     {
         public async Task<IViewComponentResult> InvokeAsync(int authorId)
         {
-            var totalPostCount = await postService.GetTotalPostCountAsync(authorId);
+            var totalPostCount = await postService.GetTotalPostCountByAuthorAsync(authorId);
             var totalReplyCount = await replyService.GetTotalReplyCountAsync(authorId);
             var joinedOn = await userService.GetUserJoinedDate(authorId);
             

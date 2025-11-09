@@ -31,7 +31,7 @@ namespace NETForum.Pages.Forums
 
             try
             {
-                await forumService.CreateForumAsync(CreateForumDto);
+                await forumService.AddForumAsync(CreateForumDto);
                 return RedirectToPage("/Admin/Forums/Index");
             } 
             catch (UniqueConstraintException ex)

@@ -31,7 +31,7 @@ namespace NETForum.Pages.Posts
             // Create the post and catch any exceptions
             try
             {
-                var result = await postService.CreatePostAsync(username, forumId, CreatePostDto);
+                var result = await postService.AddPostAsync(username, forumId, CreatePostDto);
                 return RedirectToPage("/Posts/Details", new { id = result.Id });
             }
             catch(Exception ex)

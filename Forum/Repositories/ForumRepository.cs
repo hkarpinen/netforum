@@ -19,12 +19,11 @@ public class ForumRepository(AppDbContext context) : BaseRepository<Forum, Forum
         return await query.ToListAsync();
     }
 
-    public async Task<IReadOnlyCollection<Forum>> GetForumPostsWithReplies(int forumId)
+    public async Task<IReadOnlyCollection<Forum>> GetChildForumsAsync(int forumId, params string[] includes)
     {
-        return await _dbSet.Where(f => f.ParentForumId == forumId)
-            .Include(f => f.Posts)
-            .ThenInclude(f => f.Replies)
-            .ToListAsync();
+        var query = _dbSet.AsQueryable().Where(f => f.ParentForumId == forumId);
+        query = ApplyIncludes(query, includes);
+        return await query.ToListAsync();
     }
 
     public override async Task<Forum?> GetByIdAsync(int id, params string[] includes)

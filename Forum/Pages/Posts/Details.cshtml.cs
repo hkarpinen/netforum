@@ -37,7 +37,7 @@ namespace NETForum.Pages.Posts
             if (post == null) return false;
             Post = post;
             Replies = await replyService.GetRepliesAsync(Post.Id);
-            AuthorTotalPosts = await postService.GetTotalPostCountAsync(Post.AuthorId);
+            AuthorTotalPosts = await postService.GetTotalPostCountByAuthorAsync(Post.AuthorId);
             AuthorTotalReplies = await replyService.GetTotalReplyCountAsync(Post.AuthorId);
             UserIsAuthor = post.AuthorId == authenticatedUser.Id;
             ForumBreadcrumbs = await forumService.GetForumBreadcrumbItems(Post.ForumId);

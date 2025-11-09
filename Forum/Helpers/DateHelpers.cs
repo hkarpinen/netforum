@@ -2,7 +2,7 @@
 {
     public static class DateHelpers
     {
-        public static string FormatDatetime(DateTime dateTime)
+        public static string ToRelativeDatetimeString(DateTime dateTime)
         {
             var today = DateTime.Today;
             var yesterday = today.AddDays(-1);

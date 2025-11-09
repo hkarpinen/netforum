@@ -15,7 +15,7 @@ namespace NETForum.Pages.Forums
 
         public async Task OnGetAsync(int id)
         {
-            SubForumItems = await forumService.GetForumListItemsAsync(id);
+            SubForumItems = await forumService.GetChildForumListItemsWithPostsAndRepliesAsync(id);
             ForumId = id;
             BreadcrumbItems = await forumService.GetForumBreadcrumbItems(id);
             Posts = await postService.GetPostsAsync(id);

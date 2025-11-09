@@ -25,7 +25,7 @@
                    asp-route-id="@post.Id"
                 >
                     <p class="m-0 post-title">@post.Title</p>
-                    <small class="m-0 post-content">@HtmlHelpers.TruncateHtml(post.Content, 100)</small>
+                    <small class="m-0 post-content">@HtmlHelpers.StripAndTruncateHtml(post.Content, 100)</small>
                 </a>
             </div>
             <div class="d-flex justify-content-between align-items-center gap-5">
@@ -50,7 +50,7 @@
                                     @latestReply.Author.UserName
                                 }
                             </a>
-                            <p class="m-0">@DateHelpers.FormatDatetime(post.CreatedAt)</p>
+                            <p class="m-0">@DateHelpers.ToRelativeDatetimeString(post.CreatedAt)</p>
                         </div>
                         <span class="text-secondary">
                             @if (latestReply is { Author: not null })
