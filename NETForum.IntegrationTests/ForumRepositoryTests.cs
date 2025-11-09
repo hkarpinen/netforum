@@ -170,4 +170,25 @@ public class ForumRepositoryTests : IDisposable
         result.Should().HaveCount(2);
         result.All(f => f.ParentForumId != null).Should().BeTrue();
     }
+
+    [Fact]
+    public async Task AddAsync_WithValidData_ReturnsEntity()
+    {
+        var newForum = new Forum()
+        {
+            Name = "New Forum",
+            Description = "New Forum Description",
+            CategoryId = null,
+            Published = true,
+            ParentForumId = null
+        };
+        var result = await _repository.AddAsync(newForum);
+
+        result.Should().NotBeNull();
+        result.Name.Should().Be("New Forum");
+        result.Description.Should().Be("New Forum Description");
+        result.CategoryId.Should().BeNull();
+        result.Published.Should().BeTrue();
+        result.ParentForumId.Should().BeNull();
+    }
 }
