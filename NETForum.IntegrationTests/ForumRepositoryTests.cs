@@ -191,4 +191,16 @@ public class ForumRepositoryTests : IDisposable
         result.Published.Should().BeTrue();
         result.ParentForumId.Should().BeNull();
     }
+
+    [Fact]
+    public async Task DeleteByIdAsync_WithValidId_DeletesForum()
+    {
+        var validForumId = 5;
+        await _repository.DeleteByIdAsync(validForumId);
+        
+        var deleted = await _repository.GetByIdAsync(validForumId);
+        deleted.Should().BeNull();
+    }
+    
+    
 }
