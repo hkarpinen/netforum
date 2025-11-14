@@ -1,50 +1,23 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Attributes;
 using NETForum.Models.DTOs;
-using NETForum.Models.Entities;
+using NETForum.Services;
 
 namespace NETForum.Pages.Account.Login
 {
-    public class IndexModel(
-        SignInManager<User> signInManager)
-        : PageModel
-    {
+    [RedirectAuthenticatedUsers]
+    public class IndexModel(IAuthenticationService authenticationService) : PageModel {
+        
         [BindProperty]
         public UserLoginDto UserLoginDto { get; set; } = new();
 
-        public IActionResult OnGet()
-        {
-            if (User.Identity is { IsAuthenticated: true })
-            {
-                return RedirectToPage("/Index");
-            }
-
-            return Page();
-
-        }
-
         public async Task<IActionResult> OnPostAsync()
         {
-            if(User.Identity is { IsAuthenticated: true })
-            {
-                return RedirectToPage("/Index");
-            }
+            var loginSuccessful = await authenticationService.SignInAsync(UserLoginDto);
+            if(loginSuccessful) return RedirectToPage("/Index");
 
-            var result = await signInManager.PasswordSignInAsync(
-                UserLoginDto.Username,
-                UserLoginDto.Password,
-                isPersistent: UserLoginDto.RememberMe,
-                lockoutOnFailure: false
-            );
-
-            if (result.Succeeded)
-            {
-                return RedirectToPage("/Index");
-            }
-
-            ModelState.AddModelError("", "Invalid Username or password");
-
+            ModelState.AddModelError("", "Invalid username or password.");
             return Page();
         }
     }

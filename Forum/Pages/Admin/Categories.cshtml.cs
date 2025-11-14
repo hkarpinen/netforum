@@ -7,7 +7,7 @@ using NETForum.Services;
 namespace NETForum.Pages.Admin;
 
 [Authorize(Roles = "Admin")]
-public class Categories(ICategoryService categoryService) : PageModel
+public class CategoriesModel(ICategoryService categoryService) : PageModel
 {
     public PagedResult<Models.Entities.Category> CategoriesResult { get; set; } = new();
 

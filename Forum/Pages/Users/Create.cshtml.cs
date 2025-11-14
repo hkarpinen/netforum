@@ -31,24 +31,23 @@ namespace NETForum.Pages.Users
             var result = await userService.CreateUserAsync(CreateUserDto);
             
             // If adding the user succeeded, update the roles for the user.
-            if (result.Succeeded)
+            if (result.IsSuccess)
             {
-                var user = await userService.GetUserAsync(CreateUserDto.Username);
-                if (user != null)
+                var user = await userService.GetByUsernameAsync(CreateUserDto.Username);
+                if(user.IsFailure) return NotFound();
+                
+                var rolesToList = SelectedRoles.ToList();
+                var updateRolesResult = await userService.UpdateUserRolesAsync(user.Value.Id, rolesToList);
+                if (!updateRolesResult)
                 {
-                    var rolesToList = SelectedRoles.ToList();
-                    await userService.UpdateUserRolesAsync(user, rolesToList);
+                    // TODO: Should gracefully fail here.
                 }
+                return RedirectToPage("/Admin/Users");
             }
             
-            // Handle errors
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError("", error.Description);
-                return Page();
-            }
-            
-            return RedirectToPage("/Admin/Users");
+            // Handle the model error.
+            ModelState.AddModelError(result.Error.Code, result.Error.Message);
+            return Page();
         } 
     }
 }

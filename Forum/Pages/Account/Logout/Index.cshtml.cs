@@ -1,15 +1,14 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Models.Entities;
+using NETForum.Services;
 
 namespace NETForum.Pages.Account.Logout
 {
-    public class LogoutModel(SignInManager<User> signInManager) : PageModel
+    public class LogoutModel(IAuthenticationService authenticationService) : PageModel
     {
         public async Task<IActionResult> OnGetAsync()
         {
-            await signInManager.SignOutAsync();
+            await authenticationService.SignOutAsync();
             return RedirectToPage("/Index");
         }
     }

@@ -15,9 +15,10 @@ namespace NETForum.Pages.Account.Profile
         public async Task<IActionResult> OnGetAsync()
         {
             if(User.Identity?.Name == null) return RedirectToPage("/Account/Login");
-            var user = await userService.GetUserAsync(User.Identity.Name);
-            if (user == null) return NotFound();
+            var lookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
+            if (lookupResult.IsFailure) return NotFound();
             
+            var user = lookupResult.Value;
             UserProfileDto.UserId = user.Id;
             var userProfile = await userProfileService.GetUserProfileAsync(user.Id);
 
@@ -35,8 +36,9 @@ namespace NETForum.Pages.Account.Profile
         {
             if (!ModelState.IsValid) return Page();
             if (User.Identity?.Name == null) return RedirectToPage("/Account/Login");
-            var user = await userService.GetUserAsync(User.Identity.Name);
-            if (user == null) return NotFound();
+            var lookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
+            if (lookupResult.IsFailure) return NotFound();
+            var user = lookupResult.Value;
             
             // Do any other necessary profile updates here (e.g., updating bio, signature, etc.)
             await userProfileService.UpdateUserProfileAsync(UserProfileDto);

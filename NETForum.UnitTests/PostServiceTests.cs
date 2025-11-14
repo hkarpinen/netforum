@@ -83,9 +83,11 @@ public class PostServiceTests
             AuthorId = user.Id
         };
         
+        var userLookupResult = Result<User>.Success(user);
+        
         _mockUserService
-            .Setup(s => s.GetUserAsync(username))
-            .ReturnsAsync(user);
+            .Setup(s => s.GetByUsernameAsync(username))
+            .ReturnsAsync(userLookupResult);
         _mockMapper
             .Setup(m => m.Map<Post>(createPostDto))
             .Returns(mappedPost);
@@ -102,7 +104,7 @@ public class PostServiceTests
         result.ForumId.Should().Be(forumId);
         result.AuthorId.Should().Be(user.Id);
         
-        _mockUserService.Verify(s => s.GetUserAsync(username), Times.Once);
+        _mockUserService.Verify(s => s.GetByUsernameAsync(username), Times.Once);
         _mockMapper.Verify(m => m.Map<Post>(createPostDto), Times.Once);
         _mockPostRepository.Verify(r => r.AddAsync(mappedPost), Times.Once);
     }
@@ -114,6 +116,7 @@ public class PostServiceTests
         var username = "testuser";
         
         var author = new User { Id = 1, UserName = username };
+        var lookupResult = Result<User>.Success(author);
         
         var createPostDto = new CreatePostDto
         {
@@ -122,8 +125,8 @@ public class PostServiceTests
         };
         
         _mockUserService
-            .Setup(s => s.GetUserAsync(username))
-            .ReturnsAsync(author);
+            .Setup(s => s.GetByUsernameAsync(username))
+            .ReturnsAsync(lookupResult);
         
         await Assert.ThrowsAsync<NullReferenceException>(async () => 
             await _systemUnderTest.AddPostAsync(username, forumId, createPostDto));
@@ -140,9 +143,11 @@ public class PostServiceTests
             Content = "New Content"
         };
         
+        var userLookupResult = Result<User>.Failure(new Error("User.NotFound", "Not Found"));
+        
         _mockUserService
-            .Setup(s => s.GetUserAsync(username))
-            .ReturnsAsync((User)null);
+            .Setup(s => s.GetByUsernameAsync(username))
+            .ReturnsAsync(userLookupResult);
         
         await Assert.ThrowsAsync<Exception>(async () =>
             await _systemUnderTest.AddPostAsync(username, forumId, createPostDto));

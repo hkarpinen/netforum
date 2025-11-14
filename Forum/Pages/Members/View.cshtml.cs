@@ -11,9 +11,9 @@ public class ViewModel(IUserService userService) : PageModel
     
     public async Task<IActionResult> OnGetAsync(string username)
     {
-        var result = await userService.GetUserAsync(username);
-        if (result == null) return NotFound();
-        User = result;
+        var lookupResult = await userService.GetByUsernameAsync(username);
+        if (lookupResult.IsFailure) return NotFound();
+        User = lookupResult.Value;
         return Page();
     }
 }

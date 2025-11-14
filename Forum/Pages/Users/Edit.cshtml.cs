@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,8 +11,7 @@ namespace NETForum.Pages.Users
     public class EditModel(
         IRoleService roleService,
         IUserService userService,
-        IUserRoleService userRoleService,
-        IMapper mapper
+        IUserRoleService userRoleService
     ) : PageModel
     {
         [BindProperty]
@@ -25,11 +23,10 @@ namespace NETForum.Pages.Users
         
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var user = await userService.GetUserAsync(id);
-            if (user == null) return NotFound();
+            var editUserDto = await userService.GetUserForEditAsync(id);
+            if(editUserDto == null) return NotFound();
 
-            // Populate form dropdowns
-            EditUserDto = mapper.Map<EditUserDto>(user);
+            EditUserDto = editUserDto;
             AllRoles = await roleService.GetSelectItemsAsync();
             SelectedRoles = await userRoleService.GetUserRoleNamesAsync(id);
 
@@ -38,9 +35,9 @@ namespace NETForum.Pages.Users
 
         public async Task<IActionResult> OnPostAsync(int id)
         {
-            var user = await userService.GetUserAsync(id);
-            if (user == null) return NotFound();
-            await userService.UpdateUserRolesAsync(user, SelectedRoles.ToList());
+            var userExists = await userService.UserExistsAsync(id);
+            if(!userExists) return NotFound();
+            await userService.UpdateUserRolesAsync(id, SelectedRoles.ToList());
             return RedirectToPage("/Admin/Users");
         }
     }

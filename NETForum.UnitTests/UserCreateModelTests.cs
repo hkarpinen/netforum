@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Moq;
@@ -15,13 +14,13 @@ public class UserCreateModelTests
 {
     private readonly Mock<IRoleService> _mockRoleService;
     private readonly Mock<IUserService> _mockUserService;
-    private readonly CreateModel _systemUnderTest;
+    private readonly CreateModel _pageModel;
 
     public UserCreateModelTests()
     {
         _mockRoleService = new Mock<IRoleService>();
         _mockUserService = new Mock<IUserService>();
-        _systemUnderTest = new CreateModel(
+        _pageModel = new CreateModel(
             _mockRoleService.Object,
             _mockUserService.Object
         );
@@ -40,10 +39,10 @@ public class UserCreateModelTests
             .Setup(r => r.GetSelectItemsAsync())
             .ReturnsAsync(roleSelectListItems);
         
-        await _systemUnderTest.OnGetAsync();
+        await _pageModel.OnGetAsync();
         
-        _systemUnderTest.RoleSelectListItems.Should().HaveCount(2);
-        _systemUnderTest.RoleSelectListItems.Should().BeEquivalentTo(roleSelectListItems);
+        _pageModel.RoleSelectListItems.Should().HaveCount(2);
+        _pageModel.RoleSelectListItems.Should().BeEquivalentTo(roleSelectListItems);
         
         _mockRoleService.Verify(r => r.GetSelectItemsAsync(), Times.Once);
     }
@@ -51,21 +50,21 @@ public class UserCreateModelTests
     [Fact]
     public async Task OnPostAsync_WithInvalidModelState_ReturnsPage()
     {
-        _systemUnderTest.ModelState.AddModelError("error", "error");
+        _pageModel.ModelState.AddModelError("error", "error");
         
-        var result = await _systemUnderTest.OnPostAsync();
+        var result = await _pageModel.OnPostAsync();
         result.Should().BeOfType<PageResult>();
     }
     
     [Fact]
     public async Task OnPostAsync_WithInvalidModelState_DoesNotCreateUser()
     {
-        _systemUnderTest.ModelState.AddModelError("error", "error");
+        _pageModel.ModelState.AddModelError("error", "error");
         
-        await _systemUnderTest.OnPostAsync();
+        await _pageModel.OnPostAsync();
         
         _mockUserService.Verify(u => u.CreateUserAsync(It.IsAny<CreateUserDto>()), Times.Never);
-        _mockUserService.Verify(u => u.UpdateUserRolesAsync(It.IsAny<User>(), It.IsAny<List<string>>()), Times.Never);
+        _mockUserService.Verify(u => u.UpdateUserRolesAsync(It.IsAny<int>(), It.IsAny<List<string>>()), Times.Never);
     }
 
     [Fact]
@@ -83,8 +82,8 @@ public class UserCreateModelTests
             "Role 2"
         };
         
-        _systemUnderTest.SelectedRoles = selectedRoles;
-        _systemUnderTest.CreateUserDto = createUserDto;
+        _pageModel.SelectedRoles = selectedRoles;
+        _pageModel.CreateUserDto = createUserDto;
         
         var successResult = IdentityResult.Success;
         var createdUser = new User()
@@ -94,21 +93,88 @@ public class UserCreateModelTests
             Email = createUserDto.Email,
         };
         
-        _mockUserService
-            .Setup(u => u.CreateUserAsync(_systemUnderTest.CreateUserDto))
-            .ReturnsAsync(successResult);
+        var serviceCreateResult = Result<User>.Success(createdUser);
+        var serviceUserLookupResult = Result<User>.Success(createdUser);
         
         _mockUserService
-            .Setup(u => u.GetUserAsync(createUserDto.Username))
-            .ReturnsAsync(createdUser);
+            .Setup(u => u.CreateUserAsync(_pageModel.CreateUserDto))
+            .ReturnsAsync(serviceCreateResult);
         
         _mockUserService
-            .Setup(u => u.UpdateUserRolesAsync(createdUser, It.IsAny<List<string>>()))
-            .ReturnsAsync(successResult);
+            .Setup(u => u.GetByUsernameAsync(createUserDto.Username))
+            .ReturnsAsync(serviceUserLookupResult);
         
-        await _systemUnderTest.OnPostAsync();
+        _mockUserService
+            .Setup(u => u.UpdateUserRolesAsync(createdUser.Id, It.IsAny<List<string>>()))
+            .ReturnsAsync(true);
+        
+        await _pageModel.OnPostAsync();
         
         _mockUserService.Verify(u => u.CreateUserAsync(createUserDto), Times.Once);
-        _mockUserService.Verify(u => u.UpdateUserRolesAsync(createdUser, selectedRoles), Times.Once);
+        _mockUserService.Verify(u => u.UpdateUserRolesAsync(createdUser.Id, selectedRoles), Times.Once);
+    }
+
+    [Fact]
+    public async Task OnPostAsync_WhenUserCreationFails_AddsErrorsToModelState()
+    {
+        var createUserDto = new CreateUserDto()
+        {
+            Username = "test",
+            Email = "test"
+        };
+        
+        _pageModel.CreateUserDto = createUserDto;
+        
+        var createUserResult = Result<User>.Failure(new Error("Error1", "Error1"));
+        
+        _mockUserService
+            .Setup(u => u.CreateUserAsync(_pageModel.CreateUserDto))
+            .ReturnsAsync(createUserResult);
+        
+        var result = await _pageModel.OnPostAsync();
+        
+        result.Should().BeOfType<PageResult>();
+        _pageModel.ModelState.ErrorCount.Should().Be(1);
+        _pageModel.ModelState["Error1"]?.Errors[0].ErrorMessage.Should().Be("Error1");
+        
+        _mockUserService.Verify(u => u.GetByUsernameAsync(It.IsAny<string>()), Times.Never);
+        _mockUserService.Verify(u => u.UpdateUserRolesAsync(It.IsAny<int>(), It.IsAny<List<string>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task OnPostAsync_WhenUserIsCreatedButNotFound_RolesAreNotAdded()
+    {
+        var createUserDto = new CreateUserDto()
+        {
+            Username = "test",
+            Email = "test"
+        };
+
+        _pageModel.CreateUserDto = createUserDto;
+        var successResult = IdentityResult.Success;
+
+
+        var createdUser = new User()
+        {
+            Id = 1,
+            UserName = createUserDto.Username,
+            Email = createUserDto.Email,
+        };
+        var userCreateResult = Result<User>.Success(createdUser);
+        
+        _mockUserService
+            .Setup(u => u.CreateUserAsync(createUserDto))
+            .ReturnsAsync(userCreateResult);
+        
+        var userLookupResult = Result<User>.Failure(new Error("Error1", "Error1"));
+        
+        _mockUserService
+            .Setup(u => u.GetByUsernameAsync(createUserDto.Username))
+            .ReturnsAsync(userLookupResult);
+        
+        await _pageModel.OnPostAsync();
+        
+        _mockUserService.Verify(u => u.CreateUserAsync(createUserDto), Times.Once);
+        _mockUserService.Verify(u => u.UpdateUserRolesAsync(It.IsAny<int>(), It.IsAny<List<string>>()), Times.Never);
     }
 }

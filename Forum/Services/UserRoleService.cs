@@ -41,10 +41,10 @@ namespace NETForum.Services
         public async Task<IEnumerable<string>> GetUserRoleNamesAsync(int id)
         {
             IList<string>? result = null;
-            var user = await userService.GetUserAsync(id);
-            if(user != null)
+            var lookupResult = await userService.GetUserByIdAsync(id);
+            if(lookupResult.IsSuccess)
             {
-                result = await userManager.GetRolesAsync(user);
+                result = await userManager.GetRolesAsync(lookupResult.Value);
             }
             return result ?? new List<string>();
         }

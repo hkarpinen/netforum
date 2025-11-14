@@ -8,17 +8,9 @@ namespace NETForum.Pages.Users
     [Authorize(Roles = "Admin")]
     public class DeleteModel(IUserService userService) : PageModel
     {
-        public async Task<IActionResult> OnGetAsync(int id) {
-            try
-            {
-                await userService.DeleteUserAsync(id);
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return Page();
-            }
-
+        public async Task<IActionResult> OnGetAsync(int id)
+        {
+            await userService.DeleteUserAsync(id);
             return RedirectToPage("/Admin/Users");
         }
     }

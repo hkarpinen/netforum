@@ -37,11 +37,11 @@ namespace NETForum.Services
         
         public async Task<Post> AddPostAsync(string username, int forumId, CreatePostDto createPostDto)
         {
-                var author = await userService.GetUserAsync(username);
-                if(author == null) throw new Exception("User not found");
+                var author = await userService.GetByUsernameAsync(username);
+                if(!author.IsSuccess) throw new Exception("User not found");
                 
                 var post = mapper.Map<Post>(createPostDto);
-                post.AuthorId = author.Id;
+                post.AuthorId = author.Value.Id;
                 post.ForumId = forumId;
                 
                 var result = await postRepository.AddAsync(post);

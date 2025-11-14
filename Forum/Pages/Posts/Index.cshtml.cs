@@ -47,10 +47,10 @@ namespace NETForum.Pages.Posts
             
             if (AuthorName != null)
             {
-                var author = await userService.GetUserAsync(AuthorName);
-                if (author != null)
+                var author = await userService.GetByUsernameAsync(AuthorName);
+                if (author.IsSuccess)
                 {
-                    authorId = author.Id;
+                    authorId = author.Value.Id;
                 }
             }
             

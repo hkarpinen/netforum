@@ -30,20 +30,20 @@ namespace NETForum.Pages.Posts
         {
             // TODO: Might be better to the store the entire Author object instead of selecting properties to instantiate other properties. 
             if (User.Identity?.Name == null) return false;
-            var authenticatedUser = await userService.GetUserAsync(User.Identity.Name);
-            if (authenticatedUser == null) return false;
-            AuthenticatedUser = authenticatedUser;
+            var userLookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
+            if (userLookupResult.IsFailure) return false;
+            AuthenticatedUser = userLookupResult.Value;
             var post = await postService.GetPostWithAuthorAndRepliesAsync(postId);
             if (post == null) return false;
             Post = post;
             Replies = await replyService.GetRepliesAsync(Post.Id);
             AuthorTotalPosts = await postService.GetTotalPostCountByAuthorAsync(Post.AuthorId);
             AuthorTotalReplies = await replyService.GetTotalReplyCountAsync(Post.AuthorId);
-            UserIsAuthor = post.AuthorId == authenticatedUser.Id;
+            UserIsAuthor = post.AuthorId == userLookupResult.Value.Id;
             ForumBreadcrumbs = await forumService.GetForumBreadcrumbItems(Post.ForumId);
             
             // TODO: This is wrong, this is when the current user joined, not the Author. 
-            AuthorJoinedOn = authenticatedUser.CreatedAt;
+            AuthorJoinedOn = userLookupResult.Value.CreatedAt;
 
             return true;
         }
