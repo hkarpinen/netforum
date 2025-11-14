@@ -15,7 +15,7 @@ namespace NETForum.Pages.Account.Register
         public UserRegistrationDto UserRegistrationDto { get; set; } = new();
         
         [BindProperty]
-        public UserProfileDto UserProfileDto { get; set; } = new();
+        public CreateUserProfileDto CreateUserProfileDto { get; set; } = new();
         
         public async Task<IActionResult> OnPostAsync()
         {
@@ -36,18 +36,18 @@ namespace NETForum.Pages.Account.Register
             }
 
             // Update the user profile DTO with the newly created User record ID.
-            UserProfileDto.UserId = createdUser.Value.Id;
+            CreateUserProfileDto.UserId = createdUser.Value.Id;
 
-            var profileAddResult = await userProfileService.AddUserProfileAsync(UserProfileDto);
+            var profileAddResult = await userProfileService.AddUserProfileAsync(CreateUserProfileDto);
             if (!profileAddResult.IsSuccess)
             {
-                ModelState.AddModelError(userCreateResult.Error.Code, userCreateResult.Error.Message);
+                ModelState.AddModelError(profileAddResult.Error.Code, profileAddResult.Error.Message);
                 return Page();
             }
 
-            if (UserProfileDto.ProfileImage != null)
+            if (CreateUserProfileDto.ProfileImage != null)
             {
-                var profileImageAddResult = await userService.UpdateUserProfileImageAsync(createdUser.Value.Id, UserProfileDto.ProfileImage);
+                var profileImageAddResult = await userService.UpdateUserProfileImageAsync(createdUser.Value.Id, CreateUserProfileDto.ProfileImage);
                 if (!profileImageAddResult)
                 {
                     ModelState.AddModelError("", "Could not add profile image");

@@ -37,29 +37,29 @@
                     <span asp-validation-for="UserRegistrationDto.ConfirmPassword" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label asp-for="UserProfileDto.ProfileImage">Profile Image</label>
-                    <input asp-for="UserProfileDto.ProfileImage" type="file" class="form-control" accept="image/*"/>
-                    <span asp-validation-for="UserProfileDto.ProfileImage" class="text-danger"></span>
+                    <label asp-for="CreateUserProfileDto.ProfileImage">Profile Image</label>
+                    <input asp-for="CreateUserProfileDto.ProfileImage" type="file" class="form-control" accept="image/*"/>
+                    <span asp-validation-for="CreateUserProfileDto.ProfileImage" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label asp-for="UserProfileDto.Bio" class="form-label">Bio</label>
-                    <textarea asp-for="UserProfileDto.Bio" class="form-control"></textarea>
-                    <span asp-validation-for="UserProfileDto.Bio" class="text-danger"></span>
+                    <label asp-for="CreateUserProfileDto.Bio" class="form-label">Bio</label>
+                    <textarea asp-for="CreateUserProfileDto.Bio" class="form-control"></textarea>
+                    <span asp-validation-for="CreateUserProfileDto.Bio" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label asp-for="UserProfileDto.Signature" class="form-label">Signature</label>
-                    <textarea asp-for="UserProfileDto.Signature" class="form-control"></textarea>
-                    <span asp-validation-for="UserProfileDto.Signature" class="text-danger"></span>
+                    <label asp-for="CreateUserProfileDto.Signature" class="form-label">Signature</label>
+                    <textarea asp-for="CreateUserProfileDto.Signature" class="form-control"></textarea>
+                    <span asp-validation-for="CreateUserProfileDto.Signature" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label asp-for="UserProfileDto.Location">Location</label>
-                    <input asp-for="UserProfileDto.Location" class="form-control" />
-                    <span asp-validation-for="UserProfileDto.Location" class="text-danger"></span>
+                    <label asp-for="CreateUserProfileDto.Location">Location</label>
+                    <input asp-for="CreateUserProfileDto.Location" class="form-control" />
+                    <span asp-validation-for="CreateUserProfileDto.Location" class="text-danger"></span>
                 </div>
                 <div class="form-group">
-                    <label asp-for="UserProfileDto.DateOfBirth">Date of Birth</label>
-                    <input asp-for="UserProfileDto.DateOfBirth" type="date" class="form-control" />
-                    <span asp-validation-for="UserProfileDto.DateOfBirth" class="text-danger"></span>
+                    <label asp-for="CreateUserProfileDto.DateOfBirth">Date of Birth</label>
+                    <input asp-for="CreateUserProfileDto.DateOfBirth" type="date" class="form-control" />
+                    <span asp-validation-for="CreateUserProfileDto.DateOfBirth" class="text-danger"></span>
                 </div>
                 <button type="submit" class="btn btn-primary mt-3">Register</button>
             </form>

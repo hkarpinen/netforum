@@ -30,5 +30,24 @@ public class UserProfile : Profile
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+        CreateMap<CreateUserProfileDto, Models.Entities.UserProfile>()
+            .ForMember(dest => dest.Bio, opt => opt.MapFrom(src => src.Bio))
+            .ForMember(dest => dest.Signature, opt => opt.MapFrom(src => src.Signature))
+            .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
+            .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.DateOfBirth))
+            .ForMember(dest => dest.LastUpdated, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+        CreateMap<Models.Entities.UserProfile, EditUserProfileDto>()
+            .ForMember(dest => dest.Bio, opt => opt.MapFrom(src => src.Bio))
+            .ForMember(dest => dest.Signature, opt => opt.MapFrom(src => src.Signature))
+            .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
+            .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.DateOfBirth));
+        
+        CreateMap<EditUserProfileDto, Models.Entities.UserProfile>()
+            .ForMember(dest => dest.Bio, opt => opt.MapFrom(src => src.Bio))
+            .ForMember(dest => dest.Signature, opt => opt.MapFrom(src => src.Signature))
+            .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
+            .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.DateOfBirth));
     }
 }

@@ -10,25 +10,19 @@ namespace NETForum.Pages.Account.Profile
     public class EditModel(IUserService userService, IUserProfileService userProfileService) : PageModel
     {
         [BindProperty] 
-        public UserProfileDto UserProfileDto { get; set; } = new();
+        public EditUserProfileDto EditUserProfileDto { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
         {
             if(User.Identity?.Name == null) return RedirectToPage("/Account/Login");
-            var lookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
-            if (lookupResult.IsFailure) return NotFound();
-            
-            var user = lookupResult.Value;
-            UserProfileDto.UserId = user.Id;
-            var userProfile = await userProfileService.GetUserProfileAsync(user.Id);
-
-            if (userProfile == null) return Page();
+            var userLookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
+            if (userLookupResult.IsFailure) return NotFound();
+            var user = userLookupResult.Value;
             
             // Populate the form with existing profile data
-            UserProfileDto.Bio = userProfile.Bio;
-            UserProfileDto.Signature = userProfile.Signature;
-            UserProfileDto.Location = userProfile.Location;
-            UserProfileDto.DateOfBirth = userProfile.DateOfBirth;
+            var editUserProfileDtoResult = await userProfileService.GetUserProfileForEditAsync(user.Id);
+            if (editUserProfileDtoResult.IsFailure) return NotFound();
+            EditUserProfileDto = editUserProfileDtoResult.Value;
             return Page();
         }
 
@@ -41,12 +35,12 @@ namespace NETForum.Pages.Account.Profile
             var user = lookupResult.Value;
             
             // Do any other necessary profile updates here (e.g., updating bio, signature, etc.)
-            await userProfileService.UpdateUserProfileAsync(UserProfileDto);
+            await userProfileService.UpdateUserProfileAsync(user.Id, EditUserProfileDto);
 
             // Handle profile image upload if a new image is provided
-            if (UserProfileDto.ProfileImage != null)
+            if (EditUserProfileDto.ProfileImage != null)
             {
-                await userService.UpdateUserProfileImageAsync(user.Id, UserProfileDto.ProfileImage);
+                await userService.UpdateUserProfileImageAsync(user.Id, EditUserProfileDto.ProfileImage);
             }
             
             return RedirectToPage("/Index");

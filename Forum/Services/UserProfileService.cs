@@ -1,45 +1,35 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using AutoMapper;
 using NETForum.Data;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
+using NETForum.Repositories;
 
 namespace NETForum.Services;
 
 public interface IUserProfileService
 {
-    Task<Result<UserProfile>> AddUserProfileAsync(UserProfileDto userProfileDto);
-    Task<UserProfile?> GetUserProfileAsync(int userId);
-    Task<bool> UpdateUserProfileAsync(UserProfileDto userProfileDto);
+    Task<Result<UserProfile>> AddUserProfileAsync(CreateUserProfileDto createUserProfileDto);
+    Task<Result<UserProfile>> GetUserProfileAsync(int userId);
+    Task<Result<EditUserProfileDto>> GetUserProfileForEditAsync(int userId);
+    Task<Result> UpdateUserProfileAsync(int userId, EditUserProfileDto editUserProfileDto);
 }
 
-public class UserProfileService(AppDbContext context) : IUserProfileService
+public class UserProfileService(AppDbContext context, IUserProfileRepository userProfileRepository, IMapper mapper) : IUserProfileService
 {
-    public async Task<Result<UserProfile>> AddUserProfileAsync(UserProfileDto userProfileDto)
+    public async Task<Result<UserProfile>> AddUserProfileAsync(CreateUserProfileDto createUserProfileDto)
     {
         try
         {
-            var userProfileExists = await context.UserProfiles.AnyAsync(x => x.UserId == userProfileDto.UserId);
+            var userProfileExists = await userProfileRepository.UserProfileExists(createUserProfileDto.UserId);
             if (userProfileExists)
             {
-                return Result<UserProfile>.Failure(new Error("UserProfile.AlreadyExists", $"UserProfile.{userProfileDto.UserId}"));
+                return Result<UserProfile>.Failure(new Error("UserProfile.AlreadyExists", $"UserProfile.{createUserProfileDto.UserId}"));
             }
-        
-            // Create the object to insert into the database.
-            var userProfile = new UserProfile
-            {
-                UserId = userProfileDto.UserId,
-                Bio = userProfileDto.Bio,
-                Signature = userProfileDto.Signature,
-                Location = userProfileDto.Location,
-                DateOfBirth = userProfileDto.DateOfBirth,
-                LastUpdated = DateTime.UtcNow
-            };
-
-            // TODO: User profiles service needs a UserProfileRepository class instead so it does not directly use db context.
-            var result = await context.UserProfiles.AddAsync(userProfile);
+            
+            var userProfile = mapper.Map<UserProfile>(createUserProfileDto);
+            var result = await userProfileRepository.AddAsync(userProfile);
             await context.SaveChangesAsync();
-            return Result<UserProfile>.Success(result.Entity);
+            return Result<UserProfile>.Success(result);
         }
         catch (Exception ex)
         {
@@ -47,27 +37,36 @@ public class UserProfileService(AppDbContext context) : IUserProfileService
         }
     }
 
-    public async Task<UserProfile?> GetUserProfileAsync(int userId)
+    public async Task<Result<UserProfile>> GetUserProfileAsync(int userId)
     {
-        return await context.UserProfiles
-            .FirstOrDefaultAsync(up => up.UserId == userId);
+        var result = await userProfileRepository.GetByUserIdAsync(userId);
+        return result == null ?
+            Result<UserProfile>.Failure(new Error("UserProfile.NotFound", $"UserProfile.{userId}")) : 
+            Result<UserProfile>.Success(result);
+    }
+
+    public async Task<Result<EditUserProfileDto>> GetUserProfileForEditAsync(int userId)
+    {
+        var result = await userProfileRepository.GetByUserIdAsync(userId);
+        if (result == null)
+        {
+            return Result<EditUserProfileDto>.Failure(new Error("UserProfile.NotFound", $"UserProfile.{userId}"));
+        }
+        var editUserProfileDto = mapper.Map<EditUserProfileDto>(result);
+        return Result<EditUserProfileDto>.Success(editUserProfileDto);
     }
     
-    public async Task<bool> UpdateUserProfileAsync(UserProfileDto userProfileDto)
+    public async Task<Result> UpdateUserProfileAsync(int userId, EditUserProfileDto editUserProfileDto)
     {
-        var userProfile = await context.UserProfiles
-            .FirstOrDefaultAsync(up => up.UserId == userProfileDto.UserId);
-
-        if (userProfile == null) return false;
-
-        userProfile.Bio = userProfileDto.Bio;
-        userProfile.Signature = userProfileDto.Signature;
-        userProfile.Location = userProfileDto.Location;
-        userProfile.DateOfBirth = userProfileDto.DateOfBirth;
-        userProfile.LastUpdated = DateTime.UtcNow;
-
-        context.UserProfiles.Update(userProfile);
-        await context.SaveChangesAsync();
-        return true;
+        var userProfile = await userProfileRepository.GetByUserIdAsync(userId);
+        if (userProfile == null)
+        {
+            return Result.Failure(new Error("UserProfile.NotFound", $"UserProfile.{userId}"));
+        }
+        await userProfileRepository.UpdateAsync(userProfile.Id, trackedUserProfile =>
+        {
+            mapper.Map(editUserProfileDto, trackedUserProfile);
+        });
+        return Result.Success();
     }
 }

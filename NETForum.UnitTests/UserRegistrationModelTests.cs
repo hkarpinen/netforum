@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
@@ -104,7 +105,7 @@ public class UserRegistrationModelTests
             Email = "test@email.com"
         };
 
-        var userProfileDto = new UserProfileDto()
+        var userProfileDto = new CreateUserProfileDto()
         {
             UserId = 1,
             Bio = "test",
@@ -112,7 +113,7 @@ public class UserRegistrationModelTests
         };
         
         _pageModel.UserRegistrationDto = userRegistrationDto;
-        _pageModel.UserProfileDto = userProfileDto;
+        _pageModel.CreateUserProfileDto = userProfileDto;
         
         var userCreateResult = Result.Success();
 
@@ -153,6 +154,129 @@ public class UserRegistrationModelTests
         _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
         _mockUserService.Verify(s => s.GetByUsernameAsync(userRegistrationDto.Username), Times.Once);
         _mockUserProfileService.Verify(s => s.AddUserProfileAsync(userProfileDto), Times.Once);
+    }
+
+    [Fact]
+    public async Task OnPostAsync_WhenUserIsCreatedAndCreatingUserProfileFails_ShouldAddModelErrorAndReturnPage()
+    {
+        var userRegistrationDto = new UserRegistrationDto()
+        {
+            Username = "test",
+            Password = "test",
+            ConfirmPassword = "test",
+            Email = "test@test.com"
+        };
+
+        var expectedUser = new User()
+        {
+            Id = 1,
+            UserName = "test",
+            Email = "test@test.com"
+        };
+
+        var userProfileDto = new CreateUserProfileDto()
+        {
+            UserId = 1,
+            Bio = "test",
+            Location = "test"
+        };
+        
+        _pageModel.UserRegistrationDto = userRegistrationDto;
+        _pageModel.CreateUserProfileDto = userProfileDto;
+        
+        var userCreateResult = Result.Success();
+        var userLookupResult = Result<User>.Success(expectedUser);
+        var userProfileAddResult = Result<UserProfile>.Failure(new Error("UserProfile.AlreadyExists", $"User profile already exists"));
+        
+        _mockUserService
+            .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
+            .ReturnsAsync(userCreateResult);
+        
+        _mockUserService
+            .Setup(s => s.GetByUsernameAsync(userRegistrationDto.Username))
+            .ReturnsAsync(userLookupResult);
+        
+        _mockUserProfileService
+            .Setup(s => s.AddUserProfileAsync(userProfileDto))
+            .ReturnsAsync(userProfileAddResult);
+        
+        var result = await _pageModel.OnPostAsync();
+        
+        result.Should().BeOfType<PageResult>();
+        _pageModel.ModelState.ErrorCount.Should().Be(1);
+        _pageModel.ModelState["UserProfile.AlreadyExists"].Errors[0].ErrorMessage.Should().Be($"User profile already exists");
+        _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
+        _mockUserService.Verify(s => s.GetByUsernameAsync(userRegistrationDto.Username), Times.Once);
+        _mockUserProfileService.Verify(s => s.AddUserProfileAsync(userProfileDto), Times.Once);
+    }
+
+    [Fact]
+    public async Task OnPostAsync_WhenUserSuccessfullyRegistersAndAddingProfileImageFails_ShouldAddModelErrorAndReturnPage()
+    {
+        var userRegistrationDto = new UserRegistrationDto()
+        {
+            Username = "test",
+            Password = "test",
+            ConfirmPassword = "test",
+            Email = "test@test.com"
+        };
+
+        var expectedUser = new User()
+        {
+            Id = 1,
+            UserName = "test",
+            Email = "test@test.com",
+        };
+
+        var userProfileDto = new CreateUserProfileDto()
+        {
+            UserId = 1,
+            Bio = "test",
+            Location = "test",
+            ProfileImage = new Mock<IFormFile>().Object
+        };
+
+        var expectedUserProfile = new UserProfile()
+        {
+            Id = 1,
+            UserId = 1,
+            Bio = "test",
+            Location = "test"
+        };
+        
+        _pageModel.UserRegistrationDto = userRegistrationDto;
+        _pageModel.CreateUserProfileDto = userProfileDto;
+        
+        var userCreateResult = Result.Success();
+        var userLookupResult = Result<User>.Success(expectedUser);
+        var userProfileAddResult = Result<UserProfile>.Success(expectedUserProfile);
+        
+        _mockUserService
+            .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
+            .ReturnsAsync(userCreateResult);
+        
+        _mockUserService
+            .Setup(s => s.GetByUsernameAsync(userRegistrationDto.Username))
+            .ReturnsAsync(userLookupResult);
+        
+        _mockUserProfileService
+            .Setup(s => s.AddUserProfileAsync(userProfileDto))
+            .ReturnsAsync(userProfileAddResult);
+
+        _mockUserService
+            .Setup(s => s.UpdateUserProfileImageAsync(expectedUser.Id, userProfileDto.ProfileImage))
+            .ReturnsAsync(false);
+        
+        var result = await _pageModel.OnPostAsync();
+        
+        result.Should().BeOfType<PageResult>();
+        _pageModel.ModelState[""].Errors[0].ErrorMessage.Should().Be($"Could not add profile image");
+        _pageModel.ModelState.ErrorCount.Should().Be(1);
+        _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
+        _mockUserService.Verify(s => s.GetByUsernameAsync(userRegistrationDto.Username), Times.Once);
+        _mockUserProfileService.Verify(s => s.AddUserProfileAsync(userProfileDto), Times.Once);
+        _mockUserService.Verify(s => s.UpdateUserProfileImageAsync(expectedUser.Id, userProfileDto.ProfileImage));
+        
     }
 
 }
