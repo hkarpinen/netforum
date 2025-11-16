@@ -11,7 +11,7 @@ namespace NETForum.Services
         Task<IEnumerable<Reply>> GetRepliesAsync(int postId);
         Task<int> GetTotalReplyCountAsync();
         Task<int> GetTotalReplyCountAsync(int authorId);
-        Task<Reply> AddReplyAsync(int postId, int authorId, CreatePostReplyDto inputModel);
+        Task<Result<Reply>> AddReplyAsync(int postId, int authorId, CreatePostReplyDto inputModel);
     }
 
     public class ReplyService(AppDbContext context, IMapper mapper, IReplyRepository replyRepository) : IReplyService
@@ -21,15 +21,22 @@ namespace NETForum.Services
             return await replyRepository.GetRepliesByPostAsync(postId);
         }
 
-        public async Task<Reply> AddReplyAsync(int postId, int userId, CreatePostReplyDto inputModel)
+        public async Task<Result<Reply>> AddReplyAsync(int postId, int userId, CreatePostReplyDto inputModel)
         {
-            var postReply = mapper.Map<Reply>(inputModel);
-            postReply.PostId = postId;
-            postReply.AuthorId = userId;
+            try
+            {
+                var postReply = mapper.Map<Reply>(inputModel);
+                postReply.PostId = postId;
+                postReply.AuthorId = userId;
             
-            var result = await replyRepository.AddAsync(postReply);
-            await context.SaveChangesAsync();
-            return result;
+                var result = await replyRepository.AddAsync(postReply);
+                await context.SaveChangesAsync();
+                return Result<Reply>.Success(result);
+            }
+            catch (Exception e)
+            {
+                return Result<Reply>.Failure(new Error("Reply.UnknownError", e.Message));
+            }
         }
 
         public async Task<int> GetTotalReplyCountAsync()

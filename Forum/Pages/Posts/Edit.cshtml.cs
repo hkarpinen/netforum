@@ -17,7 +17,7 @@ namespace NETForum.Pages.Posts
         {
             // Fake data for the form, need to use a service to fetch real data.
             var post = await postService.GetPostWithAuthorAndRepliesAsync(id);
-            if (post == null) return NotFound();
+            if (post.IsFailure) return NotFound();
             
             // Handle scenario where username is null.
             if (User.Identity?.Name == null)
@@ -25,10 +25,10 @@ namespace NETForum.Pages.Posts
                 return RedirectToPage("/Account/Login");
             }
 
-            if(post.Author == null) throw new Exception("Post Author Not Found");
+            if(post.Value.Author == null) throw new Exception("Post Author Not Found");
             
             // Forbid a user who is not the author from editing a post that is not theirs.
-            if(User.Identity.Name != post.Author.UserName)
+            if(User.Identity.Name != post.Value.Author.UserName)
             {
                 return Forbid();
             }

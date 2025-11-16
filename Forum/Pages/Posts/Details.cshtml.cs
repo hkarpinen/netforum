@@ -26,25 +26,21 @@ namespace NETForum.Pages.Posts
         [BindProperty]
         public CreatePostReplyDto CreatePostReplyDto { get; set; } = new();
 
-        private async Task<bool> LoadPostAndAuthorData(int postId)
+        public async Task<bool> LoadPostAndAuthorData(int postId)
         {
-            // TODO: Might be better to the store the entire Author object instead of selecting properties to instantiate other properties. 
             if (User.Identity?.Name == null) return false;
             var userLookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
             if (userLookupResult.IsFailure) return false;
             AuthenticatedUser = userLookupResult.Value;
-            var post = await postService.GetPostWithAuthorAndRepliesAsync(postId);
-            if (post == null) return false;
-            Post = post;
-            Replies = await replyService.GetRepliesAsync(Post.Id);
+            var postLookupResult = await postService.GetPostWithAuthorAndRepliesAsync(postId);
+            if (postLookupResult.IsFailure) return false;
+            Post = postLookupResult.Value;
+            Replies = postLookupResult.Value.Replies;
             AuthorTotalPosts = await postService.GetTotalPostCountByAuthorAsync(Post.AuthorId);
             AuthorTotalReplies = await replyService.GetTotalReplyCountAsync(Post.AuthorId);
-            UserIsAuthor = post.AuthorId == userLookupResult.Value.Id;
+            UserIsAuthor = postLookupResult.Value.AuthorId == userLookupResult.Value.Id;
             ForumBreadcrumbs = await forumService.GetForumBreadcrumbItems(Post.ForumId);
-            
-            // TODO: This is wrong, this is when the current user joined, not the Author. 
-            AuthorJoinedOn = userLookupResult.Value.CreatedAt;
-
+            AuthorJoinedOn = Post.Author!.CreatedAt;
             return true;
         }
 
@@ -58,23 +54,13 @@ namespace NETForum.Pages.Posts
         {
             var loadSuccessful = await LoadPostAndAuthorData(id);
             if (!loadSuccessful) return RedirectToPage("/Error");
-            if (!ModelState.IsValid)
-            {
-                ModelState.AddModelError("PostReplyCreateInputModel.Title", "Post reply creation failed");
-                return Page();
-            }
+            if (!ModelState.IsValid) return Page();
+            var addReplyResult = await replyService.AddReplyAsync(id, AuthenticatedUser.Id, CreatePostReplyDto);
+            if (addReplyResult.IsSuccess) return RedirectToPage();
             
-            // Add the reply to the database and redirect to the same page to show the new reply.
-            try
-            {
-                await replyService.AddReplyAsync(id, AuthenticatedUser.Id, CreatePostReplyDto);
-            }
-            catch (Exception e)
-            {
-                ModelState.AddModelError("", e.Message);
-                return Page();
-            }
-            return RedirectToPage();
+            // Reply add operation failed
+            ModelState.AddModelError("", addReplyResult.Error.Message);
+            return Page();
         }
     }
 }

@@ -1,4 +1,5 @@
 using AutoMapper;
+using EntityFramework.Exceptions.Common;
 using FluentAssertions;
 using Moq;
 using NETForum.Models.DTOs;
@@ -95,7 +96,8 @@ public class PostServiceTests
             .Setup(r => r.AddAsync(mappedPost))
             .ReturnsAsync(createdPost);
         
-        var result = await _systemUnderTest.AddPostAsync(username, forumId, createPostDto);
+        var addPostResult = await _systemUnderTest.AddPostAsync(username, forumId, createPostDto);
+        var result = addPostResult.Value;
         
         result.Should().NotBeNull();
         result.Id.Should().Be(createdPost.Id);
@@ -108,32 +110,9 @@ public class PostServiceTests
         _mockMapper.Verify(m => m.Map<Post>(createPostDto), Times.Once);
         _mockPostRepository.Verify(r => r.AddAsync(mappedPost), Times.Once);
     }
-    
-    [Fact]
-    public async Task AddPostAsync_WithNoAuthorId_ThrowsException()
-    {
-        var forumId = 1;
-        var username = "testuser";
-        
-        var author = new User { Id = 1, UserName = username };
-        var lookupResult = Result<User>.Success(author);
-        
-        var createPostDto = new CreatePostDto
-        {
-            Title = "New Post",
-            Content = "New Content"
-        };
-        
-        _mockUserService
-            .Setup(s => s.GetByUsernameAsync(username))
-            .ReturnsAsync(lookupResult);
-        
-        await Assert.ThrowsAsync<NullReferenceException>(async () => 
-            await _systemUnderTest.AddPostAsync(username, forumId, createPostDto));
-    }
 
     [Fact]
-    public async Task AddPostAsync_WithNonExistingAuthor_ThrowsException()
+    public async Task AddPostAsync_WithNonExistingAuthor_ReturnsFailureResult()
     {
         var forumId = 1;
         var username = "testuser";
@@ -149,8 +128,9 @@ public class PostServiceTests
             .Setup(s => s.GetByUsernameAsync(username))
             .ReturnsAsync(userLookupResult);
         
-        await Assert.ThrowsAsync<Exception>(async () =>
-            await _systemUnderTest.AddPostAsync(username, forumId, createPostDto));
+        var result = await _systemUnderTest.AddPostAsync(username, forumId, createPostDto);
+        
+        result.IsFailure.Should().BeTrue();
     }
     
     [Fact]
@@ -169,7 +149,8 @@ public class PostServiceTests
             .Setup(r => r.GetByIdAsync(postId, navigations))
             .ReturnsAsync(expectedPost);
         
-        var result = await _systemUnderTest.GetPostWithAuthorAndRepliesAsync(postId);
+        var postLookupResult = await _systemUnderTest.GetPostWithAuthorAndRepliesAsync(postId);
+        var result = postLookupResult.Value;
         
         result.Should().NotBeNull();
         result.Id.Should().Be(expectedPost.Id);
@@ -179,7 +160,7 @@ public class PostServiceTests
     }
 
     [Fact]
-    public async Task GetPostAsync_WithInvalidId_ReturnsNull()
+    public async Task GetPostAsync_WithInvalidId_ReturnsFailedResult()
     {
         var invalidPostId = 1000;
         var navigations = new[] { "Author", "Replies" };
@@ -187,7 +168,7 @@ public class PostServiceTests
             .Setup(r => r.GetByIdAsync(invalidPostId, navigations))
             .ReturnsAsync((Post?)null);
         var result = await _systemUnderTest.GetPostWithAuthorAndRepliesAsync(invalidPostId);
-        result.Should().BeNull();
+        result.IsFailure.Should().BeTrue();
     }
     
     [Fact]
@@ -223,6 +204,49 @@ public class PostServiceTests
         result.Should().NotBeNull();
         result.Should().HaveCount(limit);
         result.Should().BeEquivalentTo(posts);
+    }
+
+    [Fact]
+    public async Task AddPostAsync_WhenUniqueConstraintViolation_ReturnsFailureResult()
+    {
+        var username = "testuser";
+        var user = new User { Id = 1, UserName = "testuser" };
+        var forumId = 1;
+
+        var createPostDto = new CreatePostDto()
+        {
+            Title = "Test Post 1",
+            Content = "Content 1",
+        };
+
+        var mappedPost = new Post()
+        {
+            Id = 1,
+            Title = "Test Post 1",
+            Content = "Content 1",
+        };
+
+        _mockUserService
+            .Setup(s => s.GetByUsernameAsync(username))
+            .ReturnsAsync(Result<User>.Success(user));
+        
+        _mockMapper
+            .Setup(s => s.Map<Post>(createPostDto))
+            .Returns(mappedPost);
+            
+        var exception = new UniqueConstraintException();
+        var constraintNameProperty = typeof(UniqueConstraintException)
+            .GetProperty("ConstraintName");
+        constraintNameProperty?.SetValue(exception, "IX_Posts_Title");
+        
+        _mockPostRepository
+            .Setup(r => r.AddAsync(It.IsAny<Post>()))
+            .ThrowsAsync(exception);
+        
+        var result = await _systemUnderTest.AddPostAsync(username, forumId, createPostDto);
+        
+        result.IsFailure.Should().BeTrue();
+        result.Error.Message.Should().Be("Title is already taken.");
     }
     
     [Fact]

@@ -6,7 +6,7 @@ using NETForum.Services;
 
 namespace NETForum.Pages.Posts
 {
-    [Authorize(Roles = "Admin,Member")]
+    [Authorize]
     public class CreateModel(IPostService postService) : PageModel
     {
         [BindProperty]
@@ -14,31 +14,15 @@ namespace NETForum.Pages.Posts
 
         public async Task<IActionResult> OnPostAsync(int forumId)
         {
-            // If the form state is invalid, show validation errors.
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
+            if (!ModelState.IsValid) return Page();
+            
+            var username = User.Identity?.Name!;
+            var addPostResult = await postService.AddPostAsync(username, forumId, CreatePostDto);
+            if(addPostResult.IsSuccess) return RedirectToPage("/Posts/Details", new { id = addPostResult.Value.Id });
 
-            // Handle case where username is null.
-            var username = User.Identity?.Name;
-            if (username == null)
-            {
-                ModelState.AddModelError(string.Empty, "You must have a user name to post.");
-                return Page();
-            }
-
-            // Create the post and catch any exceptions
-            try
-            {
-                var result = await postService.AddPostAsync(username, forumId, CreatePostDto);
-                return RedirectToPage("/Posts/Details", new { id = result.Id });
-            }
-            catch(Exception ex)
-            {
-                ModelState.AddModelError("", ex.Message);
-                return Page();
-            }
+            // Adding the post failed, add the error to the ModelState.
+            ModelState.AddModelError(string.Empty, addPostResult.Error.Message);
+            return Page();
         }
     }
 }

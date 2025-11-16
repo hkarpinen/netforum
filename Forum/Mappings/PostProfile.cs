@@ -12,7 +12,6 @@ public class PostProfile : Profile
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
             .ForMember(dest => dest.Content, opt => opt.MapFrom(src => src.Content))
             .ForMember(dest => dest.ForumId, opt => opt.MapFrom(src => src.ForumId))
-            .ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.AuthorId))
             .ForMember(dest => dest.IsPinned, opt => opt.MapFrom(src => src.IsPinned))
             .ForMember(dest => dest.IsLocked, opt => opt.MapFrom(src => src.IsLocked))
             .ForMember(dest => dest.Published, opt => opt.MapFrom(src => src.Published))

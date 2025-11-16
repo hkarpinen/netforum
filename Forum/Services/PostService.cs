@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using EntityFramework.Exceptions.Common;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Repositories;
@@ -11,8 +12,8 @@ namespace NETForum.Services
         Task<IReadOnlyCollection<Post>> GetPostsAsync(int forumId);
         Task<int> GetTotalPostCountAsync();
         Task<int> GetTotalPostCountByAuthorAsync(int authorId);
-        Task<Post?> GetPostWithAuthorAndRepliesAsync(int id);
-        Task<Post> AddPostAsync(string username, int forumId, CreatePostDto createPostDto);
+        Task<Result<Post>> GetPostWithAuthorAndRepliesAsync(int id);
+        Task<Result<Post>> AddPostAsync(string username, int forumId, CreatePostDto createPostDto);
         Task<IReadOnlyCollection<Post>> GetLatestPostsWithAuthorAsync(int limit);
         Task<PagedResult<Post>> GetPostsPagedAsync(
             int pageNumber, 
@@ -35,27 +36,41 @@ namespace NETForum.Services
             return await postRepository.GetPostsInForumAsync(forumId, navigations);
         }
         
-        public async Task<Post> AddPostAsync(string username, int forumId, CreatePostDto createPostDto)
+        public async Task<Result<Post>> AddPostAsync(string username, int forumId, CreatePostDto createPostDto)
         {
-                var author = await userService.GetByUsernameAsync(username);
-                if(!author.IsSuccess) throw new Exception("User not found");
-                
+            try
+            {
+                var authorLookupResult = await userService.GetByUsernameAsync(username);
+                if (authorLookupResult.IsFailure)
+                {
+                    return Result<Post>.Failure(authorLookupResult.Error);
+                }
+
+                // Map the DTO to a Post() instance.
                 var post = mapper.Map<Post>(createPostDto);
-                post.AuthorId = author.Value.Id;
+                post.AuthorId = authorLookupResult.Value.Id;
                 post.ForumId = forumId;
-                
                 var result = await postRepository.AddAsync(post);
-                return result;
+                return Result<Post>.Success(result);
+            }
+            catch (UniqueConstraintException exception)
+            {
+                var shortConstraintName = exception.ConstraintName.Split("_").Last();
+                return Result<Post>.Failure(new Error("Post.UniqueConstraintViolation", $"{shortConstraintName} is already taken."));
+            }
         }
         
-        public async Task<Post?> GetPostWithAuthorAndRepliesAsync(int id)
+        public async Task<Result<Post>> GetPostWithAuthorAndRepliesAsync(int id)
         {
             var navigations = new[]
             {
                 "Author",
                 "Replies"
             };
-            return await postRepository.GetByIdAsync(id, navigations);
+            var post = await postRepository.GetByIdAsync(id, navigations);
+            return post == null ? 
+                Result<Post>.Failure(new Error("Post.NotFound", $"Post with {id} not found.")) : 
+                Result<Post>.Success(post);
         }
         
         public async Task<IReadOnlyCollection<Post>> GetLatestPostsWithAuthorAsync(int limit)
