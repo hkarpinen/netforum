@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NETForum.Models.Entities;
 using NETForum.Pages.Shared.Components.Breadcrumbs;
@@ -8,17 +9,22 @@ namespace NETForum.Pages.Forums
 {
     public class DetailsModel(IForumService forumService, IPostService postService) : PageModel
     {
-        public IEnumerable<Post> Posts { get; set; } = new List<Post>();
-        public IEnumerable<ForumListItemModel> SubForumItems { get; set; } = new List<ForumListItemModel>();
-        public IEnumerable<BreadcrumbItemModel> BreadcrumbItems { get; set; } = new List<BreadcrumbItemModel>();
-        public int ForumId { get; set; }
+        public IReadOnlyCollection<Post> Posts { get; set; } = new List<Post>();
+        public IReadOnlyCollection<ForumListItemModel> ChildForumsWithPostAndReplies { get; set; } = new List<ForumListItemModel>();
+        public IReadOnlyCollection<BreadcrumbItemModel> BreadcrumbItems { get; set; } = new List<BreadcrumbItemModel>();
+        public Forum? Forum { get; set; }
 
-        public async Task OnGetAsync(int id)
+        public async Task<IActionResult> OnGetAsync(int id)
         {
-            SubForumItems = await forumService.GetChildForumListItemsWithPostsAndRepliesAsync(id);
-            ForumId = id;
+            var forumLookupResult = await forumService.GetForumByIdAsync(id);
+            if (forumLookupResult.IsFailure) return NotFound();
+            
+            // Forum exists
+            ChildForumsWithPostAndReplies = await forumService.GetChildForumListItemsWithPostsAndRepliesAsync(id);
+            Forum = forumLookupResult.Value;
             BreadcrumbItems = await forumService.GetForumBreadcrumbItems(id);
             Posts = await postService.GetPostsAsync(id);
+            return Page();
         }
     }
 }

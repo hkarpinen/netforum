@@ -132,4 +132,53 @@ public class UserProfileEditModelTests
             ;
         result.Should().BeOfType<PageResult>();
     }
+
+    [Fact]
+    public async Task OnPostAsync_WhenUserIsNotFound_ShouldReturnNotFoundResult()
+    {
+        var userLookupResult = Result<User>.Failure(new Error("User.NotFound", "User not found"));
+        
+        _mockUserService
+            .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
+            .ReturnsAsync(userLookupResult);
+        
+        var result = await _pageModel.OnPostAsync();
+        result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [Fact]
+    public async Task OnPostAsync_WhenUserIsFound_ShouldUpdateUserProfileAndRedirect()
+    {
+        var expectedUser = new User()
+        {
+            Id = 1,
+            UserName = "test",
+            Email = "test@test.com"
+        };
+
+        var editUserProfileDto = new EditUserProfileDto()
+        {
+            Bio = "test",
+            Location = "test"
+        };
+        
+        _pageModel.EditUserProfileDto = editUserProfileDto;
+        
+        var userLookupResult = Result<User>.Success(expectedUser);
+        var userProfileUpdateResult = Result.Success();
+        
+        _mockUserService
+            .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
+            .ReturnsAsync(userLookupResult);
+        
+        _mockUserProfileService
+            .Setup(s => s.UpdateUserProfileAsync(expectedUser.Id, editUserProfileDto))
+            .ReturnsAsync(userProfileUpdateResult);
+        
+        var result = await _pageModel.OnPostAsync();
+        
+        _mockUserService.Verify(s => s.GetByUsernameAsync(It.IsAny<string>()), Times.Once);
+        _mockUserProfileService.Verify(s => s.UpdateUserProfileAsync(expectedUser.Id, editUserProfileDto), Times.Once);
+        result.Should().BeOfType<RedirectToPageResult>();
+    }
 }

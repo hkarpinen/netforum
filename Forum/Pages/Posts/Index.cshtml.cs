@@ -41,7 +41,7 @@ namespace NETForum.Pages.Posts
 
         public async Task<IActionResult> OnGetAsync()
         {
-            ForumSelectListItems = await forumService.GetSelectListItemsAsync();
+            ForumSelectListItems = await forumService.GetForumSelectListItemsAsync();
 
             int? authorId = null;
             

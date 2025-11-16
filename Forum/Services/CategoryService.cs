@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
@@ -9,10 +10,11 @@ namespace NETForum.Services
 {
     public interface ICategoryService
     {
-        Task<IEnumerable<SelectListItem>> GetCategorySelectListItems();
-        Task<Category> AddCategoryAsync(CreateCategoryDto createCategoryDto);
-        Task<Category?>GetCategoryByIdAsync(int id);
-        Task UpdateCategoryAsync(EditCategoryDto editCategoryDto);
+        Task<IEnumerable<SelectListItem>> GetCategorySelectListItemsAsync();
+        Task<Result<Category>> AddCategoryAsync(CreateCategoryDto createCategoryDto);
+        Task<Result<Category>>GetCategoryByIdAsync(int id);
+        Task<Result<EditCategoryDto>> GetCategoryForEditAsync(int id);
+        Task<Result> UpdateCategoryAsync(EditCategoryDto editCategoryDto);
         Task DeleteCategoryByIdAsync(int id);
         Task<PagedResult<Category>> GetCategoriesWithForumsPagedAsync(int pageNumber, int pageSize, CategoryFilterOptions categoryFilterOptions);
     }
@@ -24,22 +26,35 @@ namespace NETForum.Services
     /// <param name="categoryRepository">The repository for Category data access</param>
     public class CategoryService(IMapper mapper, ICategoryRepository categoryRepository) : ICategoryService
     {
-        public async Task<Category> AddCategoryAsync(CreateCategoryDto createCategoryDto)
+        public async Task<Result<Category>> AddCategoryAsync(CreateCategoryDto createCategoryDto)
         {
-            var category = mapper.Map<Category>(createCategoryDto);
-            var result = await categoryRepository.AddAsync(category);
-            return result;
-        }
-
-        public async Task UpdateCategoryAsync(EditCategoryDto editCategoryDto)
-        {
-            await categoryRepository.UpdateAsync(editCategoryDto.Id, category =>
+            try
             {
-                mapper.Map(editCategoryDto, category);
-            });
+                var category = mapper.Map<Category>(createCategoryDto);
+                var result = await categoryRepository.AddAsync(category);
+                return Result<Category>.Success(result);
+            }
+            catch (UniqueConstraintException exception)
+            {
+                return Result<Category>.Failure(new Error("Category.UniqueConstraintViolation", exception.ConstraintName));
+            }
         }
 
-        public async Task<IEnumerable<SelectListItem>> GetCategorySelectListItems()
+        public async Task<Result> UpdateCategoryAsync(EditCategoryDto editCategoryDto)
+        {
+            try
+            {
+                await categoryRepository.UpdateAsync(editCategoryDto.Id,
+                    category => { mapper.Map(editCategoryDto, category); });
+                return Result.Success();
+            }
+            catch (UniqueConstraintException exception)
+            {
+                return Result.Failure(new Error("Category.UniqueConstraintViolation", exception.ConstraintName));
+            }
+        }
+
+        public async Task<IEnumerable<SelectListItem>> GetCategorySelectListItemsAsync()
         {
             var criteria = new RepositoryQueryOptions<CategoryFilterOptions>();
             var categoryList = await categoryRepository.GetAllAsync(criteria);
@@ -50,9 +65,23 @@ namespace NETForum.Services
             });
         }
 
-        public async Task<Category?> GetCategoryByIdAsync(int id)
+        public async Task<Result<Category>> GetCategoryByIdAsync(int id)
         {
-            return await categoryRepository.GetByIdAsync(id);
+            var category = await categoryRepository.GetByIdAsync(id);
+            return category == null ?
+                Result<Category>.Failure(new Error("Category.NotFound", $"Category with ID: {id} was not found.")) : 
+                Result<Category>.Success(category);
+        }
+
+        public async Task<Result<EditCategoryDto>> GetCategoryForEditAsync(int id)
+        {
+            var category = await categoryRepository.GetByIdAsync(id);
+            if (category == null)
+            {
+                return Result<EditCategoryDto>.Failure(new Error("Category.NotFound", $"Category with ID: {id} was not found."));
+            }
+            var editCategoryDto = mapper.Map<EditCategoryDto>(category);
+            return Result<EditCategoryDto>.Success(editCategoryDto);
         }
 
         public async Task DeleteCategoryByIdAsync(int id)

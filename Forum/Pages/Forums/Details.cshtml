@@ -14,7 +14,7 @@
 <div class="row mt-2">
     <div class="col">
         <div class="d-flex">
-            <a asp-page="/Posts/Create" asp-route-forumId="@Model.ForumId" class="btn btn-secondary">Create Post</a>
+            <a asp-page="/Posts/Create" asp-route-forumId="@Model.Forum.Id" class="btn btn-secondary">Create Post</a>
         </div>
     </div>
 </div>
@@ -23,7 +23,7 @@
         @await Component.InvokeAsync("ForumList", new ForumListOptions()
         {
             ForumListTitle = "Subforums",
-            ForumItems = Model.SubForumItems
+            ForumItems = Model.ChildForumsWithPostAndReplies
          })
     </div>
 </div>

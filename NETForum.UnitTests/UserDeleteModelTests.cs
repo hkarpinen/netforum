@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NETForum.Pages.Users;
-using NETForum.Repositories;
 using NETForum.Services;
 
 namespace NETForum.UnitTests;

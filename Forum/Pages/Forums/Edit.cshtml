@@ -35,7 +35,7 @@
                     <label asp-for="EditForumDto.CategoryId">Category Id</label>
                     <select asp-for="EditForumDto.CategoryId" class="form-select">
                         <option value="" disabled selected>Select A Parent Forum</option>
-                        @foreach (var category in Model.Categories)
+                        @foreach (var category in Model.CategorySelectListItems)
                         {
                             <option value="@category.Value">@category.Text</option>
                         }
@@ -44,10 +44,10 @@
                 <div class="form-group">
                     <label asp-for="EditForumDto.ParentForumId">Parent Forum</label>
                     <select asp-for="EditForumDto.ParentForumId" class="form-select">
-                        @if (Model.ParentForums != null)
+                        @if (Model.ParentForumSelectListItems != null)
                         {
                             <option value="" disabled selected>Select A Parent Forum</option>
-                            @foreach (var forum in Model.ParentForums)
+                            @foreach (var forum in Model.ParentForumSelectListItems)
                             {
                                 <option value="@forum.Value">@forum.Text</option>
                             }

@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NETForum.Models.DTOs;
@@ -6,22 +5,31 @@ using NETForum.Services;
 
 namespace NETForum.Pages.Category;
 
-public class EditModel(ICategoryService categoryService, IMapper mapper) : PageModel
+public class EditModel(ICategoryService categoryService) : PageModel
 {
     [BindProperty]
-    public EditCategoryDto Form { get; set; } = new();
+    public EditCategoryDto EditCategoryDto { get; set; } = new();
     
-    public async Task<IActionResult> OnGet(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        var category = await categoryService.GetCategoryByIdAsync(id);
-        if (category == null) return NotFound();  
-        Form = mapper.Map<EditCategoryDto>(category);
+        var editCategoryDtoResult = await categoryService.GetCategoryForEditAsync(id);
+        if(editCategoryDtoResult.IsFailure) return NotFound();
+        EditCategoryDto = editCategoryDtoResult.Value;
         return Page();
     }
-
-    // TODO: Implement updating the existing category. 
-    public async Task<IActionResult> OnPostAsync()
+    
+    public async Task<IActionResult> OnPostAsync(int id)
     {
-        throw new NotImplementedException();
+        var editCategoryDtoResult = await categoryService.GetCategoryForEditAsync(id);
+        if(editCategoryDtoResult.IsFailure) return NotFound();
+        EditCategoryDto = editCategoryDtoResult.Value;
+        if(!ModelState.IsValid) return Page();
+        
+        var updateCategoryResult = await categoryService.UpdateCategoryAsync(EditCategoryDto);
+        if(updateCategoryResult.IsSuccess)  return RedirectToPage("/Admin/Categories");
+        
+        // An error occurred updating the category. 
+        ModelState.AddModelError("", updateCategoryResult.Error.Message);
+        return Page();
     }
 }

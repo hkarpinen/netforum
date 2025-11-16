@@ -36,8 +36,8 @@ namespace NETForum.Pages.Admin.Forums
 
         public async Task<IActionResult> OnGetAsync()
         {
-            CategoryListItems = await categoryService.GetCategorySelectListItems();
-            ParentForumListItems = await forumService.GetSelectListItemsAsync();
+            CategoryListItems = await categoryService.GetCategorySelectListItemsAsync();
+            ParentForumListItems = await forumService.GetForumSelectListItemsAsync();
             Forums = await forumService.GetForumsPagedAsync(PageNumber, PageSize, new ForumFilterOptions()
             {
                 Name = Name,

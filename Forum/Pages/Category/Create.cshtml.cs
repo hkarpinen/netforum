@@ -1,4 +1,3 @@
-using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NETForum.Models.DTOs;
@@ -11,31 +10,15 @@ namespace NETForum.Pages.Category
         [BindProperty]
         public CreateCategoryDto CreateCategoryDto { get; set; } = new();
 
-        public void OnGet()
-        {
-        }
-
-        public async Task<IActionResult> OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid) return Page();
-
+            var categoryCreateResult = await categoryService.AddCategoryAsync(CreateCategoryDto);
+            if(categoryCreateResult.IsSuccess) return RedirectToPage("/Admin/Categories");
             
-            try
-            {
-                await categoryService.AddCategoryAsync(CreateCategoryDto);
-                return RedirectToPage("/Admin/Forums/Index");
-            } 
-            catch(UniqueConstraintException ex)
-            {
-                switch (ex.ConstraintName.Split("_").Last())
-                {
-                    case "Name":
-                        var error = $"Name '{CreateCategoryDto.Name}' is already taken";
-                        ModelState.AddModelError("", error);
-                        break;
-                }
-                return Page();
-            }
+            // Create result was not successful.
+            ModelState.AddModelError(string.Empty, categoryCreateResult.Error.Message);
+            return Page();
         }
     }
 }
