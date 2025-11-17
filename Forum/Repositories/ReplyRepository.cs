@@ -12,7 +12,7 @@ public class ReplyRepository(AppDbContext context) : BaseRepository<Reply, Reply
     {
         var query = _dbSet.AsQueryable();
         query = query.Where(p => p.PostId == postId);
-        ApplyIncludes(query, navigations);
+        query = ApplyIncludes(query, navigations);
         return await query.ToListAsync();
     }
 
@@ -33,7 +33,7 @@ public class ReplyRepository(AppDbContext context) : BaseRepository<Reply, Reply
     {
         var query = _dbSet.AsQueryable();
         query = query.Where(p => p.Id == id);
-        ApplyIncludes(query, includes);
+        query = ApplyIncludes(query, includes);
         return query.FirstOrDefaultAsync();
     }
 

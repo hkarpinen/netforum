@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using EntityFramework.Exceptions.Common;
+using Microsoft.EntityFrameworkCore;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Repositories;
@@ -13,7 +14,9 @@ namespace NETForum.Services
         Task<int> GetTotalPostCountAsync();
         Task<int> GetTotalPostCountByAuthorAsync(int authorId);
         Task<Result<Post>> GetPostWithAuthorAndRepliesAsync(int id);
+        Task<Result<EditPostDto>> GetPostForEditAsync(int id);
         Task<Result<Post>> AddPostAsync(string username, int forumId, CreatePostDto createPostDto);
+        Task<Result> UpdatePostAsync(int id, EditPostDto editPostDto);
         Task<IReadOnlyCollection<Post>> GetLatestPostsWithAuthorAsync(int limit);
         Task<PagedResult<Post>> GetPostsPagedAsync(
             int pageNumber, 
@@ -34,6 +37,22 @@ namespace NETForum.Services
                 "Replies.Author"
             };
             return await postRepository.GetPostsInForumAsync(forumId, navigations);
+        }
+
+        public async Task<Result> UpdatePostAsync(int id, EditPostDto editPostDto)
+        {
+            try
+            {
+                await postRepository.UpdateAsync(id, trackedPost =>
+                {
+                    mapper.Map(editPostDto, trackedPost);
+                });
+                return Result.Success();
+            }
+            catch (DbUpdateException exception)
+            {
+                return Result.Failure(new Error("Post.UpdateException", $"Could not update post with ID: {id}."));
+            }
         }
         
         public async Task<Result<Post>> AddPostAsync(string username, int forumId, CreatePostDto createPostDto)
@@ -59,6 +78,17 @@ namespace NETForum.Services
                 return Result<Post>.Failure(new Error("Post.UniqueConstraintViolation", $"{shortConstraintName} is already taken."));
             }
         }
+
+        public async Task<Result<EditPostDto>> GetPostForEditAsync(int id)
+        {
+            var post = await postRepository.GetByIdAsync(id);
+            if (post == null)
+            {
+                return Result<EditPostDto>.Failure(new Error("Post.NotFound", $"Post with ID: ${id} not found."));
+            }
+            var editPostDto = mapper.Map<EditPostDto>(post);
+            return Result<EditPostDto>.Success(editPostDto);
+        } 
         
         public async Task<Result<Post>> GetPostWithAuthorAndRepliesAsync(int id)
         {

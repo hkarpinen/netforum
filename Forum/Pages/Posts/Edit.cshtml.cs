@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,40 +7,46 @@ using NETForum.Services;
 namespace NETForum.Pages.Posts
 {
     [Authorize(Roles = "Admin,Member")]
-    public class EditModel(IPostService postService, IMapper mapper) : PageModel
+    public class EditModel(IPostService postService, IUserService userService) : PageModel
     {
         [BindProperty]
         public EditPostDto EditPostDto { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            // Fake data for the form, need to use a service to fetch real data.
-            var post = await postService.GetPostWithAuthorAndRepliesAsync(id);
-            if (post.IsFailure) return NotFound();
-            
             // Handle scenario where username is null.
-            if (User.Identity?.Name == null)
-            {
-                return RedirectToPage("/Account/Login");
-            }
+            if (User.Identity?.Name == null) return RedirectToPage("/Account/Login");
 
-            if(post.Value.Author == null) throw new Exception("Post Author Not Found");
+            var getEditPostDtoResult = await postService.GetPostForEditAsync(id);
+            if (getEditPostDtoResult.IsFailure) return NotFound();
+            var post = getEditPostDtoResult.Value;
+            var authorLookupResult = await userService.GetUserByIdAsync(post.AuthorId);
+            
+            // TODO: Unsure what is appropriate here.
+            if (authorLookupResult.IsFailure) return RedirectToPage("/Error");
             
             // Forbid a user who is not the author from editing a post that is not theirs.
-            if(User.Identity.Name != post.Value.Author.UserName)
-            {
-                return Forbid();
-            }
+            if (User.Identity.Name != authorLookupResult.Value.UserName) return Forbid();
 
-            EditPostDto = mapper.Map<EditPostDto>(post);
-
+            EditPostDto = getEditPostDtoResult.Value;
             return Page();
         }
-
-        // TODO: Need to implement updating an existing post. 
-        public async Task<IActionResult> OnPostAsync()
+        
+        public async Task<IActionResult> OnPostAsync(int id)
         {
-            throw new NotImplementedException();
+            var getEditPostDtoResult = await postService.GetPostForEditAsync(id);
+            if (getEditPostDtoResult.IsFailure) return NotFound();
+            var post = getEditPostDtoResult.Value;
+            var authorLookupResult = await userService.GetUserByIdAsync(post.AuthorId);
+            if (authorLookupResult.IsFailure) return NotFound();
+            if (User.Identity.Name != authorLookupResult.Value.UserName) return Forbid();
+            
+            var updatePostResult = await postService.UpdatePostAsync(id, EditPostDto);
+            if (updatePostResult.IsSuccess) return RedirectToPage("/Posts/Details", new { id });
+            
+            // Handle update error
+            ModelState.AddModelError(string.Empty, updatePostResult.Error.Message);
+            return Page();
         }
     }
 }

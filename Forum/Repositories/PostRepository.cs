@@ -11,7 +11,7 @@ public class PostRepository(AppDbContext context) : BaseRepository<Post, PostFil
     public override async Task<Post?> GetByIdAsync(int id, params string[] includes)
     {
         var query = _dbSet.AsQueryable();
-        ApplyIncludes(query, includes);
+        query = ApplyIncludes(query, includes);
         return await query.FirstOrDefaultAsync(p => p.Id == id);
     }
 
@@ -76,14 +76,14 @@ public class PostRepository(AppDbContext context) : BaseRepository<Post, PostFil
     {
         var query = _dbSet.AsQueryable();
         query = query.Where(p => p.ForumId == forumId);
-        ApplyIncludes(query, navigations);
+        query = ApplyIncludes(query, navigations);
         return await query.ToListAsync();
     }
 
     public async Task<IReadOnlyCollection<Post>> GetLatestPostsAsync(int limit, params string[] navigations)
     {
         var query = _dbSet.AsQueryable();
-        ApplyIncludes(query, navigations);
+        query = ApplyIncludes(query, navigations);
         return await query.OrderByDescending(p => p.UpdatedAt).Take(limit).ToListAsync();
     }
     

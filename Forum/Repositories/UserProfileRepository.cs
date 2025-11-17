@@ -12,7 +12,7 @@ public class UserProfileRepository(AppDbContext context) : BaseRepository<UserPr
     {
         var query = _dbSet.AsQueryable();
         query = query.Where(p => p.Id == id);
-        ApplyIncludes(query, includes);
+        query = ApplyIncludes(query, includes);
         return await query.FirstOrDefaultAsync();
     }
 
@@ -45,7 +45,7 @@ public class UserProfileRepository(AppDbContext context) : BaseRepository<UserPr
     {
         var query = _dbSet.AsQueryable();
         query = query.Where(p => p.UserId == userId);
-        ApplyIncludes(query, navigations);
+        query = ApplyIncludes(query, navigations);
         return await query.FirstOrDefaultAsync();
     }
 

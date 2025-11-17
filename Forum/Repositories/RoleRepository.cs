@@ -11,7 +11,7 @@ public class RoleRepository(AppDbContext context) : BaseRepository<Role, RoleFil
     public override Task<Role?> GetByIdAsync(int id, params string[] includes)
     {
         var query = _dbSet.AsNoTracking();
-        ApplyIncludes(query, includes);
+        query = ApplyIncludes(query, includes);
         return query.FirstOrDefaultAsync(r => r.Id == id);
     }
 

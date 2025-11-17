@@ -12,7 +12,7 @@ public class UserRepository(AppDbContext context) : BaseRepository<User, UserFil
     {
         var query = _dbSet.AsQueryable();
         query = query.Where(u => u.Id == id);
-        ApplyIncludes(query, includes);
+        query = ApplyIncludes(query, includes);
         return query.FirstOrDefaultAsync();
     }
 
@@ -20,7 +20,7 @@ public class UserRepository(AppDbContext context) : BaseRepository<User, UserFil
     {
         var query = _dbSet.AsQueryable();
         query = query.Where(u => u.UserName == username);
-        ApplyIncludes(query, includes);
+        query = ApplyIncludes(query, includes);
         return query.FirstOrDefaultAsync();
     }
 
@@ -28,7 +28,7 @@ public class UserRepository(AppDbContext context) : BaseRepository<User, UserFil
     {
         var query = _dbSet.AsQueryable();
         query = query.OrderByDescending(u => u.CreatedAt);
-        ApplyIncludes(query, includes);
+        query = ApplyIncludes(query, includes);
         return await query.FirstOrDefaultAsync();
     }
 
