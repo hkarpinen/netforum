@@ -2,11 +2,10 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
-using NETForum.Models.Entities;
+using NETForum.Models.DTOs;
 using NETForum.Pages.Forums;
-using NETForum.Pages.Shared.Components.Breadcrumbs;
-using NETForum.Pages.Shared.Components.ForumList;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -26,11 +25,11 @@ public class ForumDetailModelTests
     [Fact]
     public async Task OnGetAsync_WhenForumDoesNotExist_ReturnsNotFound()
     {
-        var forumLookupResult = Result<Forum>.Failure(new Error("Forum.NotFound", "Forum not found"));
+        var forumPageDtoResult = Result.Fail<ForumPageDto>("Forum not found");
         
         _mockForumService
-            .Setup(s => s.GetForumByIdAsync(1))
-            .ReturnsAsync(forumLookupResult);
+            .Setup(s => s.GetForumPageDtoAsync(1))
+            .ReturnsAsync(forumPageDtoResult);
 
         var result = await _pageModel.OnGetAsync(1);
         
@@ -38,77 +37,26 @@ public class ForumDetailModelTests
     }
 
     [Fact]
-    public async Task OnGetAsync_WhenForumExists_PopulatesDetails()
+    public async Task OnGetAsync_WhenForumExists_PopulatesDto()
     {
-        var forum = new Forum()
+        var forumPageDto = new ForumPageDto
         {
             Id = 1,
-            Name = "test",
-            Description = "test"
-        };
-
-        var subForum = new Forum()
-        {
-            Id = 2,
-            Name = "test2",
-            Description = "test2"
-        };
-
-        var childForumListItems = new List<ForumListItemModel>()
-        {
-            new()
-            {
-                Forum = subForum,
-                PostCount = 1,
-                RepliesCount = 2
-            }
-        };
-
-        var breadcrumbItems = new List<BreadcrumbItemModel>()
-        {
-            new()
-            {
-                Active = true,
-                Text = "test",
-                Url = "test"
-            }
-        };
-
-        var forumPosts = new List<Post>()
-        {
-            new()
-            {
-                Id = 1,
-                AuthorId = 1,
-                Title = "test",
-                Content = "test"
-            }
+            Title = "Test",
+            Description = "Test description",
+            Posts = [],
+            Subforums = []
         };
         
-        var forumLookupResult = Result<Forum>.Success(forum);
+        var forumPageDtoResult = Result.Ok(forumPageDto);
         
         _mockForumService
-            .Setup(s => s.GetForumByIdAsync(1))
-            .ReturnsAsync(forumLookupResult);
-        
-        _mockForumService
-            .Setup(s => s.GetForumBreadcrumbItems(1))
-            .ReturnsAsync(breadcrumbItems);
-        
-        _mockForumService
-            .Setup(s => s.GetChildForumListItemsWithPostsAndRepliesAsync(1))
-            .ReturnsAsync(childForumListItems);
-
-        _mockPostService
-            .Setup(s => s.GetPostsAsync(1))
-            .ReturnsAsync(forumPosts);
+            .Setup(s => s.GetForumPageDtoAsync(1))
+            .ReturnsAsync(forumPageDtoResult);
         
         var result = await _pageModel.OnGetAsync(1);
         
+        _pageModel.ForumPageDto.Should().BeEquivalentTo(forumPageDto);
         result.Should().BeOfType<PageResult>();
-        _pageModel.BreadcrumbItems.Should().BeEquivalentTo(breadcrumbItems);
-        _pageModel.Posts.Should().BeEquivalentTo(forumPosts);
-        _pageModel.Forum.Should().BeEquivalentTo(forum);
-        _pageModel.ChildForumsWithPostAndReplies.Should().BeEquivalentTo(childForumListItems);
     }
 }

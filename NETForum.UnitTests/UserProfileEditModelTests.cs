@@ -8,6 +8,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Pages.Account.Profile;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -47,7 +48,7 @@ public class UserProfileEditModelTests
     [Fact]
     public async Task OnGetAsync_WhenUserIsNotFound_ShouldReturnNotFoundResult()
     {
-        var userLookupResult = Result<User>.Failure(new Error("User.NotFound", "User not found"));
+        var userLookupResult = Result.Fail<User>("User not found");
         
         _mockUserService
             .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
@@ -69,8 +70,8 @@ public class UserProfileEditModelTests
             UserName = "test"
         };
         
-        var userLookupResult = Result<User>.Success(expectedUser);
-        var userProfileLookupResult = Result<EditUserProfileDto>.Failure(new Error("UserProfile.NotFound", "User not found"));
+        var userLookupResult = Result.Ok(expectedUser);
+        var userProfileLookupResult = Result.Fail<EditUserProfileDto>("User profile not found.");
         
         _mockUserService
             .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
@@ -103,8 +104,8 @@ public class UserProfileEditModelTests
             Location = "test"
         };
         
-        var userLookupResult = Result<User>.Success(expectedUser);
-        var userProfileLookupResult = Result<EditUserProfileDto>.Success(expectedEditUserProfileDto);
+        var userLookupResult = Result.Ok(expectedUser);
+        var userProfileLookupResult = Result.Ok(expectedEditUserProfileDto);
         
         _mockUserService
             .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
@@ -136,7 +137,7 @@ public class UserProfileEditModelTests
     [Fact]
     public async Task OnPostAsync_WhenUserIsNotFound_ShouldReturnNotFoundResult()
     {
-        var userLookupResult = Result<User>.Failure(new Error("User.NotFound", "User not found"));
+        var userLookupResult = Result.Fail<User>("User not found");
         
         _mockUserService
             .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
@@ -164,9 +165,8 @@ public class UserProfileEditModelTests
         
         _pageModel.EditUserProfileDto = editUserProfileDto;
         
-        var userLookupResult = Result<User>.Success(expectedUser);
-        var userProfileUpdateResult = Result.Success();
-        
+        var userLookupResult = Result.Ok(expectedUser);
+        var userProfileUpdateResult = Result.Ok();
         _mockUserService
             .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
             .ReturnsAsync(userLookupResult);

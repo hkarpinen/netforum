@@ -17,7 +17,10 @@ namespace NETForum.Pages.Category
             if(categoryCreateResult.IsSuccess) return RedirectToPage("/Admin/Categories");
             
             // Create result was not successful.
-            ModelState.AddModelError(string.Empty, categoryCreateResult.Error.Message);
+            foreach (var error in categoryCreateResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Message);
+            }
             return Page();
         }
     }

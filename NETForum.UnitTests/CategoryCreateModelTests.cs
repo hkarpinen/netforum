@@ -6,6 +6,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Pages.Category;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -53,7 +54,7 @@ public class CategoryCreateModelTests
         
         _pageModel.CreateCategoryDto = createCategoryDto;
         
-        var categoryCreateResult = Result<Category>.Success(expectedCategory);
+        var categoryCreateResult = Result.Ok(expectedCategory);
         
         _mockCategoryService
             .Setup(s => s.AddCategoryAsync(createCategoryDto))
@@ -78,8 +79,7 @@ public class CategoryCreateModelTests
         
         _pageModel.CreateCategoryDto = createCategoryDto;
 
-        var categoryCreateResult =
-            Result<Category>.Failure(new Error("Category.UniqueConstraintViolation", "violation_Name"));
+        var categoryCreateResult = Result.Fail<Category>("Name is already in use.");
         
         _mockCategoryService
             .Setup(s => s.AddCategoryAsync(createCategoryDto))

@@ -29,7 +29,7 @@ namespace NETForum.Data.Configurations
 
             // 2. Reply -> User (Author) relationship
             builder.HasOne(r => r.Author)
-                .WithMany() // User doesn't need navigation back to Replies
+                .WithMany(u => u.Replies)
                 .HasForeignKey(r => r.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
         }

@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,24 +7,24 @@ using NETForum.Services;
 namespace NETForum.Pages.Roles
 {
     [Authorize(Roles = "Admin")]
-    public class EditModel(IRoleService roleService, IMapper mapper) : PageModel
+    public class EditModel(IRoleService roleService) : PageModel
     {
         [BindProperty]
         public EditRoleDto EditRoleDto { get; set; } = new();
 
-        public async Task OnGetAsync(int id)
+        public async Task<IActionResult> OnGetAsync(int id)
         {
-            var role = await roleService.GetRoleAsync(id);
-            if(role != null)
-            {
-                EditRoleDto = mapper.Map<EditRoleDto>(role);
-            }
+            var roleEditDtoResult = await roleService.GetRoleForEditAsync(id);
+            if(roleEditDtoResult.IsFailed) return NotFound();
+            EditRoleDto = roleEditDtoResult.Value;
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(int id)
         {
-            var role = await roleService.GetRoleAsync(id);
-            if (role == null) return NotFound();
+            var roleEditDtoResult = await roleService.GetRoleForEditAsync(id);
+            if(roleEditDtoResult.IsFailed) return NotFound();
+            EditRoleDto = roleEditDtoResult.Value;
             
             EditRoleDto.Id = id;
             var result = await roleService.UpdateRoleAsync(EditRoleDto);

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Repositories.Filters;
+using NETForum.Filters;
 using NETForum.Services;
 
 namespace NETForum.Pages.Admin;
@@ -25,15 +25,13 @@ public class CategoriesModel(ICategoryService categoryService) : PageModel
     
     public async Task<IActionResult> OnGetAsync()
     {
-        CategoriesResult = await categoryService.GetCategoriesWithForumsPagedAsync(
-            PageNumber,
-            PageSize,
-            new CategoryFilterOptions
-            {
-                Name = Name,
-                Published = Published
-            }
-        );
+        CategoriesResult = await categoryService.GetCategoriesPagedAsync(new CategoryFilterOptions
+        {
+            PageNumber = PageNumber,
+            PageSize = PageSize,
+            Name = Name,
+            Published = true
+        });
         return Page();
     }
 }

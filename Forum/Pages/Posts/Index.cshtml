@@ -1,4 +1,5 @@
 ﻿@page
+@using NETForum.Pages.Shared.Components.PostList
 @model NETForum.Pages.Posts.IndexModel
 
 @{
@@ -48,7 +49,10 @@
                 Posts
             </div>
             <div class="card-body">
-                @await Component.InvokeAsync("PostList", Model.Posts.Items)
+                @await Component.InvokeAsync("PostList", new PostListViewModel
+                {
+                    Posts = Model.Posts.Items.ToList()
+                })
             </div>
         </div>
     </div>

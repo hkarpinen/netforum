@@ -1,12 +1,6 @@
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
-using NETForum.Data;
-using NETForum.Models.Entities;
-using NETForum.Repositories;
-
 namespace NETForum.IntegrationTests;
 
-public class ForumRepositoryTests : IDisposable
+/* public class ForumRepositoryTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly ForumRepository _repository;
@@ -203,4 +197,4 @@ public class ForumRepositoryTests : IDisposable
     }
     
     
-}
+}*/

@@ -1,12 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
-using NETForum.Models.Entities;
+using NETForum.Models.DTOs;
 
 namespace NETForum.Pages.Shared.Components.PostList;
 
-public class PostListViewComponent : ViewComponent
+public class PostListViewModel
 {
-    public IViewComponentResult Invoke(IEnumerable<Post> posts)
-    {
-        return View(posts);
-    }
+    public List<PostSummaryDto> Posts { get; set; }
 }

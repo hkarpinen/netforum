@@ -30,7 +30,11 @@ namespace NETForum.Pages.Forums
             var addForumResult = await forumService.AddForumAsync(CreateForumDto);
             if(addForumResult.IsSuccess) return RedirectToPage("/Admin/Forums/Index");
 
-            ModelState.AddModelError(string.Empty, addForumResult.Error.Message);
+            // Handle forum add errors
+            foreach (var error in addForumResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Message);
+            }
             return Page();
         }
     }

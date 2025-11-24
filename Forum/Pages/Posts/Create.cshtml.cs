@@ -21,7 +21,10 @@ namespace NETForum.Pages.Posts
             if(addPostResult.IsSuccess) return RedirectToPage("/Posts/Details", new { id = addPostResult.Value.Id });
 
             // Adding the post failed, add the error to the ModelState.
-            ModelState.AddModelError(string.Empty, addPostResult.Error.Message);
+            foreach (var error in addPostResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Message);
+            }
             return Page();
         }
     }

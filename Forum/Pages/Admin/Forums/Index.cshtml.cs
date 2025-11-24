@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using NETForum.Filters;
 using NETForum.Models.Entities;
-using NETForum.Repositories.Filters;
 using NETForum.Services;
 
 namespace NETForum.Pages.Admin.Forums
@@ -38,13 +38,17 @@ namespace NETForum.Pages.Admin.Forums
         {
             CategoryListItems = await categoryService.GetCategorySelectListItemsAsync();
             ParentForumListItems = await forumService.GetForumSelectListItemsAsync();
-            Forums = await forumService.GetForumsPagedAsync(PageNumber, PageSize, new ForumFilterOptions()
+            Forums = await forumService.GetForumsPagedAsync(new ForumFilterOptions
             {
                 Name = Name,
                 CategoryId = CategoryId,
                 ParentForumId = ParentForumId,
-                Published = Published
-            }, "created", false);
+                Published = Published,
+                PageNumber = PageNumber,
+                PageSize = PageSize,
+                SortBy = ForumSearchSortBy.CreatedAt,
+                Ascending = false
+            });
             return Page();
         }
     }

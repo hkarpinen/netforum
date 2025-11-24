@@ -1,23 +1,18 @@
 @using NETForum.Helpers
 @using NETForum.Pages.Shared.Components.UserPhoto
-@model IEnumerable<NETForum.Models.Entities.Post>
+@model PostListViewModel
 
-@foreach(var post in Model)
+@foreach(var post in Model.Posts)
 {
-    var latestReply = post.Replies.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
-    
     <div class="post-list-item">
         <div class="d-flex justify-content-between p-1">
             <div class="d-flex gap-3 align-items-center">
                 <span class="text-secondary">
-                    @if(post.Author != null)
+                    @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
                     {
-                        @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
-                        {
-                            PhotoUrl = post.Author.ProfileImageUrl,
-                            UserName = post.Author.UserName,
-                        })
-                    }
+                        PhotoUrl = post.AuthorAvatarUrl,
+                        UserName = post.AuthorName,
+                    })
                 </span>
                 <a 
                     class="d-flex flex-column text-decoration-none text-black"
@@ -37,31 +32,24 @@
                     <p class="m-0 text-primary">Replies</p>
                     <p class="m-0">@post.ReplyCount.ToString()</p>
                 </div>
-                @if (post.Replies.Any())
+                @if (post.LastReplySummary != null)
                 {
                     <div class="d-flex align-items-center gap-3">
                         <div class="d-flex flex-column">
-                            <a 
+                            <a
                                 asp-page="/Posts/Details"
-                                asp-route-id="@post.Id"
-                            >
-                                @if(latestReply is { Author: not null })
-                                {
-                                    @latestReply.Author.UserName
-                                }
+                                asp-route-id="@post.Id">
+                                @post.LastReplySummary.AuthorName
                             </a>
                             <p class="m-0">@DateHelpers.ToRelativeDatetimeString(post.CreatedAt)</p>
                         </div>
                         <span class="text-secondary">
-                            @if (latestReply is { Author: not null })
+                            @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
                             {
-                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
-                                {
-                                    PhotoUrl = latestReply.Author.ProfileImageUrl,
-                                    UserName = latestReply.Author.UserName,
-                                    Size = 35
-                                })
-                            }
+                                PhotoUrl = post.LastReplySummary.AuthorAvatarUrl,
+                                UserName = post.LastReplySummary.AuthorName,
+                                Size = 35
+                            })
                         </span>
                     </div>
                 }

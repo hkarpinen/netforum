@@ -7,6 +7,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Pages.Forums;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -122,7 +123,7 @@ public class ForumCreateModelTests
             CategoryId = 1,
         };
         
-        var forumAddResult = Result<Forum>.Failure(new Error("error", "error"));
+        var forumAddResult = Result.Fail("Error");
         
         _pageModel.CreateForumDto = createForumDto;
         
@@ -177,7 +178,7 @@ public class ForumCreateModelTests
             CategoryId = 1
         };
 
-        var forumAddResult = Result<Forum>.Success(createdForum);
+        var forumAddResult = Result.Ok(createdForum);
         
         _pageModel.CreateForumDto = createForumDto;
         

@@ -1,5 +1,6 @@
 ﻿@page "/Forums/{id:int}"
 @using NETForum.Pages.Shared.Components.ForumList
+@using NETForum.Pages.Shared.Components.PostList
 
 @model NETForum.Pages.Forums.DetailsModel
 
@@ -7,24 +8,23 @@
     ViewData["Title"] = "Forum Details";
 }
 
-@section Breadcrumbs {
-    @await Component.InvokeAsync("Breadcrumbs", Model.BreadcrumbItems)
-}
-
 <div class="row mt-2">
     <div class="col">
         <div class="d-flex">
-            <a asp-page="/Posts/Create" asp-route-forumId="@Model.Forum.Id" class="btn btn-secondary">Create Post</a>
+            <a asp-page="/Posts/Create" asp-route-forumId="@Model.ForumPageDto.Id" class="btn btn-secondary">Create Post</a>
         </div>
     </div>
 </div>
 <div class="row mt-2">
     <div class="col">
-        @await Component.InvokeAsync("ForumList", new ForumListOptions()
-        {
-            ForumListTitle = "Subforums",
-            ForumItems = Model.ChildForumsWithPostAndReplies
-         })
+        @if (Model.ForumPageDto.Subforums.Count > 0)
+        { 
+            @await Component.InvokeAsync("ForumList", new ForumListOptions
+            {
+               ForumListTitle = "Subforums",
+               ForumItems = Model.ForumPageDto.Subforums
+            });
+        }
     </div>
 </div>
 <div class="row mt-4">
@@ -34,13 +34,16 @@
                 Posts
             </div>
             <div class="card-body">
-                @if (Model.Posts.Any())
+                @if (Model.ForumPageDto.Posts.Count > 0)
                 {
-                    @await Component.InvokeAsync("PostList", Model.Posts)
+                    @await Component.InvokeAsync("PostList", new PostListViewModel
+                    {
+                        Posts = Model.ForumPageDto.Posts
+                    })
                 }
                 else
                 {
-                    <p class="m-0">No posts yet! Be the first :)</p>
+                    <p>No posts to display.</p>
                 }
             </div>
         </div>

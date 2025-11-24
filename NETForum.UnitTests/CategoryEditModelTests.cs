@@ -5,6 +5,7 @@ using Moq;
 using NETForum.Models.DTOs;
 using NETForum.Pages.Category;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -29,7 +30,7 @@ public class CategoryEditModelTests
             Description = "Test"
         };
         
-        var editCategoryDtoResult = Result<EditCategoryDto>.Success(editCategoryDto);
+        var editCategoryDtoResult = Result.Ok(editCategoryDto);
 
         _mockCategoryService
             .Setup(s => s.GetCategoryForEditAsync(1))
@@ -44,7 +45,7 @@ public class CategoryEditModelTests
     [Fact]
     public async Task OnPostAsync_WhenCategoryIsNotFound_ReturnsNotFound()
     {
-        var categoryLookupResult = Result<EditCategoryDto>.Failure(new Error("Category.NotFound", "Category not found"));
+        var categoryLookupResult = Result.Fail<EditCategoryDto>("Category not found");
         
         _mockCategoryService
             .Setup(s => s.GetCategoryForEditAsync(1))

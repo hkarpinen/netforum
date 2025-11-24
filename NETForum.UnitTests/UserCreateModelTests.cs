@@ -7,6 +7,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Pages.Users;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -93,8 +94,8 @@ public class UserCreateModelTests
             Email = createUserDto.Email,
         };
         
-        var serviceCreateResult = Result<User>.Success(createdUser);
-        var serviceUserLookupResult = Result<User>.Success(createdUser);
+        var serviceCreateResult = Result.Ok(createdUser);
+        var serviceUserLookupResult = Result.Ok(createdUser);
         
         _mockUserService
             .Setup(u => u.CreateUserAsync(_pageModel.CreateUserDto))
@@ -106,7 +107,7 @@ public class UserCreateModelTests
         
         _mockUserService
             .Setup(u => u.UpdateUserRolesAsync(createdUser.Id, It.IsAny<List<string>>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(Result.Ok());
         
         await _pageModel.OnPostAsync();
         
@@ -125,7 +126,7 @@ public class UserCreateModelTests
         
         _pageModel.CreateUserDto = createUserDto;
         
-        var createUserResult = Result<User>.Failure(new Error("Error1", "Error1"));
+        var createUserResult = Result.Fail<User>("Error1");
         
         _mockUserService
             .Setup(u => u.CreateUserAsync(_pageModel.CreateUserDto))
@@ -160,13 +161,13 @@ public class UserCreateModelTests
             UserName = createUserDto.Username,
             Email = createUserDto.Email,
         };
-        var userCreateResult = Result<User>.Success(createdUser);
+        var userCreateResult = Result.Ok(createdUser);
         
         _mockUserService
             .Setup(u => u.CreateUserAsync(createUserDto))
             .ReturnsAsync(userCreateResult);
         
-        var userLookupResult = Result<User>.Failure(new Error("Error1", "Error1"));
+        var userLookupResult = Result.Fail<User>("Error1");
         
         _mockUserService
             .Setup(u => u.GetByUsernameAsync(createUserDto.Username))

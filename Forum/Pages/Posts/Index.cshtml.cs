@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using NETForum.Filters;
+using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
-using NETForum.Repositories.Filters;
 using NETForum.Services;
 
 namespace NETForum.Pages.Posts
@@ -37,7 +38,7 @@ namespace NETForum.Pages.Posts
         [BindProperty(SupportsGet = true)]
         public string? ContentSearch { get; set; }
         public IEnumerable<SelectListItem> ForumSelectListItems { get; set; } = new List<SelectListItem>();
-        public PagedResult<Post> Posts { get; set; } = new();
+        public PagedResult<PostSummaryDto> Posts { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -53,8 +54,8 @@ namespace NETForum.Pages.Posts
                     authorId = author.Value.Id;
                 }
             }
-            
-            Posts = await postService.GetPostsPagedAsync(PageNumber, PageSize, new PostFilterOptions()
+
+            Posts = await postService.GetPostsPagedAsync(new PostFilterOptions
             {
                 ForumId = ForumId,
                 AuthorId = authorId,
@@ -62,8 +63,11 @@ namespace NETForum.Pages.Posts
                 Locked = Locked,
                 Published = Published,
                 Title = Title,
-                Content = ContentSearch
-            }, "created", false);
+                Content = ContentSearch,
+                SortBy = PostSortBy.CreatedAt,
+                Ascending = false
+            });
+            
             return Page();
         }
     }

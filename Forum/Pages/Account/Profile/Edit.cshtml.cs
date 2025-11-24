@@ -16,12 +16,12 @@ namespace NETForum.Pages.Account.Profile
         {
             if(User.Identity?.Name == null) return RedirectToPage("/Account/Login");
             var userLookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
-            if (userLookupResult.IsFailure) return NotFound();
+            if (userLookupResult.IsFailed) return NotFound();
             var user = userLookupResult.Value;
             
             // Populate the form with existing profile data
             var editUserProfileDtoResult = await userProfileService.GetUserProfileForEditAsync(user.Id);
-            if (editUserProfileDtoResult.IsFailure) return NotFound();
+            if (editUserProfileDtoResult.IsFailed) return NotFound();
             EditUserProfileDto = editUserProfileDtoResult.Value;
             return Page();
         }
@@ -31,7 +31,7 @@ namespace NETForum.Pages.Account.Profile
             if (!ModelState.IsValid) return Page();
             if (User.Identity?.Name == null) return RedirectToPage("/Account/Login");
             var lookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
-            if (lookupResult.IsFailure) return NotFound();
+            if (lookupResult.IsFailed) return NotFound();
             var user = lookupResult.Value;
             
             // Do any other necessary profile updates here (e.g., updating bio, signature, etc.)

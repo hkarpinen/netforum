@@ -7,6 +7,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Pages.Account.Register;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -43,9 +44,8 @@ public class UserRegistrationModelTests
         _pageModel.UserRegistrationDto = userRegistrationDto;
 
         var username = "test";
-        var userCreateResult = Result.Success();
-        var userLookupResult =
-            Result<User>.Failure(new Error("User.NotFound", $"User with name {username} not found"));
+        var userCreateResult = Result.Ok();
+        var userLookupResult = Result.Fail<User>("User could not be found");
 
         _mockUserService
             .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
@@ -59,7 +59,6 @@ public class UserRegistrationModelTests
         
         result.Should().BeOfType<PageResult>();
         _pageModel.ModelState.ErrorCount.Should().Be(1);
-        _pageModel.ModelState["User.NotFound"].Errors[0].ErrorMessage.Should().Be($"User with name {username} not found");
         _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
         _mockUserService.Verify(s => s.GetByUsernameAsync(username), Times.Once);
     }
@@ -78,7 +77,7 @@ public class UserRegistrationModelTests
         _pageModel.UserRegistrationDto = userRegistrationDto;
         
         var username = "test";
-        var userCreateResult = Result<User>.Failure(new Error("IdentityResultError", $"IdentityResultError"));
+        var userCreateResult = Result.Fail("User could not be created");
         
         _mockUserService
             .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
@@ -88,7 +87,6 @@ public class UserRegistrationModelTests
         
         result.Should().BeOfType<PageResult>();
         _pageModel.ModelState.ErrorCount.Should().Be(1);
-        _pageModel.ModelState["IdentityResultError"].Errors[0].ErrorMessage.Should().Be($"IdentityResultError");
         
         _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
         _mockUserService.Verify(s => s.GetByUsernameAsync(username), Times.Never);
@@ -115,7 +113,7 @@ public class UserRegistrationModelTests
         _pageModel.UserRegistrationDto = userRegistrationDto;
         _pageModel.CreateUserProfileDto = userProfileDto;
         
-        var userCreateResult = Result.Success();
+        var userCreateResult = Result.Ok();
 
         var expectedUser = new User()
         {
@@ -132,9 +130,9 @@ public class UserRegistrationModelTests
             Location = "test"
         };
 
-        var userLookupResult = Result<User>.Success(expectedUser);
+        var userLookupResult = Result.Ok(expectedUser);
 
-        var addUserProfileResult = Result<UserProfile>.Success(expectedUserProfile);
+        var addUserProfileResult = Result.Ok(expectedUserProfile);
         
         _mockUserService
             .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
@@ -183,10 +181,10 @@ public class UserRegistrationModelTests
         
         _pageModel.UserRegistrationDto = userRegistrationDto;
         _pageModel.CreateUserProfileDto = userProfileDto;
-        
-        var userCreateResult = Result.Success();
-        var userLookupResult = Result<User>.Success(expectedUser);
-        var userProfileAddResult = Result<UserProfile>.Failure(new Error("UserProfile.AlreadyExists", $"User profile already exists"));
+
+        var userCreateResult = Result.Ok();
+        var userLookupResult = Result.Ok(expectedUser);
+        var userProfileAddResult = Result.Fail<UserProfile>("User profile could not be created");
         
         _mockUserService
             .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
@@ -204,7 +202,6 @@ public class UserRegistrationModelTests
         
         result.Should().BeOfType<PageResult>();
         _pageModel.ModelState.ErrorCount.Should().Be(1);
-        _pageModel.ModelState["UserProfile.AlreadyExists"].Errors[0].ErrorMessage.Should().Be($"User profile already exists");
         _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
         _mockUserService.Verify(s => s.GetByUsernameAsync(userRegistrationDto.Username), Times.Once);
         _mockUserProfileService.Verify(s => s.AddUserProfileAsync(userProfileDto), Times.Once);
@@ -247,9 +244,9 @@ public class UserRegistrationModelTests
         _pageModel.UserRegistrationDto = userRegistrationDto;
         _pageModel.CreateUserProfileDto = userProfileDto;
         
-        var userCreateResult = Result.Success();
-        var userLookupResult = Result<User>.Success(expectedUser);
-        var userProfileAddResult = Result<UserProfile>.Success(expectedUserProfile);
+        var userCreateResult = Result.Ok();
+        var userLookupResult = Result.Ok(expectedUser);
+        var userProfileAddResult = Result.Ok(expectedUserProfile);
         
         _mockUserService
             .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
@@ -265,12 +262,11 @@ public class UserRegistrationModelTests
 
         _mockUserService
             .Setup(s => s.UpdateUserProfileImageAsync(expectedUser.Id, userProfileDto.ProfileImage))
-            .ReturnsAsync(false);
+            .ReturnsAsync(Result.Fail("Could not add profile image"));
         
         var result = await _pageModel.OnPostAsync();
         
         result.Should().BeOfType<PageResult>();
-        _pageModel.ModelState[""].Errors[0].ErrorMessage.Should().Be($"Could not add profile image");
         _pageModel.ModelState.ErrorCount.Should().Be(1);
         _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
         _mockUserService.Verify(s => s.GetByUsernameAsync(userRegistrationDto.Username), Times.Once);

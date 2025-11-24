@@ -13,7 +13,7 @@ public class EditModel(ICategoryService categoryService) : PageModel
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var editCategoryDtoResult = await categoryService.GetCategoryForEditAsync(id);
-        if(editCategoryDtoResult.IsFailure) return NotFound();
+        if(editCategoryDtoResult.IsFailed) return NotFound();
         EditCategoryDto = editCategoryDtoResult.Value;
         return Page();
     }
@@ -21,7 +21,7 @@ public class EditModel(ICategoryService categoryService) : PageModel
     public async Task<IActionResult> OnPostAsync(int id)
     {
         var editCategoryDtoResult = await categoryService.GetCategoryForEditAsync(id);
-        if(editCategoryDtoResult.IsFailure) return NotFound();
+        if(editCategoryDtoResult.IsFailed) return NotFound();
         EditCategoryDto = editCategoryDtoResult.Value;
         if(!ModelState.IsValid) return Page();
         
@@ -29,7 +29,10 @@ public class EditModel(ICategoryService categoryService) : PageModel
         if(updateCategoryResult.IsSuccess)  return RedirectToPage("/Admin/Categories");
         
         // An error occurred updating the category. 
-        ModelState.AddModelError("", updateCategoryResult.Error.Message);
+        foreach (var error in updateCategoryResult.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Message);
+        }
         return Page();
     }
 }

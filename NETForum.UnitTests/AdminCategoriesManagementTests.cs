@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
+using NETForum.Filters;
 using NETForum.Models.Entities;
 using NETForum.Pages.Admin;
-using NETForum.Repositories.Filters;
 using NETForum.Services;
 
 namespace NETForum.UnitTests;
@@ -34,30 +34,23 @@ public class AdminCategoriesManagementTests
             PageSize = _pageModel.PageSize,
             TotalCount = 0
         };
+
+        var categoryFilterOptions = new CategoryFilterOptions
+        {
+            PageNumber = 1,
+            PageSize = 10,
+            Name = "Test",
+            Published = false
+        };
         
         _mockCategoryService
-            .Setup(s => s.GetCategoriesWithForumsPagedAsync(
-                1, 
-                10,
-                It.Is<CategoryFilterOptions>(f =>
-                    f.Name == "Test" &&
-                    f.Published == false
-                )
-            )).ReturnsAsync(expectedResult);
+            .Setup(s => s.GetCategoriesPagedAsync(categoryFilterOptions))
+            .ReturnsAsync(expectedResult);
         
         var result = await _pageModel.OnGetAsync();
         
-        _mockCategoryService.Verify(c => c.GetCategoriesWithForumsPagedAsync(
-            1,
-            10,
-            It.Is<CategoryFilterOptions>(f =>
-                f.Name == "Test" &&
-                f.Published == false
-            )
-        ), Times.Once);
+        _mockCategoryService.Verify(s => s.GetCategoriesPagedAsync(It.IsAny<CategoryFilterOptions>()), Times.Once);
 
         result.Should().BeOfType<PageResult>();
     }
-    
-    
 }

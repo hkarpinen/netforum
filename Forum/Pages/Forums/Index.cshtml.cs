@@ -1,32 +1,25 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Models.Entities;
-using NETForum.Pages.Shared.Components.ForumList;
+using NETForum.Models.DTOs;
 using NETForum.Services;
 
 namespace NETForum.Pages.Forums 
 { 
-    public class IndexModel(
-        IPostService postService,
-        IUserService userService,
-        IReplyService replyService,
-        IForumService forumService)
-        : PageModel
+    public class IndexModel(IForumService forumService) : PageModel
     {
-        public IEnumerable<Post> LatestPosts { get; set; } = new List<Post>();
-        public int TotalPostCount { get; set; }
-        public int TotalMemberCount { get; set; }
-        public int TotalReplyCount { get; set; }
-        public User? NewestUser { get; set; }
-        public IEnumerable<ForumListItemModel> RootForumItems { get; set; } = new List<ForumListItemModel>();
+        public ForumIndexPageDto ForumIndexPageDto { get; set; }
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
-            RootForumItems = await forumService.GetRootForumListItemsAsync();
-            LatestPosts = await postService.GetLatestPostsWithAuthorAsync(5);
-            TotalPostCount = await postService.GetTotalPostCountAsync();
-            NewestUser = await userService.GetNewestUserAsync();
-            TotalMemberCount = await userService.GetTotalUserCountAsync();
-            TotalReplyCount = await replyService.GetTotalReplyCountAsync();
+            var dtoResult = await forumService.GetForumIndexPageDtoAsync();
+            if (dtoResult.IsFailed)
+            {
+                ModelState.AddModelError("","An error occurred.");
+                return Page();
+            }
+            
+            ForumIndexPageDto = dtoResult.Value;
+            return Page();
         }
     }
 }

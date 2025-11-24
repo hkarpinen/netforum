@@ -1,10 +1,14 @@
-﻿using AutoMapper;
+﻿using Ardalis.Specification.EntityFrameworkCore;
+using AutoMapper;
 using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using NETForum.Data;
+using NETForum.Filters;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
-using NETForum.Repositories;
-using NETForum.Repositories.Filters;
+using NETForum.Services.Specifications;
+using FluentResults;
 
 namespace NETForum.Services
 {
@@ -15,84 +19,78 @@ namespace NETForum.Services
         Task<Result<User>> GetByUsernameAsync(string userName);
         Task<bool> UserExistsAsync(int id);
         Task<EditUserDto?> GetUserForEditAsync(int id);
-        Task<bool> UpdateUserRolesAsync(int userId, List<string> selectedRoleNames);
-        Task<bool> UpdateUserProfileImageAsync(int userId, IFormFile file);
+        Task<Result> UpdateUserRolesAsync(int userId, List<string> selectedRoleNames);
+        Task<Result> UpdateUserProfileImageAsync(int userId, IFormFile file);
         Task<Result<User>> CreateUserAsync(CreateUserDto dto);
         Task<Result> CreateUserWithMemberRoleAsync(UserRegistrationDto dto);
-        Task DeleteUserAsync(int id);
-        Task<User?> GetNewestUserAsync();
-        Task<int> GetTotalUserCountAsync();
-        Task<DateTime> GetUserJoinedDate(int id);
-        Task<PagedResult<User>> GetUsersPagedAsync(
-            int pageNumber, 
-            int pageSize, 
-            UserFilterOptions userFilterOptions,
-            string? sortBy,
-            bool ascending
-        );
+        Task<IdentityResult?> DeleteUserAsync(int id);
+        Task<PagedResult<User>> GetUsersPagedAsync(UserFilterOptions userFilterOptions);
     }
 
     public class UserService(
         UserManager<User> userManager,
         IFileStorageService fileStorageService,
         IMapper mapper,
-        IUserRepository userRepository
+        AppDbContext appDbContext
     ) : IUserService {
 
-        public async Task<bool> UpdateUserProfileImageAsync(int userId, IFormFile file)
+        public async Task<Result> UpdateUserProfileImageAsync(int userId, IFormFile file)
         {
-            var user = await GetUserByIdAsync(userId);
-            if (user.IsFailure) return false;
+            try
+            {
+                var user = await appDbContext.Users.FindAsync(userId);
+                if (user == null) return Result.Fail("User not found");
             
-            // Store for later use to delete old image
-            var oldProfileImageUrl = user.Value.ProfileImageUrl;
+                // Store for later use to delete old image
+                var oldProfileImageUrl = user.ProfileImageUrl;
             
-            // Save the new profile image
-            await using var stream = file.OpenReadStream();
-            var profileImagePath = await fileStorageService.SaveFileAsync(stream, file.FileName);
+                // Save the new profile image
+                await using var stream = file.OpenReadStream();
+                var profileImagePath = await fileStorageService.SaveFileAsync(stream, file.FileName);
 
-            await userRepository.UpdateAsync(userId, trackedEntity =>
-            {
-                trackedEntity.ProfileImageUrl = profileImagePath;
-            });
+                user.ProfileImageUrl = profileImagePath;
+                await appDbContext.SaveChangesAsync();
             
-            // Delete the old profile image if it exists
-            if (oldProfileImageUrl != null) 
-            {
-                await fileStorageService.DeleteFileAsync(oldProfileImageUrl);
+                // Delete the old profile image if it exists
+                if (oldProfileImageUrl != null) 
+                {
+                    await fileStorageService.DeleteFileAsync(oldProfileImageUrl);
+                }
+            
+                return Result.Ok();
             }
-            
-            return true;
+            catch (DbUpdateException)
+            {
+                return Result.Fail("Could not update profile image.");
+            }
         }
 
-        public async Task<PagedResult<User>> GetUsersPagedAsync(
-            int pageNumber, 
-            int pageSize, 
-            UserFilterOptions userFilterOptions,
-            string? sortBy,
-            bool ascending)
+        public async Task<PagedResult<User>> GetUsersPagedAsync(UserFilterOptions userFilterOptions)
         {
-            var repositoryPagedQueryOptions = new PagedRepositoryQueryOptions<UserFilterOptions>()
+            var userSearchSpec = new UserSearchSpec(userFilterOptions);
+
+            var totalUsers = await appDbContext.Users.CountAsync();
+            var users = await appDbContext.Users
+                .WithSpecification(userSearchSpec)
+                .ToListAsync();
+            var pagedResult = new PagedResult<User>
             {
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                SortBy = sortBy,
-                Ascending = ascending,
-                Filter = userFilterOptions,
-                Navigations = ["UserProfile"]
+                Items = users,
+                PageNumber = userFilterOptions.PageNumber,
+                PageSize = userFilterOptions.PageSize,
+                TotalCount = totalUsers
             };
-            return await userRepository.GetAllPagedAsync(repositoryPagedQueryOptions);
+            return pagedResult;
         }
 
         public async Task<IReadOnlyCollection<User>> GetUsersAsync() {
-            var repositoryQueryOptions = new RepositoryQueryOptions<UserFilterOptions>();
-            return await userRepository.GetAllAsync(repositoryQueryOptions);
+            return await appDbContext.Users.ToListAsync();
         }
 
-        public async Task<bool> UpdateUserRolesAsync(int userId, List<string> selectedRoleNames)
+        public async Task<Result> UpdateUserRolesAsync(int userId, List<string> selectedRoleNames)
         {
             var serviceResult = await GetUserByIdAsync(userId);
-            if(!serviceResult.IsSuccess) return false;
+            if (!serviceResult.IsSuccess) return Result.Ok();
             var user = serviceResult.Value;
             
             var currentRoles = await userManager.GetRolesAsync(user);
@@ -106,35 +104,35 @@ namespace NETForum.Services
                 .Where(currentRole => !selectedRoleNames.Contains(currentRole));
             await userManager.RemoveFromRolesAsync(user, removedRoles);
 
-            return true;
+            return Result.Ok();
         }
         
         public async Task<Result<User>> GetUserByIdAsync(int id)
         {
-            var user = await userRepository.GetByIdAsync(id);
+            var user = await appDbContext.Users.FindAsync(id);
             return user == null ? 
-                Result<User>.Failure(new Error("User.NotFound", $"User with ID ${id} not found")) : 
-                Result<User>.Success(user);
+                Result.Fail<User>($"User with ID ${id} not found") : 
+                Result.Ok(user);
         }
 
         public async Task<bool> UserExistsAsync(int id)
         {
-            var result = await userRepository.GetByIdAsync(id);
-            return result != null;
+            return await appDbContext.Users.AnyAsync(u => u.Id == id);
         }
 
         public async Task<Result<User>> GetByUsernameAsync(string userName)
         {
-            var navigations = new[] { "UserProfile" };
-            var user = await userRepository.GetByUsernameAsync(userName, navigations);
+            var user = await appDbContext.Users
+                .Include(x => x.UserProfile)
+                .FirstOrDefaultAsync(u => u.UserName == userName);
             return user == null ?
-                Result<User>.Failure(new Error("User.NotFound", $"User with name {userName} not found")) :
-                Result<User>.Success(user);
+                Result.Fail<User>($"User with name {userName} not found") :
+                Result.Ok(user);
         }
 
         public async Task<EditUserDto?> GetUserForEditAsync(int id)
         {
-            var user = await userRepository.GetByIdAsync(id);
+            var user = await appDbContext.Users.FindAsync(id);
             return user == null ? null : mapper.Map<EditUserDto>(user);
         }
 
@@ -145,14 +143,14 @@ namespace NETForum.Services
             {
                 await userManager.CreateAsync(user);
                 var createdUser = await userManager.FindByNameAsync(dto.Username);
-                return createdUser == null ? 
-                    Result<User>.Failure(
-                        new Error("User.NotFound", $"User with name ${dto.Username} not found")) 
-                    : Result<User>.Success(user);
+                return createdUser == null
+                    ? Result.Fail<User>($"User with name ${dto.Username} not found")
+                    : Result.Ok(user);
             }
             catch (UniqueConstraintException exception)
             {
-                return Result<User>.Failure(new Error("UniqueConstraintException", exception.Message));
+                var constraintShortName = exception.ConstraintName.Split("_").Last();
+                return Result.Fail<User>($"{constraintShortName} is already used.");
             }
         }
 
@@ -163,33 +161,20 @@ namespace NETForum.Services
             var createResult = await userManager.CreateAsync(user, dto.Password);
             if (!createResult.Succeeded)
             {
-                return Result.FromIdentityResult(createResult);
+                return Result.Ok();
             }
             
             var addMemberRoleResult = await userManager.AddToRoleAsync(user, "Member");
-            return !addMemberRoleResult.Succeeded ? 
-                Result.FromIdentityResult(addMemberRoleResult) : 
-                Result.Success();
+
+            return Result.FailIfNotEmpty(
+                addMemberRoleResult.Errors.Select(e => new Error(e.Description)));
         }
 
-        public async Task DeleteUserAsync(int id)
+        public async Task<IdentityResult?> DeleteUserAsync(int id)
         {
-            await userRepository.DeleteByIdAsync(id);
-        }
-        
-        public async Task<User?> GetNewestUserAsync()
-        {
-            return await userRepository.GetNewestUserAsync();
-        }
-
-        public async Task<int> GetTotalUserCountAsync()
-        {
-            return await userRepository.CountTotalUsersAsync();
-        }
-
-        public async Task<DateTime> GetUserJoinedDate(int id)
-        {
-            return await userRepository.GetUserJoinedDateAsync(id);
+            var user = await appDbContext.Users.FindAsync(id);
+            if(user == null) return null;
+            return await userManager.DeleteAsync(user);
         }
     }
 }

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Filters;
 using NETForum.Models.Entities;
-using NETForum.Repositories.Filters;
 using NETForum.Services;
 
 namespace NETForum.Pages.Members;
@@ -21,14 +21,15 @@ public class IndexModel(IUserService userService) : PageModel
     
     public async Task<IActionResult> OnGetAsync()
     {
-        Users = await userService.GetUsersPagedAsync(
-            PageNumber,
-            PageSize,
-            new UserFilterOptions()
-            {
-                Username = Username
-            }, "created", false
-        );
+        Users = await userService.GetUsersPagedAsync(new UserFilterOptions
+        {
+            PageNumber = PageNumber,
+            PageSize = PageSize,
+            Username = Username,
+            SortBy = UserSortBy.CreatedAt,
+            Ascending = false
+        });
+        
         return Page();
     }
 }

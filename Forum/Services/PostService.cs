@@ -1,57 +1,74 @@
-﻿using AutoMapper;
+﻿using Ardalis.Specification.EntityFrameworkCore;
+using AutoMapper;
 using EntityFramework.Exceptions.Common;
 using Microsoft.EntityFrameworkCore;
+using NETForum.Data;
+using NETForum.Filters;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
-using NETForum.Repositories;
-using NETForum.Repositories.Filters;
+using NETForum.Services.Specifications;
+using FluentResults;
 
 namespace NETForum.Services
 {
     public interface IPostService
     {
-        Task<IReadOnlyCollection<Post>> GetPostsAsync(int forumId);
-        Task<int> GetTotalPostCountAsync();
-        Task<int> GetTotalPostCountByAuthorAsync(int authorId);
-        Task<Result<Post>> GetPostWithAuthorAndRepliesAsync(int id);
         Task<Result<EditPostDto>> GetPostForEditAsync(int id);
         Task<Result<Post>> AddPostAsync(string username, int forumId, CreatePostDto createPostDto);
         Task<Result> UpdatePostAsync(int id, EditPostDto editPostDto);
-        Task<IReadOnlyCollection<Post>> GetLatestPostsWithAuthorAsync(int limit);
-        Task<PagedResult<Post>> GetPostsPagedAsync(
-            int pageNumber, 
-            int pageSize, 
-            PostFilterOptions postFilterOptions,
-            string? sortBy,
-            bool ascending
-        );
+        Task<PagedResult<PostSummaryDto>> GetPostsPagedAsync(PostFilterOptions postFilterOptions);
+        Task<Result<PostPageDto>> GetPostPageDto(int postId, string viewerUsername);
     }
 
-    public class PostService(IMapper mapper, IUserService userService, IPostRepository postRepository) : IPostService
+    public class PostService(IMapper mapper, AppDbContext appDbContext) : IPostService
     {
-        public async Task<IReadOnlyCollection<Post>> GetPostsAsync(int forumId)
+        public async Task<Result<PostPageDto>> GetPostPageDto(int postId, string? viewerUsername)
         {
-            var navigations = new[]
-            {
-                "Author",
-                "Replies.Author"
-            };
-            return await postRepository.GetPostsInForumAsync(forumId, navigations);
+            var dto = await appDbContext.Posts
+                .Where(p => p.Id == postId)
+                .Select(p => new PostPageDto
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Content = p.Content,
+                    CreatedAt = p.CreatedAt,
+                    AuthorId = p.AuthorId,
+                    AuthorName = p.Author.UserName,
+                    AuthorAvatarImageUrl = p.Author.ProfileImageUrl,
+                    Replies = p.Replies.Select(r => new ReplyViewModel
+                    {
+                        Id = r.Id,
+                        AuthorName = r.Author.UserName,
+                        AuthorAvatarImageUrl = r.Author.ProfileImageUrl,
+                        Content = r.Content,
+                        CreatedAt = r.CreatedAt
+                    }).ToList(),
+                    AuthorStatsSummary = new AuthorStatsSummary
+                    {
+                        TotalPostCount = p.Author.Posts.Count(),
+                        TotalReplyCount = p.Author.Replies.Count(),
+                        JoinedOn = p.Author.CreatedAt
+                    },
+                    CurrentUserIsAuthor = viewerUsername != null && viewerUsername == p.Author.UserName
+                }).FirstOrDefaultAsync();
+            
+            return dto == null ? 
+                Result.Fail<PostPageDto>("Could not find post") :
+                Result.Ok(dto);
         }
-
+        
         public async Task<Result> UpdatePostAsync(int id, EditPostDto editPostDto)
         {
             try
             {
-                await postRepository.UpdateAsync(id, trackedPost =>
-                {
-                    mapper.Map(editPostDto, trackedPost);
-                });
-                return Result.Success();
+                var post = await appDbContext.Posts.FindAsync(id);
+                mapper.Map(editPostDto, post);
+                await appDbContext.SaveChangesAsync();
+                return Result.Ok();
             }
             catch (DbUpdateException exception)
             {
-                return Result.Failure(new Error("Post.UpdateException", $"Could not update post with ID: {id}."));
+                return Result.Fail("Could not update post");
             }
         }
         
@@ -59,84 +76,72 @@ namespace NETForum.Services
         {
             try
             {
-                var authorLookupResult = await userService.GetByUsernameAsync(username);
-                if (authorLookupResult.IsFailure)
+                var author = await appDbContext.Users.FindAsync(username);
+                if (author == null)
                 {
-                    return Result<Post>.Failure(authorLookupResult.Error);
+                    return Result.Fail<Post>("Author not found");
                 }
 
                 // Map the DTO to a Post() instance.
                 var post = mapper.Map<Post>(createPostDto);
-                post.AuthorId = authorLookupResult.Value.Id;
+                post.AuthorId = author.Id;
                 post.ForumId = forumId;
-                var result = await postRepository.AddAsync(post);
-                return Result<Post>.Success(result);
+                var result = await appDbContext.Posts.AddAsync(post);
+                await appDbContext.SaveChangesAsync();
+                return Result.Ok(result.Entity);
             }
             catch (UniqueConstraintException exception)
             {
                 var shortConstraintName = exception.ConstraintName.Split("_").Last();
-                return Result<Post>.Failure(new Error("Post.UniqueConstraintViolation", $"{shortConstraintName} is already taken."));
+                return Result.Fail<Post>($"{shortConstraintName} is already taken.");
             }
         }
 
         public async Task<Result<EditPostDto>> GetPostForEditAsync(int id)
         {
-            var post = await postRepository.GetByIdAsync(id);
+            var post = await appDbContext.Posts.FindAsync(id);
             if (post == null)
             {
-                return Result<EditPostDto>.Failure(new Error("Post.NotFound", $"Post with ID: ${id} not found."));
+                return Result.Fail<EditPostDto>("Post not found");
             }
             var editPostDto = mapper.Map<EditPostDto>(post);
-            return Result<EditPostDto>.Success(editPostDto);
+            return Result.Ok(editPostDto);
         } 
         
-        public async Task<Result<Post>> GetPostWithAuthorAndRepliesAsync(int id)
-        {
-            var navigations = new[]
+        public async Task<PagedResult<PostSummaryDto>> GetPostsPagedAsync(PostFilterOptions postFilterOptions) {
+            
+            var postSearchSpec = new PostSearchSpec(postFilterOptions);
+            var totalPosts = await appDbContext.Posts.CountAsync();
+            var posts = await appDbContext.Posts
+                .WithSpecification(postSearchSpec)
+                .Select(p => new PostSummaryDto
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Content = p.Content,
+                    CreatedAt = p.CreatedAt,
+                    AuthorName = p.Author.UserName,
+                    AuthorAvatarUrl = p.Author.ProfileImageUrl,
+                    ReplyCount = p.Replies.Count(),
+                    ViewCount = p.ViewCount,
+                    LastReplySummary = p.Replies.OrderByDescending(r => r.CreatedAt)
+                        .Select(r => new ReplySummaryDto
+                        {
+                            Id = r.Id,
+                            AuthorName = r.Author.UserName,
+                            AuthorAvatarUrl = r.Author.ProfileImageUrl,
+                            CreatedAt = r.CreatedAt
+                        }).FirstOrDefault(),
+                })
+                .ToListAsync();
+            var pagedResult = new PagedResult<PostSummaryDto>
             {
-                "Author",
-                "Replies"
+                TotalCount = totalPosts,
+                PageSize = postFilterOptions.PageSize,
+                PageNumber = postFilterOptions.PageNumber,
+                Items = posts
             };
-            var post = await postRepository.GetByIdAsync(id, navigations);
-            return post == null ? 
-                Result<Post>.Failure(new Error("Post.NotFound", $"Post with {id} not found.")) : 
-                Result<Post>.Success(post);
-        }
-        
-        public async Task<IReadOnlyCollection<Post>> GetLatestPostsWithAuthorAsync(int limit)
-        {
-            var navigations = new[] {  "Author" };
-            return await postRepository.GetLatestPostsAsync(limit, navigations);
-        }
-
-        public async Task<int> GetTotalPostCountAsync()
-        {
-            return await postRepository.GetTotalPostCountAllTime();
-        }
-        
-        public async Task<int> GetTotalPostCountByAuthorAsync(int authorId)
-        {
-            return await postRepository.GetTotalPostCountByAuthorAsync(authorId);
-        }
-        
-        public async Task<PagedResult<Post>> GetPostsPagedAsync(
-            int pageNumber, 
-            int pageSize,
-            PostFilterOptions postFilterOptions,
-            string? sortBy,
-            bool ascending
-        )
-        {
-            var repositoryPagedQueryOptions = new PagedRepositoryQueryOptions<PostFilterOptions>()
-            {
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Filter = postFilterOptions,
-                Navigations = ["Author", "Replies"],
-                SortBy = sortBy,
-                Ascending = ascending
-            };
-            return await postRepository.GetAllPagedAsync(repositoryPagedQueryOptions);
+            return pagedResult;
         }
     }
 }

@@ -27,7 +27,7 @@ namespace NETForum.Data.Configurations
 
             // 1. Post -> User (Author) relationship
             builder.HasOne(p => p.Author)
-                .WithMany() // User doesn't need navigation back to Posts
+                .WithMany(u => u.Posts) 
                 .HasForeignKey(p => p.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
 

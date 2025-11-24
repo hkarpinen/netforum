@@ -8,6 +8,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Pages.Posts;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -69,7 +70,7 @@ public class PostCreateModelTests
         
         _pageModel.CreatePostDto = createPostDto;
 
-        var addPostResult = Result<Post>.Failure(new Error("Post.UniqueConstraintViolation", "Title exists"));
+        var addPostResult = Result.Fail("Title exists");
         _mockPostService
             .Setup(s => s.AddPostAsync(It.IsAny<string>(), 1, createPostDto))
             .ReturnsAsync(addPostResult);
@@ -105,7 +106,7 @@ public class PostCreateModelTests
         
         _pageModel.CreatePostDto = createPostDto;
         
-        var postAddResult = Result<Post>.Success(expectedPost);
+        var postAddResult = Result.Ok(expectedPost);
         
         _mockPostService
             .Setup(s => s.AddPostAsync("testuser", 1, createPostDto))

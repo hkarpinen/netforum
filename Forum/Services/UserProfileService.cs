@@ -1,8 +1,9 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
-using NETForum.Repositories;
+using FluentResults;
 
 namespace NETForum.Services;
 
@@ -14,59 +15,65 @@ public interface IUserProfileService
     Task<Result> UpdateUserProfileAsync(int userId, EditUserProfileDto editUserProfileDto);
 }
 
-public class UserProfileService(AppDbContext context, IUserProfileRepository userProfileRepository, IMapper mapper) : IUserProfileService
+public class UserProfileService(AppDbContext context, IMapper mapper) : IUserProfileService
 {
     public async Task<Result<UserProfile>> AddUserProfileAsync(CreateUserProfileDto createUserProfileDto)
     {
         try
         {
-            var userProfileExists = await userProfileRepository.UserProfileExists(createUserProfileDto.UserId);
+            var userProfileExists = await context.UserProfiles.Where(p => p.UserId == createUserProfileDto.UserId).AnyAsync();
             if (userProfileExists)
             {
-                return Result<UserProfile>.Failure(new Error("UserProfile.AlreadyExists", $"UserProfile.{createUserProfileDto.UserId}"));
+                return Result.Fail($"UserProfile.{createUserProfileDto.UserId}");
             }
             
             var userProfile = mapper.Map<UserProfile>(createUserProfileDto);
-            var result = await userProfileRepository.AddAsync(userProfile);
+            var result = await context.UserProfiles.AddAsync(userProfile);
             await context.SaveChangesAsync();
-            return Result<UserProfile>.Success(result);
+            return Result.Ok(userProfile);
         }
-        catch (Exception ex)
+        catch (DbUpdateException e)
         {
-            return Result<UserProfile>.Failure(new Error("Internal error", ex.Message));
+            return Result.Fail<UserProfile>("Could not add user profile");
         }
     }
 
     public async Task<Result<UserProfile>> GetUserProfileAsync(int userId)
     {
-        var result = await userProfileRepository.GetByUserIdAsync(userId);
+        var result = await context.UserProfiles.Where(p => p.UserId == userId).FirstOrDefaultAsync();
         return result == null ?
-            Result<UserProfile>.Failure(new Error("UserProfile.NotFound", $"UserProfile.{userId}")) : 
-            Result<UserProfile>.Success(result);
+            Result.Fail<UserProfile>("Could not find user profile") : 
+            Result.Ok(result);
     }
 
     public async Task<Result<EditUserProfileDto>> GetUserProfileForEditAsync(int userId)
     {
-        var result = await userProfileRepository.GetByUserIdAsync(userId);
+        var result = await context.UserProfiles.Where(p => p.UserId == userId).FirstOrDefaultAsync();
         if (result == null)
         {
-            return Result<EditUserProfileDto>.Failure(new Error("UserProfile.NotFound", $"UserProfile.{userId}"));
+            return Result.Fail<EditUserProfileDto>("Could not find user profile");
         }
         var editUserProfileDto = mapper.Map<EditUserProfileDto>(result);
-        return Result<EditUserProfileDto>.Success(editUserProfileDto);
+        return Result.Ok(editUserProfileDto);
     }
     
     public async Task<Result> UpdateUserProfileAsync(int userId, EditUserProfileDto editUserProfileDto)
     {
-        var userProfile = await userProfileRepository.GetByUserIdAsync(userId);
-        if (userProfile == null)
+        try
         {
-            return Result.Failure(new Error("UserProfile.NotFound", $"UserProfile.{userId}"));
+            var userProfile = await context.UserProfiles.Where(p => p.UserId == userId).FirstOrDefaultAsync();
+            if (userProfile == null)
+            {
+                return Result.Fail("Could not find user profile");
+            }
+
+            mapper.Map(editUserProfileDto, userProfile);
+            await context.SaveChangesAsync();
+            return Result.Ok();
         }
-        await userProfileRepository.UpdateAsync(userProfile.Id, trackedUserProfile =>
+        catch (DbUpdateException e)
         {
-            mapper.Map(editUserProfileDto, trackedUserProfile);
-        });
-        return Result.Success();
+            return Result.Fail("Could not update user profile");
+        }
     }
 }

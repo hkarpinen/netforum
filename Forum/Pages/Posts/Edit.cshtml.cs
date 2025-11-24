@@ -18,12 +18,12 @@ namespace NETForum.Pages.Posts
             if (User.Identity?.Name == null) return RedirectToPage("/Account/Login");
 
             var getEditPostDtoResult = await postService.GetPostForEditAsync(id);
-            if (getEditPostDtoResult.IsFailure) return NotFound();
+            if (getEditPostDtoResult.IsFailed) return NotFound();
             var post = getEditPostDtoResult.Value;
             var authorLookupResult = await userService.GetUserByIdAsync(post.AuthorId);
             
             // TODO: Unsure what is appropriate here.
-            if (authorLookupResult.IsFailure) return RedirectToPage("/Error");
+            if (authorLookupResult.IsFailed) return RedirectToPage("/Error");
             
             // Forbid a user who is not the author from editing a post that is not theirs.
             if (User.Identity.Name != authorLookupResult.Value.UserName) return Forbid();
@@ -35,17 +35,23 @@ namespace NETForum.Pages.Posts
         public async Task<IActionResult> OnPostAsync(int id)
         {
             var getEditPostDtoResult = await postService.GetPostForEditAsync(id);
-            if (getEditPostDtoResult.IsFailure) return NotFound();
+            if (getEditPostDtoResult.IsFailed) return NotFound();
             var post = getEditPostDtoResult.Value;
+            EditPostDto = post;
+            
+            
             var authorLookupResult = await userService.GetUserByIdAsync(post.AuthorId);
-            if (authorLookupResult.IsFailure) return NotFound();
+            if (authorLookupResult.IsFailed) return NotFound();
             if (User.Identity.Name != authorLookupResult.Value.UserName) return Forbid();
             
             var updatePostResult = await postService.UpdatePostAsync(id, EditPostDto);
             if (updatePostResult.IsSuccess) return RedirectToPage("/Posts/Details", new { id });
             
             // Handle update error
-            ModelState.AddModelError(string.Empty, updatePostResult.Error.Message);
+            foreach (var error in updatePostResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Message);
+            }
             return Page();
         }
     }

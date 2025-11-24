@@ -29,6 +29,7 @@ namespace NETForum.Data.Configurations
                 .WithOne()
                 .HasForeignKey<UserProfile>(up => up.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
         }
     }
 }

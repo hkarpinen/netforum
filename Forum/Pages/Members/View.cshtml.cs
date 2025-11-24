@@ -12,7 +12,7 @@ public class ViewModel(IUserService userService) : PageModel
     public async Task<IActionResult> OnGetAsync(string username)
     {
         var lookupResult = await userService.GetByUsernameAsync(username);
-        if (lookupResult.IsFailure) return NotFound();
+        if (lookupResult.IsFailed) return NotFound();
         User = lookupResult.Value;
         return Page();
     }

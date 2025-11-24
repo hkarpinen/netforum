@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
 using NETForum.Middleware;
 using NETForum.Models.Entities;
-using NETForum.Repositories;
 using NETForum.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +23,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
 ));
 
+// Enable memory cache
+builder.Services.AddMemoryCache();
+
 // Add Identity Management
 builder.Services.AddIdentity<User, Role>()
     .AddEntityFrameworkStores<AppDbContext>()
@@ -37,14 +39,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // Add DI classes
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IForumRepository, ForumRepository>();
-builder.Services.AddScoped<IPostRepository, PostRepository>();
-builder.Services.AddScoped<IReplyRepository, ReplyRepository>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
-
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();

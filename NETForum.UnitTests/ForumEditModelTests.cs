@@ -6,6 +6,7 @@ using Moq;
 using NETForum.Models.DTOs;
 using NETForum.Pages.Forums;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -25,7 +26,7 @@ public class ForumEditModelTests
     [Fact]
     public async Task OnGetAsync_WhenForumIsNotFound_ReturnsNotFoundResult()
     {
-        var forumLookupResult = Result<EditForumDto>.Failure(new Error("Forum.NotFound", "Forum not found"));
+        var forumLookupResult = Result.Fail<EditForumDto>("Forum not found");
         
         _mockForumService
             .Setup(s => s.GetForumForEditAsync(1))
@@ -61,8 +62,8 @@ public class ForumEditModelTests
             new() { Value = "1", Text = "1" },
             new() { Value = "2", Text = "2" }
         };
-        
-        var forumLookupResult = Result<EditForumDto>.Success(editForumDto);
+
+        var forumLookupResult = Result.Ok(editForumDto);
         
         _mockForumService
             .Setup(s => s.GetForumForEditAsync(1))
@@ -87,7 +88,7 @@ public class ForumEditModelTests
     [Fact]
     public async Task OnPostAsync_WhenForumIsNotFound_ReturnsNotFoundResult()
     {
-        var forumLookupResult = Result<EditForumDto>.Failure(new Error("Forum.NotFound", "Forum not found"));
+        var forumLookupResult = Result.Fail<EditForumDto>("Forum not found");
         
         _mockForumService
             .Setup(s=>s.GetForumForEditAsync(1))
@@ -111,7 +112,7 @@ public class ForumEditModelTests
             Description = "test"
         };
         
-        var forumLookupResult = Result<EditForumDto>.Success(expectedForumEditDto);
+        var forumLookupResult = Result.Ok(expectedForumEditDto);
         
         _mockForumService
             .Setup(s => s.GetForumForEditAsync(1))
@@ -137,8 +138,8 @@ public class ForumEditModelTests
             Description = "test"
         };
         
-        var forumLookupResult = Result<EditForumDto>.Success(editForumDto);
-        var forumUpdateResult = Result.Failure(new  Error("Forum.UniqueConstraintViolation", "Name is already taken"));
+        var forumLookupResult = Result.Ok(editForumDto);
+        var forumUpdateResult = Result.Fail("Name is already in use");
 
         _mockForumService
             .Setup(s => s.GetForumForEditAsync(1))
@@ -166,8 +167,8 @@ public class ForumEditModelTests
             Description = "test"
         };
 
-        var forumUpdateResult = Result.Success();
-        var forumLookupResult = Result<EditForumDto>.Success(editForumDto);
+        var forumUpdateResult = Result.Ok();
+        var forumLookupResult = Result.Ok(editForumDto);
         
         _mockForumService
             .Setup(s => s.GetForumForEditAsync(1))

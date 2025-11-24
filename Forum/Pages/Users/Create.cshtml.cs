@@ -34,11 +34,11 @@ namespace NETForum.Pages.Users
             if (result.IsSuccess)
             {
                 var user = await userService.GetByUsernameAsync(CreateUserDto.Username);
-                if(user.IsFailure) return NotFound();
+                if(user.IsFailed) return NotFound();
                 
                 var rolesToList = SelectedRoles.ToList();
                 var updateRolesResult = await userService.UpdateUserRolesAsync(user.Value.Id, rolesToList);
-                if (!updateRolesResult)
+                if (updateRolesResult.IsFailed)
                 {
                     // TODO: Should gracefully fail here.
                 }
@@ -46,7 +46,10 @@ namespace NETForum.Pages.Users
             }
             
             // Handle the model error.
-            ModelState.AddModelError(result.Error.Code, result.Error.Message);
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Message);
+            }
             return Page();
         } 
     }

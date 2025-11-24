@@ -6,7 +6,7 @@
 
 @{
     ViewData["Title"] = "Forums";
-    var groupedByCategory = Model.RootForumItems.Where(f => f.Forum.CategoryId != null).GroupBy(f => f.Forum.Category);
+    var groupedByCategory = Model.ForumIndexPageDto.RootForums.Where(f => f.CategoryName!= null).GroupBy(f => f.CategoryName);
 }
 
 <div class="row mt-2">
@@ -14,15 +14,15 @@
         @await Component.InvokeAsync("ForumList", new ForumListOptions()
         {
             ForumListTitle = "Uncategorized Forums",
-            ForumItems = Model.RootForumItems.Where(f => f.Forum.CategoryId == null)
+            ForumItems = Model.ForumIndexPageDto.RootForums.Where(f => f.CategoryName == null).ToList()
         })
         @foreach(var categoryGroup in groupedByCategory)
         {
             <div class="mt-2">
                 @await Component.InvokeAsync("ForumList", new ForumListOptions()
                 {
-                    ForumListTitle = categoryGroup.Key.Name,
-                    ForumItems = categoryGroup
+                    ForumListTitle = categoryGroup.Key,
+                    ForumItems = categoryGroup.ToList()
                 })
             </div>
         }
@@ -42,20 +42,18 @@
                     Latest Posts
                 </div>
                 <div class="card-body">
-                    @if(Model.LatestPosts.Any())
+                    @if(Model.ForumIndexPageDto.LatestPosts.Any())
                         {
-                            @foreach (var post in Model.LatestPosts)
+                            @foreach (var post in Model.ForumIndexPageDto.LatestPosts)
                             {
                                 <div class="latest-post">
                                     <div class="d-flex gap-3 align-items-center">
                                         <span class="text-secondary account-icon">
-                                            @if(post.Author != null) {
-                                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
-                                                {
-                                                    PhotoUrl = post.Author.ProfileImageUrl,
-                                                    UserName = post.Author.UserName
-                                                })
-                                            }
+                                            @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                                            {
+                                                PhotoUrl = post.AuthorAvatarUrl,
+                                                UserName = post.AuthorName
+                                            })
                                         </span>
                                         <div class="d-flex justify-content-between flex-grow-1">
                                             <div class="d-flex flex-column">
@@ -66,10 +64,7 @@
                                                 </a>
                                                 <small>@DateHelpers.ToRelativeDatetimeString(post.UpdatedAt)</small>
                                             </div>
-                                            @if (post.Author != null)
-                                            {
-                                                <p class="m-0">@post.Author.UserName</p>
-                                            }
+                                            <p class="m-0">@post.AuthorName</p>
                                         </div>
                                     </div>
                                 </div>
@@ -96,21 +91,21 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <p class="text-primary">Posts:</p>
-                        <p class="text-secondary">@Model.TotalPostCount.ToString()</p>
+                        <p class="text-secondary">@Model.ForumIndexPageDto.Stats.TotalPosts.ToString()</p>
                     </div>
                     <div class="d-flex justify-content-between">
                         <p class="text-primary">Replies:</p>
-                        <p class="text-secondary">@Model.TotalReplyCount.ToString()</p>
+                        <p class="text-secondary">@Model.ForumIndexPageDto.Stats.TotalReplies.ToString()</p>
                     </div>
                     <div class="d-flex justify-content-between">
                         <p class="text-primary">Members:</p>
-                        <p class="text-secondary">@Model.TotalMemberCount.ToString()</p>
+                        <p class="text-secondary">@Model.ForumIndexPageDto.Stats.TotalMembers.ToString()</p>
                     </div>
                     <div class="d-flex justify-content-between">
                         <p class="text-primary">Newest Member:</p>
-                        @if(Model.NewestUser != null)
+                        @if(Model.ForumIndexPageDto.NewestUser != null)
                         {
-                            <a class="text-secondary">@Model.NewestUser.UserName</a>
+                            <a class="text-secondary">@Model.ForumIndexPageDto.NewestUser.UserName</a>
                         }
                     </div>
                 </div>

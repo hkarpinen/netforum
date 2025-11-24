@@ -19,7 +19,7 @@ public class EditModel(
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var editForumDtoResult = await forumService.GetForumForEditAsync(id);
-        if (editForumDtoResult.IsFailure) return NotFound();
+        if (editForumDtoResult.IsFailed) return NotFound();
         EditForumDto = editForumDtoResult.Value;
         CategorySelectListItems = await categoryService.GetCategorySelectListItemsAsync();
         ParentForumSelectListItems = await forumService.GetForumSelectListItemsAsync();
@@ -30,7 +30,7 @@ public class EditModel(
     public async Task<IActionResult> OnPostAsync(int id)
     {
         var editForumDtoResult = await forumService.GetForumForEditAsync(id);
-        if (editForumDtoResult.IsFailure) return NotFound();
+        if (editForumDtoResult.IsFailed) return NotFound();
         EditForumDto = editForumDtoResult.Value;
         
         CategorySelectListItems = await categoryService.GetCategorySelectListItemsAsync();
@@ -42,7 +42,10 @@ public class EditModel(
         if(updateForumResult.IsSuccess) return RedirectToPage("/Admin/Forums/Index");
         
         // An error occurred.
-        ModelState.AddModelError(string.Empty, updateForumResult.Error.Message);
+        foreach (var error in updateForumResult.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Message);
+        }
         return Page();
     }
 }

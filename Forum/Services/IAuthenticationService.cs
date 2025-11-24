@@ -1,4 +1,5 @@
 using NETForum.Models.DTOs;
+using FluentResults;
 
 namespace NETForum.Services;
 

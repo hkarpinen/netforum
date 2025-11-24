@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Filters;
 using NETForum.Models.Entities;
-using NETForum.Repositories.Filters;
 using NETForum.Services;
 
 namespace NETForum.Pages.Admin
@@ -26,11 +26,15 @@ namespace NETForum.Pages.Admin
 
         public async Task OnGet()
         {
-            Roles = await roleService.GetRolesPagedAsync(PageNumber, PageSize, new RoleFilterOptions()
+            Roles = await roleService.GetRolesPagedAsync(new RoleFilterOptions
             {
+                PageNumber = PageNumber,
+                PageSize = PageSize,
                 Name = Name,
-                Description = Description
-            }, "name", true);
+                Description = Description,
+                SortBy = RoleSortBy.Name,
+                Ascending = true
+            });
         }
     }
 }

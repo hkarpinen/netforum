@@ -7,14 +7,13 @@ using Moq;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Pages.Posts;
-using NETForum.Pages.Shared.Components.Breadcrumbs;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
 public class PostDetailModelTests
 {
-    private readonly Mock<IForumService> _mockForumService;
     private readonly Mock<IPostService> _mockPostService;
     private readonly Mock<IReplyService> _mockReplyService;
     private readonly Mock<IUserService> _mockUserService;
@@ -22,13 +21,10 @@ public class PostDetailModelTests
 
     public PostDetailModelTests()
     {
-        _mockForumService = new Mock<IForumService>();
         _mockPostService = new Mock<IPostService>();
         _mockReplyService = new Mock<IReplyService>();
         _mockUserService = new Mock<IUserService>();
-        _pageModel = new DetailModel(
-            _mockForumService.Object,
-            _mockPostService.Object,
+        _pageModel = new DetailModel(_mockPostService.Object,
             _mockReplyService.Object,
             _mockUserService.Object
         );
@@ -58,35 +54,22 @@ public class PostDetailModelTests
         var user = new User { Id = authorId, UserName = "test", CreatedAt = DateTime.UtcNow.AddYears(-1) };
         _mockUserService
             .Setup(s => s.GetByUsernameAsync("test"))
-            .ReturnsAsync(Result<User>.Success(user));
+            .ReturnsAsync(Result.Ok(user));
 
         // Setup post
-        var post = new Post 
-        { 
-            Id = postId, 
+        var postPageDto = new PostPageDto
+        {
+            Id = 1,
+            AuthorName = "test",
+            AuthorId = 2,
             Title = "Test Post Title",
-            Content = "Test Post Content",
-            AuthorId = authorId,
-            Author = user,
-            Replies = new List<Reply>()
+            Content = "Test Post Content"
         };
-        _mockPostService
-            .Setup(s => s.GetPostWithAuthorAndRepliesAsync(postId))
-            .ReturnsAsync(Result<Post>.Success(post));
-
-        // Setup counts
-        _mockPostService
-            .Setup(s => s.GetTotalPostCountByAuthorAsync(authorId))
-            .ReturnsAsync(10);
+        var postPageDtoResult = Result.Ok(postPageDto);
         
-        _mockReplyService
-            .Setup(s => s.GetTotalReplyCountAsync(authorId))
-            .ReturnsAsync(25);
-
-        // Setup breadcrumbs
-        _mockForumService
-            .Setup(s => s.GetForumBreadcrumbItems(It.IsAny<int>()))
-            .ReturnsAsync(new List<BreadcrumbItemModel>());
+        _mockPostService
+            .Setup(s => s.GetPostPageDto(1, "test"))
+            .ReturnsAsync(postPageDtoResult);
     }
 
     [Fact]
@@ -94,16 +77,20 @@ public class PostDetailModelTests
     {
         SetupAuthenticatedUser(_pageModel, "test");
         SetupSuccessfulPostLoad(1, 2);
+
+        var postPageDto = new PostPageDto
+        {
+            Id = 1,
+            AuthorName = "test",
+            AuthorId = 2,
+            Title = "Test Post Title",
+            Content = "Test Post Content"
+        };
         
         var result = await _pageModel.OnGetAsync(1);
         
         result.Should().BeOfType<PageResult>();
-        _pageModel.AuthenticatedUser.Should().NotBeNull();
-        _pageModel.Post.Should().NotBeNull();
-        _pageModel.Replies.Should().NotBeNull();
-        _pageModel.UserIsAuthor.Should().BeTrue();
-        _pageModel.AuthorTotalPosts.Should().Be(10);
-        _pageModel.AuthorTotalReplies.Should().Be(25);
+        _pageModel.PostPageDto.Should().BeEquivalentTo(postPageDto);
     }
     
     [Fact]
@@ -144,8 +131,8 @@ public class PostDetailModelTests
         };
         
         _pageModel.CreatePostReplyDto = createReplyDto;
-        
-        var addReplyResult = Result<Reply>.Success(expectedReply);
+
+        var addReplyResult = Result.Ok(expectedReply);
         
         _mockReplyService
             .Setup(s => s.AddReplyAsync(1, 2, createReplyDto))
@@ -170,7 +157,7 @@ public class PostDetailModelTests
         
         _pageModel.CreatePostReplyDto = createReplyDto;
         
-        var addReplyResult = Result<Reply>.Failure(new Error("Reply.NoContent", "Reply must have content"));
+        var addReplyResult = Result.Fail<Reply>("Could not add reply.");
         
         _mockReplyService
             .Setup(s => s.AddReplyAsync(1, 2, createReplyDto))

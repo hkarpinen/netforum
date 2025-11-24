@@ -6,6 +6,7 @@ using Moq;
 using NETForum.Models.DTOs;
 using NETForum.Pages.Users;
 using NETForum.Services;
+using FluentResults;
 
 namespace NETForum.UnitTests;
 
@@ -118,7 +119,7 @@ public class UserEditModelTests
         
         _mockUserService
             .Setup(u => u.UpdateUserRolesAsync(1, It.IsAny<List<string>>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync(Result.Ok());
         
         var result = await _pageModel.OnPostAsync(1);
         

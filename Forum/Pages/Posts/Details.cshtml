@@ -5,21 +5,16 @@
 @model NETForum.Pages.Posts.DetailModel
 
 @{
-    ViewData["Title"] = Model.Post.Title;
+    ViewData["Title"] = Model.PostPageDto.Title;
     var mceEditorModel = new TinyMceEditorModel()
     {
         EditorId = "post-reply"
     };
-
 }
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     @await Component.InvokeAsync("TinyMceEditor", mceEditorModel)
-}
-
-@section Breadcrumbs {
-    @await Component.InvokeAsync("Breadcrumbs", Model.ForumBreadcrumbs)
 }
 
 <div asp-validation-summary="All" class="text-danger"></div>
@@ -30,10 +25,10 @@
                 <div class="card rounded-bottom-0">
                     <div class="card-header shadow bg-primary text-white">
                         <div class="d-flex justify-content-between align-items-center">
-                            <p class="m-0">@Model.Post.Title</p>
-                            @if(Model.UserIsAuthor)
+                            <p class="m-0">@Model.PostPageDto.Title</p>
+                            @if(Model.PostPageDto.CurrentUserIsAuthor)
                             {
-                                var url = "/Posts/" + Model.Post.Id +  "/Edit";
+                                var url = "/Posts/" + Model.PostPageDto.Id +  "/Edit";
                                 <a href="@url" class="edit-icon text-white">
                                     @await Html.PartialAsync("_ExternalSVG", "edit_icon")
                                 </a>
@@ -43,45 +38,52 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center pb-2">
                             <div class="d-flex gap-2">
-                                @if(Model.Post.Author != null)
+                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
                                 {
-                                    @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
-                                    {
-                                        PhotoUrl = Model.Post.Author.ProfileImageUrl,
-                                        UserName = Model.Post.Author.UserName
-                                    })
-                                    <div class="d-flex flex-column">
-                                        <a href="/Members/@Model.Post.Author.UserName" class="text-tertiary">@Model.Post.Author.UserName</a>
-                                        <small class="m-0">@DateHelpers.ToRelativeDatetimeString(Model.Post.CreatedAt)</small>
-                                    </div>
-                                }
+                                    PhotoUrl = Model.PostPageDto.AuthorAvatarImageUrl,
+                                    UserName = Model.PostPageDto.AuthorName
+                                })
+                                <div class="d-flex flex-column">
+                                    <a href="/Members/@Model.PostPageDto.AuthorName" class="text-tertiary">@Model.PostPageDto.AuthorName</a>
+                                    <small class="m-0">@DateHelpers.ToRelativeDatetimeString(Model.PostPageDto.CreatedAt)</small>
+                                </div>
                             </div>
-                            @await Component.InvokeAsync("UserStats", Model.Post.AuthorId)
+                            <div class="d-flex flex-column gap-2">
+                                <div class="d-flex gap-2">
+                                    <p class="m-0 text-secondary">Posts:</p>
+                                    <small>@Model.PostPageDto.AuthorStatsSummary.TotalPostCount.ToString()</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <p class="m-0 text-secondary">Replies:</p>
+                                    <small>@Model.PostPageDto.AuthorStatsSummary.TotalPostCount.ToString()</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <p class="m-0 text-secondary">Joined On:</p>
+                                    <small>@Model.PostPageDto.AuthorStatsSummary.JoinedOn.ToShortDateString()</small>
+                                </div>
+                            </div>
                         </div>
                         <div id="original-post-content">
-                            @Html.Raw(Model.Post.Content)
+                            @Html.Raw(Model.PostPageDto.Content)
                         </div>
                     </div>
                 </div>
             </div>
             <div id="post-replies">
-                @foreach (var reply in Model.Replies)
+                @foreach (var reply in Model.PostPageDto.Replies)
                 {
                     <div class="post-reply border p-3">
                         <div id="post-user-block" div class="d-flex justify-content-between align-items-center pb-2">
                             <div class="d-flex gap-2 align-items-center">
-                                @if(reply.Author != null)
+                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
                                 {
-                                    @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
-                                    {
-                                        PhotoUrl = reply.Author.ProfileImageUrl,
-                                        UserName = reply.Author.UserName
-                                    })
-                                    <div class="d-flex flex-column">
-                                        <a class="text-tertiary">@reply.Author.UserName</a>
-                                        <small class="m-0">@DateHelpers.ToRelativeDatetimeString(reply.CreatedAt)</small>
-                                    </div>
-                                }
+                                    PhotoUrl = reply.AuthorAvatarImageUrl,
+                                    UserName = reply.AuthorName
+                                })
+                                <div class="d-flex flex-column">
+                                    <a class="text-tertiary">@reply.AuthorName</a>
+                                    <small class="m-0">@DateHelpers.ToRelativeDatetimeString(reply.CreatedAt)</small>
+                                </div>
                             </div>
                         </div>
                         <div id="reply-content">

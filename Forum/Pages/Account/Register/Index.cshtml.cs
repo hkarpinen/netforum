@@ -24,14 +24,20 @@ namespace NETForum.Pages.Account.Register
             var userCreateResult = await userService.CreateUserWithMemberRoleAsync(UserRegistrationDto);
             if (!userCreateResult.IsSuccess)
             {
-                ModelState.AddModelError(userCreateResult.Error.Code, userCreateResult.Error.Message);
+                foreach (var error in userCreateResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Message);
+                }
                 return Page();
             }
             
             var createdUser = await userService.GetByUsernameAsync(UserRegistrationDto.Username);
             if (!createdUser.IsSuccess)
             {
-                ModelState.AddModelError(createdUser.Error.Code, createdUser.Error.Message);
+                foreach (var error in createdUser.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Message);
+                }
                 return Page();
             }
 
@@ -41,16 +47,22 @@ namespace NETForum.Pages.Account.Register
             var profileAddResult = await userProfileService.AddUserProfileAsync(CreateUserProfileDto);
             if (!profileAddResult.IsSuccess)
             {
-                ModelState.AddModelError(profileAddResult.Error.Code, profileAddResult.Error.Message);
+                foreach (var error in profileAddResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Message);
+                }
                 return Page();
             }
 
             if (CreateUserProfileDto.ProfileImage != null)
             {
                 var profileImageAddResult = await userService.UpdateUserProfileImageAsync(createdUser.Value.Id, CreateUserProfileDto.ProfileImage);
-                if (!profileImageAddResult)
+                if (profileImageAddResult.IsFailed)
                 {
-                    ModelState.AddModelError("", "Could not add profile image");
+                    foreach (var error in profileImageAddResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Message);
+                    }
                     return Page();
                 }
             }

@@ -1,76 +1,69 @@
-﻿using AutoMapper;
+﻿using Ardalis.Specification.EntityFrameworkCore;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using NETForum.Data;
+using NETForum.Filters;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
-using NETForum.Repositories;
-using NETForum.Repositories.Filters;
+using NETForum.Services.Specifications;
+using FluentResults;
 
 namespace NETForum.Services
 {
     public interface IRoleService
     {
-        Task<IEnumerable<Role>> GetRolesAsync();
         Task<IEnumerable<SelectListItem>> GetSelectItemsAsync();
-        Task<Role?> GetRoleAsync(int id);
         Task<IdentityResult> CreateRoleAsync(CreateRoleDto createRoleDto);
         Task<IdentityResult?> DeleteRoleAsync(int id);
         Task<IdentityResult?> UpdateRoleAsync(EditRoleDto editRoleDto);
-        Task<PagedResult<Role>> GetRolesPagedAsync(
-            int pageNumber, 
-            int pageSize, 
-            RoleFilterOptions roleFilterOptions,
-            string? sortBy,
-            bool ascending
-        );
+        Task<Result<EditRoleDto>> GetRoleForEditAsync(int id);
+        Task<PagedResult<Role>> GetRolesPagedAsync(RoleFilterOptions roleFilterOptions);
     }
 
     public class RoleService(
         RoleManager<Role> roleManager,
         IMapper mapper,
-        IRoleRepository roleRepository)
-        : IRoleService
+        AppDbContext appDbContext
+        ) : IRoleService
     {
-        public async Task<PagedResult<Role>> GetRolesPagedAsync(
-            int pageNumber, 
-            int pageSize, 
-            RoleFilterOptions roleFilterOptions,
-            string? sortBy,
-            bool ascending
-        ) {
-            var repositoryPagedQueryOptions = new PagedRepositoryQueryOptions<RoleFilterOptions>()
+        public async Task<PagedResult<Role>> GetRolesPagedAsync(RoleFilterOptions roleFilterOptions) {
+            var roleSearchSpec = new RoleSearchSpec(roleFilterOptions);
+
+            var totalRoleCount = await appDbContext.Roles.CountAsync();
+            var roles = await appDbContext.Roles
+                .WithSpecification(roleSearchSpec)
+                .ToListAsync();
+            var pagedResult = new PagedResult<Role>
             {
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Filter = roleFilterOptions,
-                SortBy = sortBy,
-                Ascending = ascending
+                PageNumber = roleFilterOptions.PageNumber,
+                PageSize = roleFilterOptions.PageSize,
+                TotalCount = totalRoleCount,
+                Items = roles
             };
-            return await roleRepository.GetAllPagedAsync(repositoryPagedQueryOptions);
+            return pagedResult;
         }
 
-        // TODO: Rename to GetAllRolesAsync()
-        public async Task<IEnumerable<Role>> GetRolesAsync()
+        public async Task<Result<EditRoleDto>> GetRoleForEditAsync(int id)
         {
-            var queryOptions = new RepositoryQueryOptions<RoleFilterOptions>();
-            return await roleRepository.GetAllAsync(queryOptions);
+            var role = await appDbContext.Roles.Where(r => r.Id == id).FirstOrDefaultAsync();
+            if (role == null)
+            {
+                return Result.Fail<EditRoleDto>("Role not found");
+            }
+            var editRoleDto = mapper.Map<EditRoleDto>(role);
+            return Result.Ok(editRoleDto);
         }
-
-        public async Task<Role?> GetRoleAsync(int id)
-        {
-            return await roleRepository.GetByIdAsync(id);
-        }
-
+        
         public async Task<IEnumerable<SelectListItem>> GetSelectItemsAsync()
         {
-            var queryOptions = new RepositoryQueryOptions<RoleFilterOptions>();
-            var allRoles = await roleRepository.GetAllAsync(queryOptions);
-            return allRoles.Select(r => new SelectListItem
+            return await appDbContext.Roles.Select(r => new SelectListItem
             {
                 // TODO: Value should be the ID, not the Name value.
                 Value = r.Name,
                 Text = r.Name
-            });
+            }).ToListAsync();
         }
 
         public async Task<IdentityResult> CreateRoleAsync(CreateRoleDto createRoleDto)
@@ -81,14 +74,14 @@ namespace NETForum.Services
 
         public async Task<IdentityResult?> DeleteRoleAsync(int id)
         {
-            var role = await GetRoleAsync(id);
+            var role = await appDbContext.Roles.FindAsync(id);
             if (role == null) return null;
             return await roleManager.DeleteAsync(role);
         }
 
         public async Task<IdentityResult?> UpdateRoleAsync(EditRoleDto editRoleDto)
         {
-            var role = await GetRoleAsync(editRoleDto.Id);
+            var role = await appDbContext.Roles.FindAsync(editRoleDto.Id);
             if(role == null) return null;
             mapper.Map(editRoleDto, role);
             var result = await roleManager.UpdateAsync(role);

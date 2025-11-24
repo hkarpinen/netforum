@@ -1,112 +1,210 @@
-﻿using AutoMapper;
+﻿using Ardalis.Specification.EntityFrameworkCore;
+using AutoMapper;
 using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using NETForum.Data;
+using NETForum.Filters;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Pages.Shared.Components.Breadcrumbs;
-using NETForum.Pages.Shared.Components.ForumList;
-using NETForum.Repositories;
-using NETForum.Repositories.Filters;
+using NETForum.Services.Specifications;
+using FluentResults;
 
 namespace NETForum.Services
 {
     public interface IForumService
     {
         Task<IEnumerable<Forum>> GetForumsAsync();
-        Task<IEnumerable<ForumListItemModel>> GetRootForumListItemsAsync();
-        Task<Result<Forum>> GetForumByIdAsync(int id);
         Task<Result<EditForumDto>> GetForumForEditAsync(int id); 
         Task<Result> UpdateForumAsync(int id, EditForumDto editForumDto);
-        Task<IReadOnlyCollection<ForumListItemModel>> GetChildForumListItemsWithPostsAndRepliesAsync(int parentForumId);
         Task<IReadOnlyCollection<BreadcrumbItemModel>> GetForumBreadcrumbItems(int forumId);
         Task<IEnumerable<SelectListItem>> GetForumSelectListItemsAsync();
         Task<Result<Forum>> AddForumAsync(CreateForumDto createForumDto);
-        Task<PagedResult<Forum>> GetForumsPagedAsync(
-            int pageNumber, 
-            int pageSize, 
-            ForumFilterOptions filterOptions,
-            string? sortBy,
-            bool ascending
-        );
+        Task<PagedResult<Forum>> GetForumsPagedAsync(ForumFilterOptions filterOptions);
+        Task<Result<ForumPageDto>> GetForumPageDtoAsync(int forumId);
+        Task<Result<ForumIndexPageDto>> GetForumIndexPageDtoAsync(int latestPostLimit = 5);
     }
 
-    public class ForumService(IForumRepository forumRepository, IMapper mapper) : IForumService
+    public class ForumService(IMapper mapper, AppDbContext appDbContext, IMemoryCache memoryCache) : IForumService
     {
+        public async Task<Result<ForumPageDto>> GetForumPageDtoAsync(int forumId)
+        {
+            var dto = await appDbContext.Forums
+                .Where(f => f.Id == forumId)
+                .Select(f => new ForumPageDto
+                {
+                    Id = f.Id,
+                    Title = f.Name,
+                    Description = f.Description,
+                    Posts = f.Posts.Select(p => new PostSummaryDto
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        Content = p.Content,
+                        AuthorName = p.Author.UserName,
+                        AuthorAvatarUrl = p.Author.ProfileImageUrl,
+                        ReplyCount = p.Replies.Count(),
+                        ViewCount = p.ViewCount,
+                        CreatedAt = p.CreatedAt,
+                        LastReplySummary = p.Replies.OrderByDescending(p => p.CreatedAt)
+                            .Select(lr => new ReplySummaryDto
+                            {
+                                Id = lr.Id,
+                                AuthorAvatarUrl = lr.Author.ProfileImageUrl,
+                                AuthorName = lr.Author.UserName,
+                                CreatedAt = lr.CreatedAt
+                            }).FirstOrDefault()
+                    }).ToList(),
+                    Subforums = f.SubForums.Select(sf => new ForumListItemDto
+                    {
+                        Id = sf.Id,
+                        Title = sf.Name,
+                        Description = sf.Description,
+                        TotalPosts = sf.Posts.Count,
+                        TotalReplies = sf.Posts.Count,
+                        LastPostSummary = sf.Posts.OrderByDescending(p => p.CreatedAt)
+                            .Select(lp => new PostSummaryDto
+                            {
+                                Id = lp.Id,
+                                Title = lp.Title,
+                                Content = lp.Content,
+                                AuthorName = lp.Author.UserName,
+                                AuthorAvatarUrl = lp.Author.ProfileImageUrl,
+                                ReplyCount = lp.Replies.Count(),
+                                ViewCount = lp.ViewCount,
+                                CreatedAt = lp.CreatedAt,
+                                LastReplySummary = lp.Replies.OrderByDescending(lpr => lpr.CreatedAt)
+                                    .Select(lpr => new ReplySummaryDto
+                                    {
+                                        Id = lpr.Id,
+                                        AuthorName = lpr.Author.UserName,
+                                        AuthorAvatarUrl = lpr.Author.ProfileImageUrl,
+                                        CreatedAt = lpr.CreatedAt
+                                    })
+                                    .FirstOrDefault()
+                            }).FirstOrDefault(),
+                    }).ToList()
+                }).FirstOrDefaultAsync();
+
+            return dto == null ? 
+                Result.Fail<ForumPageDto>("Could not find forum") :
+                Result.Ok(dto);
+
+        }
+        
+        public async Task<Result<ForumIndexPageDto>> GetForumIndexPageDtoAsync(int latestPostLimit = 5)
+        {
+            var dto = new ForumIndexPageDto
+            {
+                RootForums = await appDbContext.Forums
+                    .Where(f => f.ParentForumId == null)
+                    .Select(f => new ForumListItemDto
+                    {
+                        Id = f.Id,
+                        Title = f.Name,
+                        Description = f.Description,
+                        TotalPosts = f.Posts.Count,
+                        TotalReplies = f.Posts.Count,
+                        CategoryName = f.Category.Name,
+                        LastPostSummary = f.Posts.OrderByDescending(p => p.CreatedAt)
+                            .Select(lp => new PostSummaryDto
+                            {
+                                Id = lp.Id,
+                                Title = lp.Title,
+                                Content = lp.Content,
+                                AuthorName = lp.Author.UserName,
+                                AuthorAvatarUrl = lp.Author.ProfileImageUrl,
+                                ReplyCount = lp.Replies.Count(),
+                                ViewCount = lp.ViewCount,
+                                CreatedAt = lp.CreatedAt,
+                                LastReplySummary = lp.Replies.OrderByDescending(lpr => lpr.CreatedAt)
+                                    .Select(lr => new ReplySummaryDto
+                                    {
+                                        Id = lr.Id,
+                                        AuthorName = lr.Author.UserName,
+                                        AuthorAvatarUrl = lr.Author.ProfileImageUrl,
+                                        CreatedAt = lr.CreatedAt
+                                    }).FirstOrDefault()
+                            }).FirstOrDefault()
+                    }).ToListAsync(),
+                NewestUser = await appDbContext.Users
+                    .OrderByDescending(u => u.CreatedAt)
+                    .FirstOrDefaultAsync(),
+                LatestPosts = await appDbContext.Posts
+                    .OrderByDescending(u => u.CreatedAt)
+                    .Take(latestPostLimit)
+                    .Select(p => new PostTeaserDto
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        Content = p.Content,
+                        AuthorName = p.Author.UserName,
+                        AuthorAvatarUrl = p.Author.ProfileImageUrl,
+                        UpdatedAt = p.UpdatedAt
+                    }).ToListAsync(),
+                Stats = await memoryCache.GetOrCreateAsync("HomeStats", async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+
+                    return new HomeStatsDto
+                    {
+                        TotalPosts = await appDbContext.Posts.CountAsync(),
+                        TotalMembers = await appDbContext.Users.CountAsync(),
+                        TotalReplies = await appDbContext.Posts.CountAsync()
+                    };
+                })
+            };
+            return Result.Ok(dto);
+        }
+        
         public async Task<IEnumerable<Forum>> GetForumsAsync()
         {
-            var options = new RepositoryQueryOptions<ForumFilterOptions>();
-            return await forumRepository.GetAllAsync(options);
-        }
-
-        public async Task<IEnumerable<ForumListItemModel>> GetRootForumListItemsAsync()
-        {
-            var rootForumsNavigations = new[]
-            {
-                "Category",
-                "Posts.Replies"
-            };
-            var rootForums = await forumRepository.GetAllRootForumsAsync(rootForumsNavigations);
-            return rootForums.Select(rf => new ForumListItemModel
-            {
-                Forum = rf,
-                PostCount = rf.Posts.Count,
-                RepliesCount = rf.Posts.Sum(p => p.Replies.Count()),
-                LastPost = rf.Posts.OrderByDescending(p => p.CreatedAt).FirstOrDefault(),
-                
-                // TODO: Created at is not the right date to use here?
-                LastUpdated = rf.Posts.Count != 0 ? rf.Posts.Max(p => p.UpdatedAt) : rf.CreatedAt
-            });
-
+            return await appDbContext.Forums.ToListAsync();
         }
 
         public async Task<Result<EditForumDto>> GetForumForEditAsync(int id)
         {
-            var forum = await forumRepository.GetByIdAsync(id);
+            var forum = await appDbContext.Forums.FindAsync(id);
             if (forum == null)
             {
-                return Result<EditForumDto>.Failure(new Error("Forum.NotFound", $"Forum not found with ID: {id}"));
+                return Result.Fail<EditForumDto>("Could not find forum");
             }
             var editForumDto = mapper.Map<EditForumDto>(forum);
-            return Result<EditForumDto>.Success(editForumDto);
+            return Result.Ok(editForumDto);
         }
         
-        public async Task<Result<Forum>> GetForumByIdAsync(int id)
-        {
-            var forum = await forumRepository.GetByIdAsync(id);
-            return forum == null ? 
-                new Error("Forum.NotFound", $"Forum not found with ID: {id}") : 
-                Result<Forum>.Success(forum);
-        }
-
         public async Task<Result> UpdateForumAsync(int forumId, EditForumDto editForumDto)
         {
             try
             {
-                await forumRepository.UpdateAsync(forumId,
-                    trackedForum => { mapper.Map(editForumDto, trackedForum); });
-                return Result.Success();
-            }
-            catch (KeyNotFoundException exception)
-            {
-                // TODO: Need to setup logging for this. Log to external file or service maybe?
-                return Result.Failure(new Error("Forum.NotFound", exception.Message));
+                var forum = await appDbContext.Forums.FindAsync(forumId);
+                if (forum == null)
+                {
+                    return Result.Fail("Could not find forum");
+                }
+                
+                // Map changes to forum
+                mapper.Map(editForumDto, forum);
+                await appDbContext.SaveChangesAsync();
+                return Result.Ok();
             }
             catch (UniqueConstraintException exception)
             {
                 var constraintNameShort = exception.ConstraintName.Split("_").Last();
-                return Result.Failure(new Error("Forum.UniqueConstraintViolation", $"Forum {constraintNameShort} already exists."));
+                return Result.Fail($"Forum {constraintNameShort} already exists.");
             }
         }
 
         public async Task<IEnumerable<SelectListItem>> GetForumSelectListItemsAsync()
         {
-            var forumFilterOptions = new RepositoryQueryOptions<ForumFilterOptions>();
-            var allForums = await forumRepository.GetAllAsync(forumFilterOptions);
-            return allForums.Select(f => new SelectListItem
-            {
-                Value = f.Id.ToString(),
-                Text = f.Name
-            });
+            return await appDbContext.Forums
+                .Select(f => new SelectListItem
+                {
+                    Value = f.Id.ToString(),
+                    Text = f.Name,
+                }).ToListAsync();
         }
         
         public async Task<Result<Forum>> AddForumAsync(CreateForumDto createForumDto) 
@@ -114,41 +212,29 @@ namespace NETForum.Services
             try
             {
                 var forum = mapper.Map<Forum>(createForumDto);
-                var result = await forumRepository.AddAsync(forum);
-                return Result<Forum>.Success(result);
+                var result = await appDbContext.Forums.AddAsync(forum);
+                await appDbContext.SaveChangesAsync();
+                return Result.Ok(result.Entity);
             }
             catch (UniqueConstraintException exception)
             {
                 var constraintNameShort = exception.ConstraintName.Split("_").Last();
-                return Result<Forum>.Failure(new Error("Forum.UniqueConstraintViolation", $"Forum {constraintNameShort} already exists."));
+                return Result.Fail<Forum>($"Forum {constraintNameShort} already exists.");
             }
-        }
-        
-        public async Task<IReadOnlyCollection<ForumListItemModel>> GetChildForumListItemsWithPostsAndRepliesAsync(int parentForumId)
-        {
-            var navigations = new[] { "Posts.Replies" };
-            var forums = await forumRepository.GetChildForumsAsync(parentForumId, navigations);
-            return forums.Select(f => new ForumListItemModel
-            {
-                Forum = f,
-                PostCount = f.Posts.Count,
-                RepliesCount = f.Posts.Sum(p => p.Replies.Count()),
-                LastPost = f.Posts.OrderByDescending(p => p.CreatedAt).FirstOrDefault(),
-                LastUpdated = f.Posts.Count != 0 ? f.Posts.Max(p => p.UpdatedAt) : f.CreatedAt
-            }).ToList();
         }
         
         public async Task<IReadOnlyCollection<BreadcrumbItemModel>> GetForumBreadcrumbItems(int forumId)
         {
             // Recursively find parent forums
             Stack<Forum> stack = new();
-            var forum = await forumRepository.GetByIdAsync(forumId);
+            var forum = await appDbContext.Forums.FindAsync(forumId);
+            
             while (forum != null)
             {
                 stack.Push(forum);
                 if (forum.ParentForumId.HasValue)
                 {
-                    forum = await forumRepository.GetByIdAsync(forum.ParentForumId.Value);
+                    forum = await appDbContext.Forums.FindAsync(forum.ParentForumId.Value);
                 }
                 else
                 {
@@ -164,27 +250,22 @@ namespace NETForum.Services
                 Active = index == stack.Count - 1
             }).ToList();
         }
-
-        // TODO: Rename method to GetForumsPagedWithCategoryAndParentForumAsync()
-        // TODO: Might be better to create a repository method that does this, then manually building query options.
-        public async Task<PagedResult<Forum>> GetForumsPagedAsync(
-            int pageNumber, 
-            int pageSize, 
-            ForumFilterOptions filterOptions,
-            string? sortBy,
-            bool ascending
-        ) {
-            var repositoryPagedQueryOptions = new PagedRepositoryQueryOptions<ForumFilterOptions>()
+        
+        public async Task<PagedResult<Forum>> GetForumsPagedAsync(ForumFilterOptions filterOptions) {
+            var forumSearchSpec = new ForumSearchSpec(filterOptions);
+            
+            var totalForums = await appDbContext.Forums.CountAsync();
+            var forums = await appDbContext.Forums
+                .WithSpecification(forumSearchSpec)
+                .ToListAsync();
+            var pagedResult = new PagedResult<Forum>
             {
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Filter = filterOptions,
-                Navigations = ["Category", "ParentForum"],
-                SortBy = sortBy,
-                Ascending = ascending
+                TotalCount = totalForums,
+                Items = forums,
+                PageSize = filterOptions.PageSize,
+                PageNumber = filterOptions.PageNumber
             };
-
-            return await forumRepository.GetAllPagedAsync(repositoryPagedQueryOptions);
+            return pagedResult;
         }
     }
 }

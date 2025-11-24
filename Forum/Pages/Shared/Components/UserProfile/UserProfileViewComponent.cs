@@ -12,7 +12,7 @@ namespace NETForum.Pages.Shared.Components.UserProfile
         public async Task <IViewComponentResult> InvokeAsync() {
             if (User.Identity?.Name == null) return View();
             var lookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
-            if (lookupResult.IsFailure) return View();
+            if (lookupResult.IsFailed) return View();
             var user = lookupResult.Value;
             var model = new UserProfileViewModel()
             {

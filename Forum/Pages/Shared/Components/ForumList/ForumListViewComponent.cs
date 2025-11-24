@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using NETForum.Models.DTOs;
 
 namespace NETForum.Pages.Shared.Components.ForumList
 {
@@ -6,7 +7,7 @@ namespace NETForum.Pages.Shared.Components.ForumList
     public class ForumListOptions
     {
         public required string ForumListTitle { get; set; }
-        public required IEnumerable<ForumListItemModel> ForumItems { get; set; }
+        public required List<ForumListItemDto> ForumItems { get; set; }
     }
 
     public class ForumListViewComponent : ViewComponent
