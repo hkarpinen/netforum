@@ -17,7 +17,7 @@ public class IndexModel(IUserService userService) : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Username { get; set; }
     
-    public PagedResult<User> Users { get; set; }
+    public PagedResult<User>? Users { get; set; }
     
     public async Task<IActionResult> OnGetAsync()
     {

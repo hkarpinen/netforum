@@ -1,6 +1,4 @@
 ﻿using Ardalis.Specification.EntityFrameworkCore;
-using AutoMapper;
-using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -11,24 +9,36 @@ using NETForum.Models.Entities;
 using NETForum.Pages.Shared.Components.Breadcrumbs;
 using NETForum.Services.Specifications;
 using FluentResults;
+using NETForum.Errors;
 
 namespace NETForum.Services
 {
     public interface IForumService
     {
-        Task<IEnumerable<Forum>> GetForumsAsync();
+        Task<IReadOnlyCollection<Forum>> GetForumsAsync();
         Task<Result<EditForumDto>> GetForumForEditAsync(int id); 
         Task<Result> UpdateForumAsync(int id, EditForumDto editForumDto);
         Task<IReadOnlyCollection<BreadcrumbItemModel>> GetForumBreadcrumbItems(int forumId);
         Task<IEnumerable<SelectListItem>> GetForumSelectListItemsAsync();
+        Task<Result<Forum>> GetForumAsync(int id);
         Task<Result<Forum>> AddForumAsync(CreateForumDto createForumDto);
         Task<PagedResult<Forum>> GetForumsPagedAsync(ForumFilterOptions filterOptions);
         Task<Result<ForumPageDto>> GetForumPageDtoAsync(int forumId);
         Task<Result<ForumIndexPageDto>> GetForumIndexPageDtoAsync(int latestPostLimit = 5);
     }
 
-    public class ForumService(IMapper mapper, AppDbContext appDbContext, IMemoryCache memoryCache) : IForumService
+    public class ForumService(AppDbContext appDbContext, IMemoryCache memoryCache) : IForumService
     {
+        public async Task<Result<Forum>> GetForumAsync(int id)
+        {
+            var forum = await appDbContext.Forums
+                .Where(f => f.Id == id)
+                .FirstOrDefaultAsync();
+            return forum == null ?
+                Result.Fail<Forum>(ForumErrors.NotFound(id)) :
+                Result.Ok(forum);
+        }
+        
         public async Task<Result<ForumPageDto>> GetForumPageDtoAsync(int forumId)
         {
             var dto = await appDbContext.Forums
@@ -89,9 +99,8 @@ namespace NETForum.Services
                 }).FirstOrDefaultAsync();
 
             return dto == null ? 
-                Result.Fail<ForumPageDto>("Could not find forum") :
+                Result.Fail<ForumPageDto>(ForumErrors.NotFound(forumId)) :
                 Result.Ok(dto);
-
         }
         
         public async Task<Result<ForumIndexPageDto>> GetForumIndexPageDtoAsync(int latestPostLimit = 5)
@@ -100,6 +109,7 @@ namespace NETForum.Services
             {
                 RootForums = await appDbContext.Forums
                     .Where(f => f.ParentForumId == null)
+                    .Where(f => f.Published == true)
                     .Select(f => new ForumListItemDto
                     {
                         Id = f.Id,
@@ -144,7 +154,7 @@ namespace NETForum.Services
                         AuthorAvatarUrl = p.Author.ProfileImageUrl,
                         UpdatedAt = p.UpdatedAt
                     }).ToListAsync(),
-                Stats = await memoryCache.GetOrCreateAsync("HomeStats", async entry =>
+                Stats = await memoryCache.GetOrCreateAsync<HomeStatsDto>("HomeStats", async entry =>
                 {
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
 
@@ -159,7 +169,7 @@ namespace NETForum.Services
             return Result.Ok(dto);
         }
         
-        public async Task<IEnumerable<Forum>> GetForumsAsync()
+        public async Task<IReadOnlyCollection<Forum>> GetForumsAsync()
         {
             return await appDbContext.Forums.ToListAsync();
         }
@@ -169,31 +179,63 @@ namespace NETForum.Services
             var forum = await appDbContext.Forums.FindAsync(id);
             if (forum == null)
             {
-                return Result.Fail<EditForumDto>("Could not find forum");
+                return Result.Fail<EditForumDto>(ForumErrors.NotFound(id));
             }
-            var editForumDto = mapper.Map<EditForumDto>(forum);
+            
+            // Map Forum to Edit DTO
+            var editForumDto = new EditForumDto
+            {
+                Name = forum.Name,
+                Description = forum.Description,
+                Published = forum.Published,
+                ParentForumId = forum.ParentForumId,
+                CategoryId = forum.CategoryId
+            };
+            
             return Result.Ok(editForumDto);
         }
         
         public async Task<Result> UpdateForumAsync(int forumId, EditForumDto editForumDto)
         {
+            var forum = await appDbContext.Forums.FindAsync(forumId);
+            
+            // Forum not found.
+            if (forum == null)
+            {
+                return Result.Fail(ForumErrors.NotFound(forumId));
+            }
+            
+            // Check if name is already taken
+            if (await appDbContext.Forums.AnyAsync(f => 
+                    f.Name == editForumDto.Name &&
+                    f.Id != forumId
+            )) {
+                return Result.Fail(ForumErrors.NameTaken(editForumDto.Name));
+            }
+            
+            // Don't allow circular references for parent forum ID
+            if (editForumDto.ParentForumId == forumId)
+            {
+                return Result.Fail(ForumErrors.InvalidParentForumId(forumId));
+            }
+            
+            // Attempt the update
             try
             {
-                var forum = await appDbContext.Forums.FindAsync(forumId);
-                if (forum == null)
-                {
-                    return Result.Fail("Could not find forum");
-                }
+                // Map Edit DTO to Forum
+                forum.Name = editForumDto.Name;
+                forum.Description = editForumDto.Description;
+                forum.Published = editForumDto.Published;
+                forum.ParentForumId = editForumDto.ParentForumId;
+                forum.CategoryId = editForumDto.CategoryId;
+                forum.UpdatedAt = DateTime.UtcNow;
                 
-                // Map changes to forum
-                mapper.Map(editForumDto, forum);
                 await appDbContext.SaveChangesAsync();
                 return Result.Ok();
             }
-            catch (UniqueConstraintException exception)
+            catch (Exception ex)
             {
-                var constraintNameShort = exception.ConstraintName.Split("_").Last();
-                return Result.Fail($"Forum {constraintNameShort} already exists.");
+                return Result.Fail(ex.Message);
             }
         }
 
@@ -209,17 +251,34 @@ namespace NETForum.Services
         
         public async Task<Result<Forum>> AddForumAsync(CreateForumDto createForumDto) 
         {
+            
+            // If a forum with the same name exists, return failure result. 
+            if (await appDbContext.Forums.AnyAsync(f => f.Name == createForumDto.Name))
+            {
+                return Result.Fail<Forum>(ForumErrors.NameTaken(createForumDto.Name));
+            }
+
             try
             {
-                var forum = mapper.Map<Forum>(createForumDto);
+                // Map Create DTO to Forum
+                var forum = new Forum
+                {
+                    Name = createForumDto.Name,
+                    Description = createForumDto.Description,
+                    Published = createForumDto.Published,
+                    ParentForumId = createForumDto.ParentForumId,
+                    CategoryId = createForumDto.CategoryId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
                 var result = await appDbContext.Forums.AddAsync(forum);
                 await appDbContext.SaveChangesAsync();
                 return Result.Ok(result.Entity);
             }
-            catch (UniqueConstraintException exception)
+            catch (Exception e)
             {
-                var constraintNameShort = exception.ConstraintName.Split("_").Last();
-                return Result.Fail<Forum>($"Forum {constraintNameShort} already exists.");
+                return Result.Fail<Forum>(e.Message);
             }
         }
         

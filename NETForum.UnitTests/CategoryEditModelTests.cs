@@ -25,7 +25,6 @@ public class CategoryEditModelTests
     {
         var editCategoryDto = new EditCategoryDto()
         {
-            Id = 1,
             Name = "Test",
             Description = "Test"
         };

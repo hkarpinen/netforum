@@ -11,7 +11,7 @@ public class RoleSearchSpec : Specification<Role>
         // Apply filters
         if (!string.IsNullOrEmpty(filter.Name))
         {
-            Query.Where(r => r.Name.Contains(filter.Name));
+            Query.Where(r => r.Name != null && r.Name.Contains(filter.Name));
         }
 
         if (!string.IsNullOrEmpty(filter.Description))

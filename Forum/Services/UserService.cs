@@ -1,5 +1,4 @@
 ﻿using Ardalis.Specification.EntityFrameworkCore;
-using AutoMapper;
 using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +17,7 @@ namespace NETForum.Services
         Task<Result<User>> GetUserByIdAsync(int id);
         Task<Result<User>> GetByUsernameAsync(string userName);
         Task<bool> UserExistsAsync(int id);
-        Task<EditUserDto?> GetUserForEditAsync(int id);
+        Task<Result<EditUserDto>> GetUserForEditAsync(int id);
         Task<Result> UpdateUserRolesAsync(int userId, List<string> selectedRoleNames);
         Task<Result> UpdateUserProfileImageAsync(int userId, IFormFile file);
         Task<Result<User>> CreateUserAsync(CreateUserDto dto);
@@ -30,7 +29,6 @@ namespace NETForum.Services
     public class UserService(
         UserManager<User> userManager,
         IFileStorageService fileStorageService,
-        IMapper mapper,
         AppDbContext appDbContext
     ) : IUserService {
 
@@ -130,17 +128,34 @@ namespace NETForum.Services
                 Result.Ok(user);
         }
 
-        public async Task<EditUserDto?> GetUserForEditAsync(int id)
+        public async Task<Result<EditUserDto>> GetUserForEditAsync(int id)
         {
             var user = await appDbContext.Users.FindAsync(id);
-            return user == null ? null : mapper.Map<EditUserDto>(user);
+            if (user == null) return Result.Fail<EditUserDto>("User not found");
+            
+            // Map User to Edit DTO
+            var editUserDto = new EditUserDto
+            {
+                Email = user.Email,
+                Username = user.UserName
+            };
+            
+            return Result.Ok(editUserDto);
         }
 
         public async Task<Result<User>> CreateUserAsync(CreateUserDto dto)
         {
-            var user = mapper.Map<User>(dto);
             try
             {
+                // Map Create DTO to user
+                var user = new User
+                {
+                    UserName = dto.Username,
+                    Email = dto.Email,
+                    CreatedAt = DateTime.UtcNow,
+                    EmailConfirmed = false
+                };
+                
                 await userManager.CreateAsync(user);
                 var createdUser = await userManager.FindByNameAsync(dto.Username);
                 return createdUser == null
@@ -156,7 +171,15 @@ namespace NETForum.Services
 
         public async Task<Result> CreateUserWithMemberRoleAsync(UserRegistrationDto dto)
         {
-            var user = mapper.Map<User>(dto);
+            
+            // Map User Registration DTO to User
+            var user = new User
+            {
+                UserName = dto.Username,
+                Email = dto.Email,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
             
             var createResult = await userManager.CreateAsync(user, dto.Password);
             if (!createResult.Succeeded)

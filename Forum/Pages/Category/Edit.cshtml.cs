@@ -25,7 +25,7 @@ public class EditModel(ICategoryService categoryService) : PageModel
         EditCategoryDto = editCategoryDtoResult.Value;
         if(!ModelState.IsValid) return Page();
         
-        var updateCategoryResult = await categoryService.UpdateCategoryAsync(EditCategoryDto);
+        var updateCategoryResult = await categoryService.UpdateCategoryAsync(id, EditCategoryDto);
         if(updateCategoryResult.IsSuccess)  return RedirectToPage("/Admin/Categories");
         
         // An error occurred updating the category. 

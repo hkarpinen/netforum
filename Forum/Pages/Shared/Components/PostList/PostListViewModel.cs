@@ -4,5 +4,5 @@ namespace NETForum.Pages.Shared.Components.PostList;
 
 public class PostListViewModel
 {
-    public List<PostSummaryDto> Posts { get; set; }
+    public required List<PostSummaryDto> Posts { get; set; }
 }

@@ -9,9 +9,9 @@ namespace NETForum.Pages.Posts
         IPostService postService,
         IReplyService replyService,
         IUserService userService
-    ) : PageModel 
+    ) : PageModel
     {
-        public PostPageDto PostPageDto { get; set; }
+        public PostPageDto? PostPageDto { get; set; }
 
         [BindProperty]
         public CreatePostReplyDto CreatePostReplyDto { get; set; } = new();

@@ -1,5 +1,4 @@
 ﻿using Ardalis.Specification.EntityFrameworkCore;
-using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -17,14 +16,13 @@ namespace NETForum.Services
         Task<IEnumerable<SelectListItem>> GetSelectItemsAsync();
         Task<IdentityResult> CreateRoleAsync(CreateRoleDto createRoleDto);
         Task<IdentityResult?> DeleteRoleAsync(int id);
-        Task<IdentityResult?> UpdateRoleAsync(EditRoleDto editRoleDto);
+        Task<IdentityResult?> UpdateRoleAsync(int id, EditRoleDto editRoleDto);
         Task<Result<EditRoleDto>> GetRoleForEditAsync(int id);
         Task<PagedResult<Role>> GetRolesPagedAsync(RoleFilterOptions roleFilterOptions);
     }
 
     public class RoleService(
         RoleManager<Role> roleManager,
-        IMapper mapper,
         AppDbContext appDbContext
         ) : IRoleService
     {
@@ -52,7 +50,14 @@ namespace NETForum.Services
             {
                 return Result.Fail<EditRoleDto>("Role not found");
             }
-            var editRoleDto = mapper.Map<EditRoleDto>(role);
+            
+            // Map Role to Edit DTO
+            var editRoleDto = new EditRoleDto
+            {
+                Name = role.Name ?? string.Empty,
+                Description = role.Description
+            };
+            
             return Result.Ok(editRoleDto);
         }
         
@@ -68,7 +73,14 @@ namespace NETForum.Services
 
         public async Task<IdentityResult> CreateRoleAsync(CreateRoleDto createRoleDto)
         {
-            var role = mapper.Map<Role>(createRoleDto);
+            // Map Create DTO to role
+            var role = new Role
+            {
+                Name = createRoleDto.Name,
+                Description = createRoleDto.Description,
+                NormalizedName = createRoleDto.Name.ToUpper()
+            };
+            
             return await roleManager.CreateAsync(role);
         }
 
@@ -79,11 +91,15 @@ namespace NETForum.Services
             return await roleManager.DeleteAsync(role);
         }
 
-        public async Task<IdentityResult?> UpdateRoleAsync(EditRoleDto editRoleDto)
+        public async Task<IdentityResult?> UpdateRoleAsync(int id, EditRoleDto editRoleDto)
         {
-            var role = await appDbContext.Roles.FindAsync(editRoleDto.Id);
+            var role = await appDbContext.Roles.FindAsync(id);
             if(role == null) return null;
-            mapper.Map(editRoleDto, role);
+            
+            // Map Edit DTO to role
+            role.Name = editRoleDto.Name;
+            role.NormalizedName = editRoleDto.Name.ToUpper();
+            role.Description = editRoleDto.Description;
             var result = await roleManager.UpdateAsync(role);
             return result;
         }

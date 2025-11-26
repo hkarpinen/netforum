@@ -8,6 +8,8 @@
         public required string Content { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime LastUpdatedAt { get; set; }
+        
+        // Navigation properties
         public Post? Post { get; set; }
         public User? Author { get; set; }
     }

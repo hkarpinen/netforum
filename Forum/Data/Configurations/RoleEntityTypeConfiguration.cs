@@ -14,7 +14,7 @@ namespace NETForum.Data.Configurations
                 .IsRequired();
             builder.Property(r => r.Description)
                 .HasMaxLength(250)
-                .IsRequired(false);
+                .IsRequired();
 
             // Build Indexes for faster searches
             builder.HasIndex(r => r.Name).IsUnique();

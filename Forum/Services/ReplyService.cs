@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
@@ -12,15 +11,21 @@ namespace NETForum.Services
         Task<Result<Reply>> AddReplyAsync(int postId, int authorId, CreatePostReplyDto inputModel);
     }
 
-    public class ReplyService(IMapper mapper, AppDbContext appDbContext) : IReplyService
+    public class ReplyService(AppDbContext appDbContext) : IReplyService
     {
         public async Task<Result<Reply>> AddReplyAsync(int postId, int userId, CreatePostReplyDto inputModel)
         {
             try
             {
-                var postReply = mapper.Map<Reply>(inputModel);
-                postReply.PostId = postId;
-                postReply.AuthorId = userId;
+                // Map Create DTO to Reply
+                var postReply = new Reply
+                {
+                    Content = inputModel.Content,
+                    CreatedAt = DateTime.UtcNow,
+                    LastUpdatedAt = DateTime.UtcNow,
+                    PostId = postId,
+                    AuthorId = userId
+                };
             
                 var result = await appDbContext.Replies.AddAsync(postReply);
                 await appDbContext.SaveChangesAsync();

@@ -17,6 +17,9 @@ namespace NETForum.Data.Configurations
             builder.Property(f => f.Name)
                 .HasMaxLength(100)
                 .IsRequired();
+            
+            builder.Property(f => f.Published)
+                .IsRequired();
 
             builder.Property(f => f.Description)
                 .HasMaxLength(100)
@@ -38,14 +41,14 @@ namespace NETForum.Data.Configurations
 
             // 2. Forum -> Category relationship
             builder.HasOne(f => f.Category)
-                .WithMany(c => c.Forums) // Assuming Category doesn't need navigation back to Forums
+                .WithMany(c => c.Forums)
                 .HasForeignKey(f => f.CategoryId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // 3. Forum -> Posts relationship
             builder.HasMany(f => f.Posts)
-                .WithOne() // We'll define the Post side later
+                .WithOne(p => p.Forum)
                 .HasForeignKey(p => p.ForumId)
                 .OnDelete(DeleteBehavior.Cascade);
         }

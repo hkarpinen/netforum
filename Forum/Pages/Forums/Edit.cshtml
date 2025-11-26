@@ -16,9 +16,6 @@
             <hr />
             <div asp-validation-summary="All" class="text-danger"></div>
             <form method="post">
-                <!-- Hidden Inputs -->
-                <input asp-for="EditForumDto.Id" hidden />
-                
                 <div class="form-group">
                     <label asp-for="EditForumDto.Name">Name</label>
                     <input asp-for="EditForumDto.Name" class="form-control"/>

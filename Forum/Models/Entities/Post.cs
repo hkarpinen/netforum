@@ -13,10 +13,14 @@
         public DateTime CreatedAt { get; set; } 
         public DateTime UpdatedAt { get; set; }
         public int ViewCount { get; set; }
+        
+        // This is really not needed since we have the replies navigation.
+        // TODO: This should be removed and any references, updated to count Replies.
         public int ReplyCount { get; set; }
 
         // Navigation properties
         public User? Author { get; set; }
+        public Forum? Forum { get; set; }
         public ICollection<Reply> Replies { get; set; } = new List<Reply>();
     }
 }

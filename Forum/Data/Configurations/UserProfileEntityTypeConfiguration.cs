@@ -12,16 +12,12 @@ namespace NETForum.Data.Configurations
             builder.Property(up => up.UserId)
                 .IsRequired();
             builder.Property(up => up.Bio)
-                .HasMaxLength(1000)
-                .IsRequired(false);
+                .HasMaxLength(1000);
             builder.Property(up => up.Signature)
-                .HasMaxLength(500)
-                .IsRequired(false);
+                .HasMaxLength(500);
             builder.Property(up => up.Location)
-                .HasMaxLength(100)
-                .IsRequired(false);
-            builder.Property(up => up.DateOfBirth)
-                .IsRequired(false);
+                .HasMaxLength(100);
+            builder.Property(up => up.DateOfBirth);
             builder.Property(up => up.LastUpdated);
         }
     }

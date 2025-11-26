@@ -12,14 +12,12 @@ namespace NETForum.UnitTests;
 public class ForumDetailModelTests
 {
     private readonly Mock<IForumService> _mockForumService;
-    private readonly Mock<IPostService> _mockPostService;
     private readonly DetailsModel _pageModel;
 
     public ForumDetailModelTests()
     {
         _mockForumService = new Mock<IForumService>();
-        _mockPostService = new Mock<IPostService>();
-        _pageModel = new DetailsModel(_mockForumService.Object, _mockPostService.Object);
+        _pageModel = new DetailsModel(_mockForumService.Object);
     }
 
     [Fact]

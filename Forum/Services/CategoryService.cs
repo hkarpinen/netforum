@@ -1,5 +1,4 @@
 ﻿using Ardalis.Specification.EntityFrameworkCore;
-using AutoMapper;
 using EntityFramework.Exceptions.Common;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -17,18 +16,28 @@ namespace NETForum.Services
         Task<IEnumerable<SelectListItem>> GetCategorySelectListItemsAsync();
         Task<Result<Category>> AddCategoryAsync(CreateCategoryDto createCategoryDto);
         Task<Result<EditCategoryDto>> GetCategoryForEditAsync(int id);
-        Task<Result> UpdateCategoryAsync(EditCategoryDto editCategoryDto);
+        Task<Result> UpdateCategoryAsync(int id, EditCategoryDto editCategoryDto);
         Task DeleteCategoryByIdAsync(int id);
         Task<PagedResult<Category>> GetCategoriesPagedAsync(CategoryFilterOptions categoryFilterOptions);
     }
     
-    public class CategoryService(IMapper mapper, AppDbContext appDbContext) : ICategoryService
+    public class CategoryService(AppDbContext appDbContext) : ICategoryService
     {
         public async Task<Result<Category>> AddCategoryAsync(CreateCategoryDto createCategoryDto)
         {
             try
             {
-                var category = mapper.Map<Category>(createCategoryDto);
+                // Map Create DTO to Category
+                var category = new Category
+                {
+                    Name = createCategoryDto.Name,
+                    Description = createCategoryDto.Description,
+                    SortOrder = createCategoryDto.SortOrder,
+                    CreatedAt = DateTime.UtcNow,
+                    Published = createCategoryDto.Published,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                
                 var result = await appDbContext.Categories.AddAsync(category);
                 await appDbContext.SaveChangesAsync();
                 return Result.Ok(result.Entity);
@@ -40,18 +49,23 @@ namespace NETForum.Services
             }
         }
 
-        public async Task<Result> UpdateCategoryAsync(EditCategoryDto editCategoryDto)
+        public async Task<Result> UpdateCategoryAsync(int id, EditCategoryDto editCategoryDto)
         {
             try
             {
-                var category = await appDbContext.Categories.FindAsync(editCategoryDto.Id);
+                var category = await appDbContext.Categories.FindAsync(id);
                 if (category == null)
                 {
                     return Result.Fail("Category not found");
                 }
                 
-                // Apply changes to entity
-                mapper.Map(editCategoryDto, category);
+                // Map Edit DTO to Category
+                category.Name = editCategoryDto.Name;
+                category.Description = editCategoryDto.Description;
+                category.SortOrder = editCategoryDto.SortOrder;
+                category.Published = editCategoryDto.Published;
+                category.UpdatedAt = DateTime.UtcNow;
+                
                 await appDbContext.SaveChangesAsync();
                 return Result.Ok();
             }
@@ -78,7 +92,18 @@ namespace NETForum.Services
             {
                 return Result.Fail<EditCategoryDto>("Category not found");
             }
-            var editCategoryDto = mapper.Map<EditCategoryDto>(category);
+            
+            // Map Category to Edit DTO
+            var editCategoryDto = new EditCategoryDto
+            {
+                Name = category.Name,
+                Description = category.Description,
+                SortOrder = category.SortOrder,
+                Published = category.Published,
+                UpdatedAt = category.UpdatedAt,
+                CreatedAt = category.CreatedAt
+            };
+            
             return  Result.Ok(editCategoryDto);
         }
 

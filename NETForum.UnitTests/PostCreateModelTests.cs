@@ -64,7 +64,6 @@ public class PostCreateModelTests
         {
             Title = "title",
             Content = "content",
-            ForumId = 1,
             IsLocked = false
         };
         
@@ -90,7 +89,6 @@ public class PostCreateModelTests
         {
             Title = "title",
             Content = "content",
-            ForumId = 1,
             IsLocked = false
         };
 

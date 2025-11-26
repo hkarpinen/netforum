@@ -1,7 +1,10 @@
-﻿namespace NETForum.Models.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace NETForum.Models.DTOs
 {
     public class CreateUserProfileDto
     {
+        [Required]
         public int UserId { get; set; }
         public IFormFile? ProfileImage { get; set; }
         public string? Bio { get; set; }

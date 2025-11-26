@@ -46,7 +46,7 @@ public class PostDetailModelTests
         };
     }
 
-    private void SetupSuccessfulPostLoad(int postId = 1, int authorId = 1)
+    private PostPageDto SetupSuccessfulPostLoad(int postId = 1, int authorId = 1)
     {
         // Setup authenticated user
         SetupAuthenticatedUser(_pageModel, "test");
@@ -63,29 +63,30 @@ public class PostDetailModelTests
             AuthorName = "test",
             AuthorId = 2,
             Title = "Test Post Title",
-            Content = "Test Post Content"
+            Content = "Test Post Content",
+            Replies = [],
+            AuthorStatsSummary = new AuthorStatsSummary()
+            {
+                JoinedOn = DateTime.UtcNow,
+                TotalPostCount = 1,
+                TotalReplyCount = 1
+            }
         };
         var postPageDtoResult = Result.Ok(postPageDto);
         
         _mockPostService
             .Setup(s => s.GetPostPageDto(1, "test"))
             .ReturnsAsync(postPageDtoResult);
+        
+        return postPageDto;
     }
 
     [Fact]
     public async Task OnGetAsync_WhenPostIsFound_ShouldPopulateDetailsAndReturnPageResult()
     {
         SetupAuthenticatedUser(_pageModel, "test");
-        SetupSuccessfulPostLoad(1, 2);
-
-        var postPageDto = new PostPageDto
-        {
-            Id = 1,
-            AuthorName = "test",
-            AuthorId = 2,
-            Title = "Test Post Title",
-            Content = "Test Post Content"
-        };
+        
+        var postPageDto = SetupSuccessfulPostLoad(1, 2);
         
         var result = await _pageModel.OnGetAsync(1);
         
@@ -168,5 +169,4 @@ public class PostDetailModelTests
         result.Should().BeOfType<PageResult>();
         _pageModel.ModelState.IsValid.Should().BeFalse();
     }
-    
 }

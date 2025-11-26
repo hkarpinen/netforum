@@ -26,8 +26,7 @@ namespace NETForum.Pages.Roles
             if(roleEditDtoResult.IsFailed) return NotFound();
             EditRoleDto = roleEditDtoResult.Value;
             
-            EditRoleDto.Id = id;
-            var result = await roleService.UpdateRoleAsync(EditRoleDto);
+            var result = await roleService.UpdateRoleAsync(id, EditRoleDto);
             
             // TODO: An error occurred, NotFound() is not the correct object to return here.
             if (result == null) return NotFound();

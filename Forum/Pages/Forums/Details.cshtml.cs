@@ -5,9 +5,9 @@ using NETForum.Services;
 
 namespace NETForum.Pages.Forums
 {
-    public class DetailsModel(IForumService forumService, IPostService postService) : PageModel
+    public class DetailsModel(IForumService forumService) : PageModel
     {
-        public ForumPageDto ForumPageDto { get; set; }
+        public ForumPageDto? ForumPageDto { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {

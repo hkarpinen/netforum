@@ -1,11 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace NETForum.Models.DTOs;
 
 public class CreatePostDto
 {
-    public string Title { get; set; }
-    public string Content { get; set; }
-    public int ForumId { get; set; }
+    [Required] 
+    public string Title { get; set; } = string.Empty;
+    
+    [Required]
+    public string Content { get; set; } = string.Empty;
+    
+    [Required]
     public bool IsPinned { get; set; }
+    
+    [Required]
     public bool IsLocked { get; set; }
+    
+    [Required]
     public bool Published { get; set; }
 }

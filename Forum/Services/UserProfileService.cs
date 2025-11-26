@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
 using NETForum.Models.DTOs;
@@ -15,7 +14,7 @@ public interface IUserProfileService
     Task<Result> UpdateUserProfileAsync(int userId, EditUserProfileDto editUserProfileDto);
 }
 
-public class UserProfileService(AppDbContext context, IMapper mapper) : IUserProfileService
+public class UserProfileService(AppDbContext context) : IUserProfileService
 {
     public async Task<Result<UserProfile>> AddUserProfileAsync(CreateUserProfileDto createUserProfileDto)
     {
@@ -24,13 +23,22 @@ public class UserProfileService(AppDbContext context, IMapper mapper) : IUserPro
             var userProfileExists = await context.UserProfiles.Where(p => p.UserId == createUserProfileDto.UserId).AnyAsync();
             if (userProfileExists)
             {
-                return Result.Fail($"UserProfile.{createUserProfileDto.UserId}");
+                return Result.Fail<UserProfile>($"UserProfile.{createUserProfileDto.UserId}");
             }
             
-            var userProfile = mapper.Map<UserProfile>(createUserProfileDto);
+            // Map Create DTO to UserProfile
+            var userProfile = new UserProfile
+            {
+                Bio = createUserProfileDto.Bio,
+                Signature = createUserProfileDto.Signature,
+                Location = createUserProfileDto.Location,
+                DateOfBirth = createUserProfileDto.DateOfBirth,
+                LastUpdated = DateTime.UtcNow
+            };
+            
             var result = await context.UserProfiles.AddAsync(userProfile);
             await context.SaveChangesAsync();
-            return Result.Ok(userProfile);
+            return Result.Ok(result.Entity);
         }
         catch (DbUpdateException e)
         {
@@ -53,7 +61,16 @@ public class UserProfileService(AppDbContext context, IMapper mapper) : IUserPro
         {
             return Result.Fail<EditUserProfileDto>("Could not find user profile");
         }
-        var editUserProfileDto = mapper.Map<EditUserProfileDto>(result);
+        
+        // Map UserProfile to Edit DTO
+        var editUserProfileDto = new EditUserProfileDto
+        {
+            Bio = result.Bio,
+            Signature = result.Signature,
+            Location = result.Location,
+            DateOfBirth = result.DateOfBirth,
+        };
+        
         return Result.Ok(editUserProfileDto);
     }
     
@@ -67,7 +84,12 @@ public class UserProfileService(AppDbContext context, IMapper mapper) : IUserPro
                 return Result.Fail("Could not find user profile");
             }
 
-            mapper.Map(editUserProfileDto, userProfile);
+            // Map Edit DTO to UserProfile
+            userProfile.Bio = editUserProfileDto.Bio;
+            userProfile.Signature = editUserProfileDto.Signature;
+            userProfile.Location = editUserProfileDto.Location;
+            userProfile.DateOfBirth = editUserProfileDto.DateOfBirth;
+            
             await context.SaveChangesAsync();
             return Result.Ok();
         }

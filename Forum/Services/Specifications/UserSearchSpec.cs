@@ -11,12 +11,12 @@ public class UserSearchSpec : Specification<User>
         // Apply filters
         if (!string.IsNullOrEmpty(filter.Username))
         {
-            Query.Where(x => x.UserName.Contains(filter.Username));
+            Query.Where(x => x.UserName != null && x.UserName.Contains(filter.Username));
         }
 
         if (!string.IsNullOrEmpty(filter.Email))
         {
-            Query.Where(x => x.Email.Contains(filter.Email));
+            Query.Where(x => x.Email != null && x.Email.Contains(filter.Email));
         }
         
         // Apply sorting

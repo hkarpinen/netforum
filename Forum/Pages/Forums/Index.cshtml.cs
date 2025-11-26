@@ -7,7 +7,7 @@ namespace NETForum.Pages.Forums
 { 
     public class IndexModel(IForumService forumService) : PageModel
     {
-        public ForumIndexPageDto ForumIndexPageDto { get; set; }
+        public ForumIndexPageDto? ForumIndexPageDto { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {

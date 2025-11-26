@@ -34,7 +34,7 @@ public class UserEditModelTests
     {
         _mockUserService
             .Setup(u => u.GetUserForEditAsync(1))
-            .ReturnsAsync(() => null);
+            .ReturnsAsync(() => Result.Fail<EditUserDto>("Could not find user"));
 
         var result = await _pageModel.OnGetAsync(1);
         result.Should().BeOfType<NotFoundResult>();
@@ -45,7 +45,6 @@ public class UserEditModelTests
     {
         var editUserDto = new EditUserDto()
         {
-            Id = 1,
             Username = "test",
             Email = "test"
         };
@@ -85,7 +84,6 @@ public class UserEditModelTests
     {
         var editUserDto = new EditUserDto()
         {
-            Id = 1,
             Username = "test",
             Email = "test"
         };

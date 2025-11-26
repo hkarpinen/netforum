@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NETForum.Filters;
 using NETForum.Models.DTOs;
-using NETForum.Models.Entities;
 using NETForum.Services;
 
 namespace NETForum.Pages.Posts

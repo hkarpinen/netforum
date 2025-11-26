@@ -30,7 +30,6 @@ namespace NETForum.Data.Configurations
                 .WithMany(u => u.Posts) 
                 .HasForeignKey(p => p.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
-
         }
     }
 }

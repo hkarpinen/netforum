@@ -9,15 +9,21 @@ namespace NETForum.Data.Configurations
         public void Configure(EntityTypeBuilder<Category> builder)
         {
             builder.HasKey(f => f.Id);
+            
             builder.Property(f => f.Name)
                 .IsRequired()
                 .HasMaxLength(100);
+            
             builder.Property(f => f.Description)
-                .HasMaxLength(500);
+                .HasMaxLength(500)
+                .IsRequired();
+            
             builder.Property(f => f.SortOrder);
+            
             builder.Property(f => f.Published)
                 .IsRequired()
                 .HasDefaultValue(true);
+            
             builder.Property(f => f.CreatedAt);
             builder.Property(f => f.UpdatedAt);
         }

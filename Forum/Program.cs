@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
@@ -12,9 +11,6 @@ builder.Services.AddSassCompiler();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-
-// Add AutoMapper 
-builder.Services.AddAutoMapper(cfg => {}, Assembly.GetExecutingAssembly());
 
 // Add DB Connection
 builder.Services.AddDbContext<AppDbContext>(options =>

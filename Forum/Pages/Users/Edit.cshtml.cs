@@ -24,9 +24,9 @@ namespace NETForum.Pages.Users
         public async Task<IActionResult> OnGetAsync(int id)
         {
             var editUserDto = await userService.GetUserForEditAsync(id);
-            if(editUserDto == null) return NotFound();
+            if(editUserDto.IsFailed) return NotFound();
 
-            EditUserDto = editUserDto;
+            EditUserDto = editUserDto.Value;
             AllRoles = await roleService.GetSelectItemsAsync();
             SelectedRoles = await userRoleService.GetUserRoleNamesAsync(id);
 

@@ -45,7 +45,6 @@ public class ForumEditModelTests
     {
         var editForumDto = new EditForumDto()
         {
-            Id = 1,
             CategoryId = 1,
             Name = "test",
             Description = "test"
@@ -107,7 +106,6 @@ public class ForumEditModelTests
     {
         var expectedForumEditDto = new EditForumDto()
         {
-            Id = 1,
             Name = "test",
             Description = "test"
         };
@@ -133,7 +131,6 @@ public class ForumEditModelTests
     {
         var editForumDto = new EditForumDto()
         {
-            Id = 1,
             Name = "test",
             Description = "test"
         };
@@ -162,7 +159,6 @@ public class ForumEditModelTests
     {
         var editForumDto = new EditForumDto()
         {
-            Id = 1,
             Name = "test",
             Description = "test"
         };

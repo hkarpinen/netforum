@@ -1,5 +1,4 @@
 ﻿using Ardalis.Specification.EntityFrameworkCore;
-using AutoMapper;
 using EntityFramework.Exceptions.Common;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
@@ -8,6 +7,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Services.Specifications;
 using FluentResults;
+using NETForum.Errors;
 
 namespace NETForum.Services
 {
@@ -18,10 +18,19 @@ namespace NETForum.Services
         Task<Result> UpdatePostAsync(int id, EditPostDto editPostDto);
         Task<PagedResult<PostSummaryDto>> GetPostsPagedAsync(PostFilterOptions postFilterOptions);
         Task<Result<PostPageDto>> GetPostPageDto(int postId, string viewerUsername);
+        Task<Result<Post>> GetPostAsync(int id);
     }
 
-    public class PostService(IMapper mapper, AppDbContext appDbContext) : IPostService
+    public class PostService(AppDbContext appDbContext) : IPostService
     {
+        public async Task<Result<Post>> GetPostAsync(int id)
+        {
+            var post = await appDbContext.Posts.Where(p => p.Id == id).FirstOrDefaultAsync();
+            return post == null ? 
+                Result.Fail<Post>(PostErrors.NotFound(id)) : 
+                Result.Ok(post);
+        }
+        
         public async Task<Result<PostPageDto>> GetPostPageDto(int postId, string? viewerUsername)
         {
             var dto = await appDbContext.Posts
@@ -53,16 +62,44 @@ namespace NETForum.Services
                 }).FirstOrDefaultAsync();
             
             return dto == null ? 
-                Result.Fail<PostPageDto>("Could not find post") :
+                Result.Fail<PostPageDto>(PostErrors.NotFound(postId)) :
                 Result.Ok(dto);
         }
         
         public async Task<Result> UpdatePostAsync(int id, EditPostDto editPostDto)
         {
+            var post = await appDbContext.Posts.FindAsync(id);
+            
+            // Handle post not found
+            if (post == null)
+            {
+                return Result.Fail(PostErrors.NotFound(id));
+            }
+            
+            // If author is not found
+            if (!await appDbContext.Users.AnyAsync(u => u.Id == editPostDto.AuthorId))
+            {
+                return Result.Fail(PostErrors.AuthorNotFound(editPostDto.AuthorId));
+            }
+            
+            // If forum doesn't exist
+            if (!await appDbContext.Forums.AnyAsync(f => f.Id == editPostDto.ForumId))
+            {
+                return Result.Fail(PostErrors.NonExistentForumId(editPostDto.ForumId));
+            }
+            
             try
             {
-                var post = await appDbContext.Posts.FindAsync(id);
-                mapper.Map(editPostDto, post);
+                // Map Edit DTO to Post
+                post.Title = editPostDto.Title;
+                post.Content = editPostDto.Content;
+                post.ForumId = editPostDto.ForumId;
+                post.AuthorId = editPostDto.AuthorId;
+                post.IsPinned = editPostDto.IsPinned;
+                post.IsLocked = editPostDto.IsLocked;
+                post.Published = editPostDto.Published;
+                post.UpdatedAt = DateTime.UtcNow;
+                
                 await appDbContext.SaveChangesAsync();
                 return Result.Ok();
             }
@@ -76,24 +113,43 @@ namespace NETForum.Services
         {
             try
             {
-                var author = await appDbContext.Users.FindAsync(username);
+                
+                var author = await appDbContext.Users.Where(u => u.UserName == username)
+                    .FirstOrDefaultAsync();
+                
+                // If author does not exist.
                 if (author == null)
                 {
-                    return Result.Fail<Post>("Author not found");
+                    return Result.Fail<Post>(PostErrors.AuthorNotFound(username));
+                }
+                
+                // If forum does not exist
+                if (!await appDbContext.Forums.AnyAsync(f => f.Id == forumId))
+                {
+                    return Result.Fail<Post>(PostErrors.NonExistentForumId(forumId));
                 }
 
-                // Map the DTO to a Post() instance.
-                var post = mapper.Map<Post>(createPostDto);
-                post.AuthorId = author.Id;
-                post.ForumId = forumId;
+                // Map Create DTO to Post
+                var post = new Post
+                {
+                    Title = createPostDto.Title,
+                    Content = createPostDto.Content,
+                    ForumId = forumId,
+                    IsPinned = createPostDto.IsPinned,
+                    IsLocked = createPostDto.IsLocked,
+                    Published = createPostDto.Published,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    AuthorId = author.Id
+                };
+                
                 var result = await appDbContext.Posts.AddAsync(post);
                 await appDbContext.SaveChangesAsync();
                 return Result.Ok(result.Entity);
             }
-            catch (UniqueConstraintException exception)
+            catch (Exception exception)
             {
-                var shortConstraintName = exception.ConstraintName.Split("_").Last();
-                return Result.Fail<Post>($"{shortConstraintName} is already taken.");
+                return Result.Fail<Post>(exception.Message);
             }
         }
 
@@ -102,9 +158,21 @@ namespace NETForum.Services
             var post = await appDbContext.Posts.FindAsync(id);
             if (post == null)
             {
-                return Result.Fail<EditPostDto>("Post not found");
+                return Result.Fail<EditPostDto>(PostErrors.NotFound(id));
             }
-            var editPostDto = mapper.Map<EditPostDto>(post);
+            
+            // Map Post to Edit DTO
+            var editPostDto = new EditPostDto
+            {
+                Title = post.Title,
+                Content = post.Content,
+                ForumId = post.ForumId,
+                AuthorId = post.AuthorId,
+                IsPinned = post.IsPinned,
+                IsLocked = post.IsLocked,
+                Published = post.Published
+            };
+            
             return Result.Ok(editPostDto);
         } 
         
