@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
 using NETForum.Filters;
 using NETForum.Models.Entities;
-using NETForum.Pages.Admin;
+using NETForum.Pages.Admin.Categories;
 using NETForum.Services;
 
 namespace NETForum.UnitTests;

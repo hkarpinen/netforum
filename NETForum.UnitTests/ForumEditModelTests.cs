@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Moq;
 using NETForum.Models.DTOs;
-using NETForum.Pages.Forums;
 using NETForum.Services;
 using FluentResults;
+using NETForum.Pages.Admin.Forums;
 
 namespace NETForum.UnitTests;
 
@@ -20,7 +20,7 @@ public class ForumEditModelTests
     {
         _mockForumService = new Mock<IForumService>();
         _mockCategoryService = new Mock<ICategoryService>();
-        _pageModel = new EditModel(_mockForumService.Object, categoryService: _mockCategoryService.Object);
+        _pageModel = new EditModel(_mockForumService.Object, _mockCategoryService.Object);
     }
 
     [Fact]
@@ -110,6 +110,8 @@ public class ForumEditModelTests
             Description = "test"
         };
         
+        _pageModel.EditForumDto = expectedForumEditDto;
+        
         var forumLookupResult = Result.Ok(expectedForumEditDto);
         
         _mockForumService
@@ -134,6 +136,8 @@ public class ForumEditModelTests
             Name = "test",
             Description = "test"
         };
+        
+        _pageModel.EditForumDto = editForumDto;
         
         var forumLookupResult = Result.Ok(editForumDto);
         var forumUpdateResult = Result.Fail("Name is already in use");
@@ -162,6 +166,8 @@ public class ForumEditModelTests
             Name = "test",
             Description = "test"
         };
+        
+        _pageModel.EditForumDto = editForumDto;
 
         var forumUpdateResult = Result.Ok();
         var forumLookupResult = Result.Ok(editForumDto);
@@ -179,7 +185,6 @@ public class ForumEditModelTests
         result.Should().BeOfType<RedirectToPageResult>();
         _mockForumService.Verify(s => s.GetForumForEditAsync(1), Times.Once);
         _mockForumService.Verify(s => s.UpdateForumAsync(1, editForumDto), Times.Once);
-        _pageModel.EditForumDto.Should().BeEquivalentTo(editForumDto);
         _pageModel.ModelState.ErrorCount.Should().Be(0);
     }
 }

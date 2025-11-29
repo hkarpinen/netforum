@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Constants;
 using NETForum.Services;
 
 namespace NETForum.Pages.Account.Logout
@@ -9,7 +10,7 @@ namespace NETForum.Pages.Account.Logout
         public async Task<IActionResult> OnGetAsync()
         {
             await authenticationService.SignOutAsync();
-            return RedirectToPage("/Index");
+            return RedirectToPage(PageRoutes.ForumLanding);
         }
     }
 }

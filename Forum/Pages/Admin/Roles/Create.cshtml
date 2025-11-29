@@ -1,0 +1,32 @@
+﻿@page
+@model CreateModel
+
+@{
+    ViewData["Title"] = "Create Role";
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<div class="row mt-2">
+    <div class="col">
+        <div class="p-4 border rounded-0">
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <h2>Create Role</h2>
+            <form method="post">
+                <div class="form-group">
+                    <label asp-for="CreateRoleDto.Name">Name</label>
+                    <input asp-for="CreateRoleDto.Name" class="form-control" />
+                    <span class="text-danger" asp-validation-for="CreateRoleDto.Name"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="CreateRoleDto.Description">Description</label>
+                    <input asp-for="CreateRoleDto.Description" class="form-control" />
+                    <span class="text-danger" asp-validation-for="CreateRoleDto.Description"></span>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Create</button>
+            </form>
+        </div>
+    </div>
+</div>

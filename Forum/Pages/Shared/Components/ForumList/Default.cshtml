@@ -1,4 +1,5 @@
-﻿@using NETForum.Helpers
+﻿@using NETForum.Constants
+@using NETForum.Helpers
 @using NETForum.Pages.Shared.Components.UserPhoto
 @model ForumListViewModel
 
@@ -16,9 +17,9 @@
                         <span class="text-secondary forum-icon">
                             <partial name="_ExternalSVG" model="@("forum_svg")" />
                         </span>
-                        <a class="d-flex flex-column text-decoration-none text-black" asp-page="/Forums/Details" asp-route-id="@forumListItem.Id">
-                            <p class="m-0 text-primary forum-name">@forumListItem.Title</p>
-                            <small class="m-0 forum-description">@forumListItem.Description</small>
+                        <a class="d-flex flex-column text-decoration-none" asp-page="@PageRoutes.ForumView" asp-route-id="@forumListItem.Id">
+                            <p class="forum-title m-0 text-secondary">@forumListItem.Title</p>
+                            <small class="m-0 text-black">@forumListItem.Description</small>
                         </a>
                     </div>
                     <div class="d-flex justify-content-between align-items-center gap-3">
@@ -32,8 +33,8 @@
                         </div>
                         @if (forumListItem.LastPostSummary != null)
                         {
-                            <div class="d-flex align-items-center gap-3">
-                                <span class="text-secondary account-icon">
+                            <div class="d-flex align-items-center">
+                                <span class="text-secondary account-icon me-3">
                                     @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel(){
                                         PhotoUrl = forumListItem.LastPostSummary.AuthorAvatarUrl,
                                         UserName = forumListItem.LastPostSummary.AuthorName
@@ -41,9 +42,9 @@
                                 </span>
                                 <div class="d-flex flex-column">
                                     <a 
-                                        asp-page="/Posts/Details" 
+                                        asp-page="@PageRoutes.PostView" 
                                         asp-route-id="@forumListItem.LastPostSummary.Id"
-                                        class="text-tertiary"
+                                        class="link-secondary text-decoration-none"
                                     >
                                         @forumListItem.LastPostSummary.Title
                                     </a>

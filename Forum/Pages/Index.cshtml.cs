@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Constants;
 
 namespace NETForum.Pages
 {
@@ -13,7 +14,7 @@ namespace NETForum.Pages
 
         public IActionResult OnGet()
         {
-            return RedirectToPage("/Forums/Index");
+            return RedirectToPage(PageRoutes.ForumLanding);
         }
     }
 }

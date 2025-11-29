@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Constants;
 using NETForum.Models.DTOs;
 using NETForum.Services;
 
@@ -7,7 +8,6 @@ namespace NETForum.Pages.Account.Register
 {
     public class IndexModel(
         IUserService userService,
-        IAuthenticationService authenticationService,
         IUserProfileService userProfileService
     ) : PageModel {
         
@@ -21,7 +21,7 @@ namespace NETForum.Pages.Account.Register
         {
             if(!ModelState.IsValid) return Page();
             
-            var userCreateResult = await userService.CreateUserWithMemberRoleAsync(UserRegistrationDto);
+            var userCreateResult = await userService.RegisterUserAsync(UserRegistrationDto);
             if (!userCreateResult.IsSuccess)
             {
                 foreach (var error in userCreateResult.Errors)
@@ -31,7 +31,7 @@ namespace NETForum.Pages.Account.Register
                 return Page();
             }
             
-            var createdUser = await userService.GetByUsernameAsync(UserRegistrationDto.Username);
+            var createdUser = await userService.GetUserAsync(UserRegistrationDto.Username);
             if (!createdUser.IsSuccess)
             {
                 foreach (var error in createdUser.Errors)
@@ -66,10 +66,8 @@ namespace NETForum.Pages.Account.Register
                     return Page();
                 }
             }
-
-            // Sign in the new user and redirect.
-            await authenticationService.SignInAsync(createdUser.Value.Id);
-            return RedirectToPage("/Index");
+            
+            return RedirectToPage(PageRoutes.RegisterConfirmation, new { email = UserRegistrationDto.Email });
             
         }
     }

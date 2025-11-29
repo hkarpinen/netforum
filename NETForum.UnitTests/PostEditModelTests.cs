@@ -80,7 +80,7 @@ public class PostEditModelTests
             .ReturnsAsync(getEditPostDtoResult);
 
         _mockUserService
-            .Setup(s => s.GetUserByIdAsync(1))
+            .Setup(s => s.GetUserAsync(1))
             .ReturnsAsync(authorLookupResult);
         
         var result = await _pageModel.OnGetAsync(1);
@@ -108,12 +108,16 @@ public class PostEditModelTests
     public async Task OnPostAsync_WhenPostUpdateFails_AddsModelErrorAndReturnsPage()
     {
         SetupAuthenticatedUser(_pageModel, "TestUsername");
+        
         var editPostDto = new EditPostDto()
         {
             AuthorId = 1,
             Content = "TestContent",
             Title = "TestTitle",
         };
+        
+        _pageModel.EditPostDto = editPostDto;
+        
         var author = new User()
         {
             Id = 1,
@@ -129,11 +133,11 @@ public class PostEditModelTests
             .ReturnsAsync(getEditPostDtoResult);
         
         _mockUserService
-            .Setup(s => s.GetUserByIdAsync(1))
+            .Setup(s => s.GetUserAsync(1))
             .ReturnsAsync(authorLookupResult);
         
         _mockPostService
-            .Setup(s => s.UpdatePostAsync(1, It.IsAny<EditPostDto>()))
+            .Setup(s => s.UpdatePostAsync(1, editPostDto))
             .ReturnsAsync(postUpdateResult);
         
         var result = await _pageModel.OnPostAsync(1);

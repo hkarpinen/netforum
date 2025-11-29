@@ -9,6 +9,7 @@ using NETForum.Models.Entities;
 using NETForum.Pages.Shared.Components.Breadcrumbs;
 using NETForum.Services.Specifications;
 using FluentResults;
+using NETForum.Constants;
 using NETForum.Errors;
 
 namespace NETForum.Services
@@ -197,7 +198,7 @@ namespace NETForum.Services
         
         public async Task<Result> UpdateForumAsync(int forumId, EditForumDto editForumDto)
         {
-            var forum = await appDbContext.Forums.FindAsync(forumId);
+            var forum = await appDbContext.Forums.Where(i => i.Id == forumId).FirstOrDefaultAsync();
             
             // Forum not found.
             if (forum == null)
@@ -305,7 +306,7 @@ namespace NETForum.Services
             return stack.Select((f, index) => new BreadcrumbItemModel
             {
                 Text = f.Name,
-                Url = $"/Forums/{f.Id}",
+                Url = $"{PageRoutes.ForumView}/{f.Id}",
                 Active = index == stack.Count - 1
             }).ToList();
         }

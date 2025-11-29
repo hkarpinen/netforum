@@ -51,13 +51,13 @@ public class UserProfileEditModelTests
         var userLookupResult = Result.Fail<User>("User not found");
         
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
+            .Setup(s => s.GetUserAsync(It.IsAny<string>()))
             .ReturnsAsync(userLookupResult);
         
         var result = await _pageModel.OnGetAsync();
         
         result.Should().BeOfType<NotFoundResult>();
-        _mockUserService.Verify(s => s.GetByUsernameAsync(It.IsAny<string>()), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class UserProfileEditModelTests
         var userProfileLookupResult = Result.Fail<EditUserProfileDto>("User profile not found.");
         
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
+            .Setup(s => s.GetUserAsync(It.IsAny<string>()))
             .ReturnsAsync(userLookupResult);
 
         _mockUserProfileService
@@ -83,7 +83,7 @@ public class UserProfileEditModelTests
         
         var result = await _pageModel.OnGetAsync();
         
-        _mockUserService.Verify(s => s.GetByUsernameAsync(It.IsAny<string>()), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(It.IsAny<string>()), Times.Once);
         _mockUserProfileService.Verify(s => s.GetUserProfileForEditAsync(expectedUser.Id), Times.Once);
         result.Should().BeOfType<NotFoundResult>();
     }
@@ -108,7 +108,7 @@ public class UserProfileEditModelTests
         var userProfileLookupResult = Result.Ok(expectedEditUserProfileDto);
         
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
+            .Setup(s => s.GetUserAsync(It.IsAny<string>()))
             .ReturnsAsync(userLookupResult);
         
         _mockUserProfileService
@@ -117,7 +117,7 @@ public class UserProfileEditModelTests
         
         var result = await _pageModel.OnGetAsync();
         
-        _mockUserService.Verify(s => s.GetByUsernameAsync(It.IsAny<string>()), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(It.IsAny<string>()), Times.Once);
         _mockUserProfileService.Verify(s => s.GetUserProfileForEditAsync(expectedUser.Id), Times.Once);
         _pageModel.EditUserProfileDto.Should().BeEquivalentTo(expectedEditUserProfileDto);
         result.Should().BeOfType<PageResult>();
@@ -140,7 +140,7 @@ public class UserProfileEditModelTests
         var userLookupResult = Result.Fail<User>("User not found");
         
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
+            .Setup(s => s.GetUserAsync(It.IsAny<string>()))
             .ReturnsAsync(userLookupResult);
         
         var result = await _pageModel.OnPostAsync();
@@ -168,7 +168,7 @@ public class UserProfileEditModelTests
         var userLookupResult = Result.Ok(expectedUser);
         var userProfileUpdateResult = Result.Ok();
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(It.IsAny<string>()))
+            .Setup(s => s.GetUserAsync(It.IsAny<string>()))
             .ReturnsAsync(userLookupResult);
         
         _mockUserProfileService
@@ -177,7 +177,7 @@ public class UserProfileEditModelTests
         
         var result = await _pageModel.OnPostAsync();
         
-        _mockUserService.Verify(s => s.GetByUsernameAsync(It.IsAny<string>()), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(It.IsAny<string>()), Times.Once);
         _mockUserProfileService.Verify(s => s.UpdateUserProfileAsync(expectedUser.Id, editUserProfileDto), Times.Once);
         result.Should().BeOfType<RedirectToPageResult>();
     }

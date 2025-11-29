@@ -1,8 +1,4 @@
-using EntityFramework.Exceptions.Sqlite;
 using FluentAssertions;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using NETForum.Data;
 using NETForum.Errors;
 using NETForum.Filters;
 using NETForum.Models.DTOs;
@@ -11,34 +7,15 @@ using NETForum.Services;
 
 namespace NETForum.IntegrationTests;
 
-public class PostServiceTests : IDisposable
+public class PostServiceTests : ServiceTests
 {
-    private readonly AppDbContext _context;
     private readonly IPostService _postService;
-    private readonly SqliteConnection _connection;
 
     public PostServiceTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
-        
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlite(_connection)
-            .UseExceptionProcessor()
-            .Options;
-        
-        _context = new AppDbContext(options);
-        _context.Database.EnsureCreated();
-        
-        _postService = new PostService(_context);
+        _postService = new PostService(_db);
         
         SeedDatabase();
-    }
-
-    public void Dispose()
-    {
-        _context.Database.EnsureDeleted();
-        _connection.Dispose();
     }
 
     private void SeedDatabase()
@@ -53,7 +30,7 @@ public class PostServiceTests : IDisposable
             Email = "test@email.com"
         };
         
-        _context.Users.AddRange(author1);
+        _db.Users.AddRange(author1);
         
         var forum = new Forum()
         {
@@ -67,7 +44,7 @@ public class PostServiceTests : IDisposable
             UpdatedAt = DateTime.Now
         };
         
-        _context.Forums.AddRange(forum);
+        _db.Forums.AddRange(forum);
 
         var post1 = new Post()
         {
@@ -98,9 +75,37 @@ public class PostServiceTests : IDisposable
             IsLocked = false,
             ViewCount = 1
         };
+
+        var pinnedPost = new Post()
+        {
+            Id = 3,
+            ForumId = forum.Id,
+            AuthorId = author1.Id,
+            Title = "Test Post 3",
+            Content = "Test Content 3",
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now,
+            Published = true,
+            IsPinned = true,
+            IsLocked = false,
+        };
+
+        var lockedPost = new Post()
+        {
+            Id = 4,
+            ForumId = forum.Id,
+            AuthorId = author1.Id,
+            Title = "Test Post 4",
+            Content = "Test Content 4",
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now,
+            Published = true,
+            IsLocked = true,
+            IsPinned = false
+        };
         
-        _context.Posts.AddRange(post1, post2);
-        _context.SaveChanges();
+        _db.Posts.AddRange(post1, post2, pinnedPost, lockedPost);
+        _db.SaveChanges();
     }
 
     [Fact]
@@ -210,14 +215,14 @@ public class PostServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetPostsPagedAsync_ReturnsExpectedResult()
+    public async Task GetPostsPagedAsync_With_UnpublishedFilter_ReturnsExpectedPosts()
     {
         var postFilterOptions = new PostFilterOptions()
         {
             Published = false
         };
 
-        var result = await _postService.GetPostsPagedAsync(postFilterOptions);
+        var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
         
         var items = result.Items.ToList();
         items.Count.Should().Be(1);
@@ -226,6 +231,74 @@ public class PostServiceTests : IDisposable
         items[0].Content.Should().Be("Test Content 2");
         items[0].AuthorName.Should().Be("test");
         items[0].AuthorAvatarUrl.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetPostsPagedAsync_WithForumIdFilter_ReturnsExpectedPosts()
+    {
+        var postFilterOptions = new PostFilterOptions()
+        {
+            ForumId = 1
+        };
+        
+        var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
+        var items = result.Items.ToList();
+        
+        items.Count.Should().Be(4);
+        items.Any(i => i.Id == 1).Should().BeTrue();
+        items.Any(i => i.Id == 2).Should().BeTrue();
+        items.Any(i => i.Title == "Test Post").Should().BeTrue();
+        items.Any(i => i.Title == "Test Post 2").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetPostsPagedAsync_WithAuthorIdFilter_ReturnsExpectedPosts()
+    {
+        var postFilterOptions = new PostFilterOptions()
+        {
+            AuthorId = 1
+        };
+        
+        var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
+        var items = result.Items.ToList();
+        
+        items.Count.Should().Be(4);
+        items.Any(i => i.Id == 1).Should().BeTrue();
+        items.Any(i => i.Id == 2).Should().BeTrue();
+        items.Any(i => i.Title == "Test Post").Should().BeTrue();
+        items.Any(i => i.Title == "Test Post 2").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetPostsPagedAsync_WithPinnedFilter_ReturnsExpectedPosts()
+    {
+        var postFilterOptions = new PostFilterOptions()
+        {
+            Pinned = true
+        };
+        
+        var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
+        
+        var items = result.Items.ToList();
+        items.Count.Should().Be(1);
+        items.Any(i => i.Id == 3).Should().BeTrue();
+        items.Any(i => i.Title == "Test Post 3").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetPostsPagedAsync_WithLockedFilter_ReturnsExpectedPosts()
+    {
+        var postFilterOptions = new PostFilterOptions()
+        {
+            Locked = true
+        };
+        
+        var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
+        
+        var items = result.Items.ToList();
+        items.Count.Should().Be(1);
+        items.Any(i => i.Id == 4).Should().BeTrue();
+        items.Any(i => i.Title == "Test Post 4").Should().BeTrue();
     }
 
     [Fact]
@@ -279,7 +352,7 @@ public class PostServiceTests : IDisposable
         
         var result = await _postService.AddPostAsync("test", 1, createPostDto);
         result.IsSuccess.Should().BeTrue();
-        result.Value.Id.Should().Be(3);
+        result.Value.Id.Should().Be(5);
         result.Value.Title.Should().Be("Test Post 3");
         result.Value.Content.Should().Be("Test Content 3");
         result.Value.AuthorId.Should().Be(1);
@@ -287,5 +360,38 @@ public class PostServiceTests : IDisposable
         result.Value.IsLocked.Should().BeFalse();
         result.Value.Published.Should().BeTrue();
     }
-    
+
+    [Fact]
+    public async Task GetPostsPagedAsync_WithTitleFilter_ReturnsExpectedPosts()
+    {
+        var postFilterOptions = new PostFilterOptions()
+        {
+            Title = "Test Post 4"
+        };
+        
+        var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
+        result.Items.Count.Should().Be(1);
+        
+        
+        var items = result.Items.ToList();
+        items.Count.Should().Be(1);
+        items.Any(i => i.Id == 4).Should().BeTrue();
+        items.Any(i => i.Title == "Test Post 4").Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetPostsPagedAsync_WithContentFilter_ReturnsExpectedPosts()
+    {
+        var postFilterOptions = new PostFilterOptions()
+        {
+            Content = "Test Content 4"
+        };
+        
+        var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
+        
+        var items = result.Items.ToList();
+        items.Count.Should().Be(1);
+        items.Any(i => i.Id == 4).Should().BeTrue();
+        items.Any(i => i.Content == "Test Content 4").Should().BeTrue();
+    }
 }

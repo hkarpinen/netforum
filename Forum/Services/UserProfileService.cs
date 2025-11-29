@@ -29,6 +29,7 @@ public class UserProfileService(AppDbContext context) : IUserProfileService
             // Map Create DTO to UserProfile
             var userProfile = new UserProfile
             {
+                UserId = createUserProfileDto.UserId,
                 Bio = createUserProfileDto.Bio,
                 Signature = createUserProfileDto.Signature,
                 Location = createUserProfileDto.Location,

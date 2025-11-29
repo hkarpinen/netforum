@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
 using NETForum.Models.DTOs;
-using NETForum.Pages.Category;
 using NETForum.Services;
 using FluentResults;
+using NETForum.Pages.Admin.Categories;
 
 namespace NETForum.UnitTests;
 

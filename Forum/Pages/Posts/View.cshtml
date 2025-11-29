@@ -1,0 +1,115 @@
+﻿@page "{id:int}"
+@using NETForum.Constants
+@using NETForum.Helpers
+@using NETForum.Pages.Shared.Components.TinyMceEditor
+@using NETForum.Pages.Shared.Components.UserPhoto
+@model NETForum.Pages.Posts.DetailModel
+
+@{
+    ViewData["Title"] = Model.PostPageDto.Title;
+    var mceEditorModel = new TinyMceEditorModel()
+    {
+        EditorId = "post-reply"
+    };
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @await Component.InvokeAsync("TinyMceEditor", mceEditorModel)
+}
+
+<div asp-validation-summary="All" class="text-danger"></div>
+<div class="row mt-2">
+    <div class="col">
+        <div class="shadow rounded-1">
+            <div id="original-post">
+                <div class="card rounded-bottom-0">
+                    <div class="card-header shadow bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="m-0">@Model.PostPageDto.Title</p>
+                            @if(Model.PostPageDto.CurrentUserIsAuthor)
+                            {
+                                <a class="edit-icon text-white" asp-page="@PageRoutes.PostEdit" asp-route-id="@Model.PostPageDto.Id">
+                                    @await Html.PartialAsync("_ExternalSVG", "edit_icon")
+                                </a>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center pb-2">
+                            <div class="d-flex gap-2">
+                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                                {
+                                    PhotoUrl = Model.PostPageDto.AuthorAvatarImageUrl,
+                                    UserName = Model.PostPageDto.AuthorName
+                                })
+                                <div class="d-flex flex-column">
+                                    <a asp-page="@PageRoutes.MemberView" asp-route-username="@Model.PostPageDto.AuthorName" class="text-tertiary">
+                                        @Model.PostPageDto.AuthorName
+                                    </a>
+                                    <small class="m-0">@DateHelpers.ToRelativeDatetimeString(Model.PostPageDto.CreatedAt)</small>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="d-flex gap-2">
+                                    <p class="m-0 text-secondary">Posts:</p>
+                                    <small>@Model.PostPageDto.AuthorStatsSummary.TotalPostCount.ToString()</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <p class="m-0 text-secondary">Replies:</p>
+                                    <small>@Model.PostPageDto.AuthorStatsSummary.TotalPostCount.ToString()</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <p class="m-0 text-secondary">Joined On:</p>
+                                    <small>@Model.PostPageDto.AuthorStatsSummary.JoinedOn.ToShortDateString()</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="original-post-content">
+                            @Html.Raw(Model.PostPageDto.Content)
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="post-replies">
+                @foreach (var reply in Model.PostPageDto.Replies)
+                {
+                    <div class="post-reply border p-3">
+                        <div id="post-user-block" div class="d-flex justify-content-between align-items-center pb-2">
+                            <div class="d-flex gap-2 align-items-center">
+                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                                {
+                                    PhotoUrl = reply.AuthorAvatarImageUrl,
+                                    UserName = reply.AuthorName
+                                })
+                                <div class="d-flex flex-column">
+                                    <a class="text-tertiary">@reply.AuthorName</a>
+                                    <small class="m-0">@DateHelpers.ToRelativeDatetimeString(reply.CreatedAt)</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="reply-content">
+                            @Html.Raw(reply.Content)
+                        </div>
+                    </div>
+                }
+            </div>
+            <div id="reply-form" class="p-3 border rounded-bottom-2">
+                @if (User.Identity is { IsAuthenticated: true })
+                {
+                    <form method="post" asp-page-handler="AddReply">
+                        <div class="form-group">
+                            <textarea asp-for="CreatePostReplyDto.Content" class="form-control" id="post-reply" rows="10"></textarea>
+                            <span class="text-danger" asp-validation-for="CreatePostReplyDto.Content"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2">Add Reply</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login/Index">Login or register to reply!</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

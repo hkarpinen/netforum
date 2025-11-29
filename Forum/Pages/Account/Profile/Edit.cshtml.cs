@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Constants;
 using NETForum.Models.DTOs;
 using NETForum.Services;
 
@@ -14,8 +15,8 @@ namespace NETForum.Pages.Account.Profile
 
         public async Task<IActionResult> OnGetAsync()
         {
-            if(User.Identity?.Name == null) return RedirectToPage("/Account/Login");
-            var userLookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
+            if(User.Identity?.Name == null) return RedirectToPage(PageRoutes.Login);
+            var userLookupResult = await userService.GetUserAsync(User.Identity.Name);
             if (userLookupResult.IsFailed) return NotFound();
             var user = userLookupResult.Value;
             
@@ -29,8 +30,8 @@ namespace NETForum.Pages.Account.Profile
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid) return Page();
-            if (User.Identity?.Name == null) return RedirectToPage("/Account/Login");
-            var lookupResult = await userService.GetByUsernameAsync(User.Identity.Name);
+            if (User.Identity?.Name == null) return RedirectToPage(PageRoutes.Login);
+            var lookupResult = await userService.GetUserAsync(User.Identity.Name);
             if (lookupResult.IsFailed) return NotFound();
             var user = lookupResult.Value;
             
@@ -43,7 +44,7 @@ namespace NETForum.Pages.Account.Profile
                 await userService.UpdateUserProfileImageAsync(user.Id, EditUserProfileDto.ProfileImage);
             }
             
-            return RedirectToPage("/Index");
+            return RedirectToPage(PageRoutes.ForumLanding);
         }
     }
 }

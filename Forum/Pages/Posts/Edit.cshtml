@@ -1,6 +1,6 @@
-﻿@page "/Posts/{id:int}/Edit"
+﻿@page "{id:int}"
 @using NETForum.Pages.Shared.Components.TinyMceEditor
-@model NETForum.Pages.Posts.EditModel
+@model EditModel
 
 @{
     ViewData["Title"] = "Edit Post - " + Model.EditPostDto.Title;

@@ -1,4 +1,5 @@
 ﻿@page
+@using NETForum.Constants
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
@@ -9,12 +10,12 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Forums</h5>
-                <a asp-page="/Forums" class="btn btn-primary">Visit</a>
+                <a asp-page="@PageRoutes.ForumLanding" class="btn btn-primary">Visit</a>
 
                 <!-- Only display if the user is an Admin -->
                 @if(Model.UserIsAdmin)
                 {
-                    <a asp-page="/Admin/Forums" class="btn btn-secondary">Manage</a>
+                    <a asp-page="@PageRoutes.ManageForums" class="btn btn-secondary">Manage</a>
                 }
             </div>
         </div>
@@ -23,17 +24,19 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Threads</h5>
-                <a asp-page="/Threads/Index" class="btn btn-primary">Visit</a>
+                <a asp-page="@PageRoutes.PostsLanding" class="btn btn-primary">Visit</a>
 
                 <!-- Only display your threads if the user is authenticated. -->
                 @if(Model.UserIsAuthenticated && User.Identity?.Name != null)
                 {
-                    <a class="btn btn-primary" asp-page="/Threads/User" asp-route-username="@User.Identity.Name">Your Threads</a>
+                    <a class="btn btn-primary" 
+                       asp-page="/Threads/User" asp-route-username="@User.Identity.Name">Your Threads
+                    </a>
 
                     <!-- Only display if they are an Admin -->
                     @if (Model.UserIsAdmin)
                     {
-                        <a asp-page="/Admin/Posts" class="btn btn-secondary">Manage</a>
+                        <a asp-page="@PageRoutes.ManagePosts" class="btn btn-secondary">Manage</a>
                     }
                 }
             </div>
@@ -48,8 +51,8 @@
         <div class="col-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Users</h5>
-                    <a asp-page="/Admin/Users" class="btn btn-secondary">Manage</a>
+                    <h5 class="card-title">Members</h5>
+                    <a asp-page="@PageRoutes.ManageMembers" class="btn btn-secondary">Manage</a>
                 </div>
             </div>
         </div>
@@ -57,7 +60,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Roles</h5>
-                    <a asp-page="/Admin/Roles" class="btn btn-secondary">Manage</a>
+                    <a asp-page="@PageRoutes.ManageRoles" class="btn btn-secondary">Manage</a>
                 </div>
             </div>
         </div>

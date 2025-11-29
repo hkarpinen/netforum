@@ -1,5 +1,4 @@
 ﻿using Ardalis.Specification.EntityFrameworkCore;
-using EntityFramework.Exceptions.Common;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
 using NETForum.Filters;
@@ -16,7 +15,7 @@ namespace NETForum.Services
         Task<Result<EditPostDto>> GetPostForEditAsync(int id);
         Task<Result<Post>> AddPostAsync(string username, int forumId, CreatePostDto createPostDto);
         Task<Result> UpdatePostAsync(int id, EditPostDto editPostDto);
-        Task<PagedResult<PostSummaryDto>> GetPostsPagedAsync(PostFilterOptions postFilterOptions);
+        Task<PagedResult<PostSummaryDto>> GetPostSummariesPagedAsync(PostFilterOptions postFilterOptions);
         Task<Result<PostPageDto>> GetPostPageDto(int postId, string viewerUsername);
         Task<Result<Post>> GetPostAsync(int id);
     }
@@ -49,6 +48,7 @@ namespace NETForum.Services
                         Id = r.Id,
                         AuthorName = r.Author.UserName,
                         AuthorAvatarImageUrl = r.Author.ProfileImageUrl,
+                        PostTitle = r.Post.Title,
                         Content = r.Content,
                         CreatedAt = r.CreatedAt
                     }).ToList(),
@@ -176,7 +176,7 @@ namespace NETForum.Services
             return Result.Ok(editPostDto);
         } 
         
-        public async Task<PagedResult<PostSummaryDto>> GetPostsPagedAsync(PostFilterOptions postFilterOptions) {
+        public async Task<PagedResult<PostSummaryDto>> GetPostSummariesPagedAsync(PostFilterOptions postFilterOptions) {
             
             var postSearchSpec = new PostSearchSpec(postFilterOptions);
             var totalPosts = await appDbContext.Posts.CountAsync();

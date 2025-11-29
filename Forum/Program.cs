@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using NETForum.Data;
 using NETForum.Middleware;
@@ -23,9 +24,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddMemoryCache();
 
 // Add Identity Management
-builder.Services.AddIdentity<User, Role>()
+/* builder.Services.AddIdentity<User, Role>()
     .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders(); */
+
+builder.Services.AddIdentity<User, Role>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = true;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
 
 // Configure cookies
 builder.Services.ConfigureApplicationCookie(options =>
@@ -35,6 +44,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // Add DI classes
+builder.Services.AddHttpContextAccessor();
+
+// Add services
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
@@ -46,6 +58,7 @@ builder.Services.AddScoped<IReplyService, ReplyService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+builder.Services.AddTransient<IEmailSender, EmailSenderService>();
 
 var app = builder.Build();
 

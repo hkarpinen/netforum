@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Moq;
 using NETForum.Models.DTOs;
-using NETForum.Pages.Users;
 using NETForum.Services;
 using FluentResults;
+using NETForum.Constants;
+using NETForum.Errors;
+using NETForum.Pages.Admin.Members;
 
 namespace NETForum.UnitTests;
 
@@ -100,9 +102,18 @@ public class UserEditModelTests
     [Fact]
     public async Task OnPostAsync_WhenUserIsNotFound_ReturnsNotFoundResult()
     {
+        var roles = new List<string>()
+        {
+            "Role1"
+        };
+
+        _pageModel.SelectedRoles = roles;
+
+        var updateUserRolesResult = Result.Fail(UserErrors.NotFound(1));
+        
         _mockUserService
-            .Setup(u => u.UserExistsAsync(1))
-            .ReturnsAsync(false);
+            .Setup(u => u.UpdateUserRolesAsync(1, roles))
+            .ReturnsAsync(updateUserRolesResult);
         
         var result = await _pageModel.OnPostAsync(1);
         result.Should().BeOfType<NotFoundResult>();
@@ -112,10 +123,6 @@ public class UserEditModelTests
     public async Task OnPostAsync_WhenUserIsFound_ShouldUpdateRolesAndRedirect()
     {
         _mockUserService
-            .Setup(u => u.UserExistsAsync(1))
-            .ReturnsAsync(true);
-        
-        _mockUserService
             .Setup(u => u.UpdateUserRolesAsync(1, It.IsAny<List<string>>()))
             .ReturnsAsync(Result.Ok());
         
@@ -123,7 +130,7 @@ public class UserEditModelTests
         
         result.Should().BeOfType<RedirectToPageResult>();
         var redirect = result as RedirectToPageResult;
-        redirect.PageName.Should().Be("/Admin/Users");
+        redirect.PageName.Should().Be(PageRoutes.ManageMembers);
         
         _mockUserService.Verify(u => u.UpdateUserRolesAsync(1, It.IsAny<List<string>>()), Times.Once);
     }

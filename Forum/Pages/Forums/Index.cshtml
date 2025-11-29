@@ -1,4 +1,5 @@
 ﻿@page
+@using NETForum.Constants
 @using NETForum.Helpers
 @using NETForum.Pages.Shared.Components.ForumList
 @using NETForum.Pages.Shared.Components.UserPhoto
@@ -11,24 +12,26 @@
 
 <div class="row mt-2">
     <div class="col-md-8 col-sm-12">
-        @await Component.InvokeAsync("ForumList", new ForumListOptions()
-        {
-            ForumListTitle = "Uncategorized Forums",
-            ForumItems = Model.ForumIndexPageDto.RootForums.Where(f => f.CategoryName == null).ToList()
-        })
-        @foreach(var categoryGroup in groupedByCategory)
-        {
-            <div class="mt-2">
-                @await Component.InvokeAsync("ForumList", new ForumListOptions()
-                {
-                    ForumListTitle = categoryGroup.Key,
-                    ForumItems = categoryGroup.ToList()
-                })
-            </div>
-        }
+        <div class="mb-3">
+            @await Component.InvokeAsync("ForumList", new ForumListOptions()
+            {
+                ForumListTitle = "Uncategorized Forums",
+                ForumItems = Model.ForumIndexPageDto.RootForums.Where(f => f.CategoryName == null).ToList()
+            })
+            @foreach(var categoryGroup in groupedByCategory)
+            {
+                <div class="mt-2">
+                    @await Component.InvokeAsync("ForumList", new ForumListOptions()
+                    {
+                        ForumListTitle = categoryGroup.Key,
+                        ForumItems = categoryGroup.ToList()
+                    })
+                </div>
+            }
+        </div>
     </div>
     <div class="col-md-4 col-sm-12">
-        <div class="d-flex flex-column gap-3">
+        <div class="d-flex flex-column gap-3 mt-lg-0 mt-md-2">
             <div class="card shadow">
                 <div class="card-header shadow bg-primary text-white">
                     Online Members
@@ -47,7 +50,7 @@
                             @foreach (var post in Model.ForumIndexPageDto.LatestPosts)
                             {
                                 <div class="latest-post">
-                                    <div class="d-flex gap-3 align-items-center">
+                                    <div class="d-flex gap-3 gap-sm-4 align-items-center mb-2">
                                         <span class="text-secondary account-icon">
                                             @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
                                             {
@@ -57,9 +60,9 @@
                                         </span>
                                         <div class="d-flex justify-content-between flex-grow-1">
                                             <div class="d-flex flex-column">
-                                                <a asp-page="/Posts/Details"
+                                                <a asp-page="@PageRoutes.PostView"
                                                    asp-route-id="@post.Id"
-                                                   class="text-tertiary">
+                                                   class="text-decoration-none link-secondary">
                                                     @post.Title
                                                 </a>
                                                 <small>@DateHelpers.ToRelativeDatetimeString(post.UpdatedAt)</small>

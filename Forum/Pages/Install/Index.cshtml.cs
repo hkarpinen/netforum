@@ -15,13 +15,9 @@ namespace NETForum.Pages.Install
         [BindProperty]
         public UserRegistrationDto Form { get; set; } = new();
 
-        public void OnGet()
-        {
-        }
-
         public async Task<IActionResult> OnPostAsync()
         {
-            User userDto = new User
+            var userDto = new User
             {
                 UserName = Form.Username,
                 Email = Form.Email,
@@ -71,7 +67,11 @@ namespace NETForum.Pages.Install
 
             // User was created and added to role "Owner".
             await signInManager.SignInAsync(user, isPersistent: true);
-            return RedirectToPage("/Index");
+            
+            // Need to await email confirmation here as it's required to sign-in. 
+            return Page();
+
+            //return RedirectToPage("/Index");
 
         }
     }

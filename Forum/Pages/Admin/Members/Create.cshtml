@@ -1,0 +1,53 @@
+﻿@page
+@model CreateModel
+
+@{
+    ViewData["Title"] = "Create User";
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<h2>Create User</h2>
+<hr />
+<form method="post">
+    <div class="form-group">
+        <label asp-for="CreateUserDto.Username">Username</label>
+        <input asp-for="CreateUserDto.Username" class="form-control" />
+        <span asp-validation-for="CreateUserDto.Username" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="CreateUserDto.Email">Email</label>
+        <input asp-for="CreateUserDto.Email" type="email" class="form-control" />
+        <span asp-validation-for="CreateUserDto.Email" class="text-danger"></span>
+    </div>
+    <div class="selected-rows">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th scope="col">Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var availableRole in Model.RoleSelectListItems)
+                {
+                    <tr>
+                        <td>
+                            <!-- Setting Name to Form.SelectedRoleIDs allows .NET to bind the checkbox values to the list. -->
+                            <input 
+                                name="SelectedRoles"
+                                value="@availableRole.Value"
+                                type="checkbox" 
+                            />
+                        </td>
+                        <td>@availableRole.Text</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    
+    <button type="submit" class="btn btn-primary mt-2">Register</button>
+</form>

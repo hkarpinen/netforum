@@ -1,7 +1,9 @@
 using FluentAssertions;
+using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
+using NETForum.Constants;
 using NETForum.Models.DTOs;
 using NETForum.Pages.Account.Login;
 using NETForum.Services;
@@ -33,13 +35,13 @@ public class UserLoginModelTests
         
         _mockAuthenticationService
             .Setup(s => s.SignInAsync(userLoginDto))
-            .ReturnsAsync(true);
+            .ReturnsAsync(Result.Ok());
 
         var result = await _pageModel.OnPostAsync();
 
         result.Should().BeOfType<RedirectToPageResult>();
         var redirectResult = result as RedirectToPageResult;
-        redirectResult.PageName.Should().Be("/Index");
+        redirectResult.PageName.Should().Be(PageRoutes.ForumLanding);
     }
 
     [Fact]
@@ -54,7 +56,7 @@ public class UserLoginModelTests
         _pageModel.UserLoginDto = userLoginDto;
         _mockAuthenticationService
             .Setup(s => s.SignInAsync(userLoginDto))
-            .ReturnsAsync(false);
+            .ReturnsAsync(Result.Fail("Invalid username or password."));
         
         var result = await _pageModel.OnPostAsync();
         

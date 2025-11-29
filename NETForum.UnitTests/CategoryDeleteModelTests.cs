@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using NETForum.Pages.Category;
+using NETForum.Pages.Admin.Categories;
 using NETForum.Services;
 
 namespace NETForum.UnitTests;

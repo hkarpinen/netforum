@@ -47,14 +47,14 @@ namespace NETForum.Pages.Posts
             
             if (AuthorName != null)
             {
-                var author = await userService.GetByUsernameAsync(AuthorName);
+                var author = await userService.GetUserAsync(AuthorName);
                 if (author.IsSuccess)
                 {
                     authorId = author.Value.Id;
                 }
             }
 
-            Posts = await postService.GetPostsPagedAsync(new PostFilterOptions
+            Posts = await postService.GetPostSummariesPagedAsync(new PostFilterOptions
             {
                 ForumId = ForumId,
                 AuthorId = authorId,

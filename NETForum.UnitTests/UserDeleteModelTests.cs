@@ -1,7 +1,8 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using NETForum.Pages.Users;
+using NETForum.Constants;
+using NETForum.Pages.Admin.Members;
 using NETForum.Services;
 
 namespace NETForum.UnitTests;
@@ -23,7 +24,7 @@ public class UserDeleteModelTests
         var result = await _pageModel.OnGetAsync(1);
         result.Should().BeOfType<RedirectToPageResult>();
         var redirectToPageResult = result.As<RedirectToPageResult>();
-        redirectToPageResult.PageName.Should().Be("/Admin/Users");
+        redirectToPageResult.PageName.Should().Be(PageRoutes.ManageMembers);
         
     }
 }

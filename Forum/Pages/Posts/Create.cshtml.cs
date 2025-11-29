@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Constants;
 using NETForum.Models.DTOs;
 using NETForum.Services;
 
@@ -18,7 +19,10 @@ namespace NETForum.Pages.Posts
             
             var username = User.Identity?.Name!;
             var addPostResult = await postService.AddPostAsync(username, forumId, CreatePostDto);
-            if(addPostResult.IsSuccess) return RedirectToPage("/Posts/Details", new { id = addPostResult.Value.Id });
+            if(addPostResult.IsSuccess) return RedirectToPage(
+                PageRoutes.PostView
+                , new { id = addPostResult.Value.Id }
+            );
 
             // Adding the post failed, add the error to the ModelState.
             foreach (var error in addPostResult.Errors)

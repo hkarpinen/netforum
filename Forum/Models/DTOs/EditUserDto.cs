@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace NETForum.Models.DTOs;
 
 public class EditUserDto

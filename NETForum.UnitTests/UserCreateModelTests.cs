@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Moq;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
-using NETForum.Pages.Users;
 using NETForum.Services;
 using FluentResults;
+using NETForum.Pages.Admin.Members;
 
 namespace NETForum.UnitTests;
 
@@ -102,7 +102,7 @@ public class UserCreateModelTests
             .ReturnsAsync(serviceCreateResult);
         
         _mockUserService
-            .Setup(u => u.GetByUsernameAsync(createUserDto.Username))
+            .Setup(u => u.GetUserAsync(createUserDto.Username))
             .ReturnsAsync(serviceUserLookupResult);
         
         _mockUserService
@@ -138,7 +138,7 @@ public class UserCreateModelTests
         _pageModel.ModelState.ErrorCount.Should().Be(1);
         _pageModel.ModelState["Error1"]?.Errors[0].ErrorMessage.Should().Be("Error1");
         
-        _mockUserService.Verify(u => u.GetByUsernameAsync(It.IsAny<string>()), Times.Never);
+        _mockUserService.Verify(u => u.GetUserAsync(It.IsAny<string>()), Times.Never);
         _mockUserService.Verify(u => u.UpdateUserRolesAsync(It.IsAny<int>(), It.IsAny<List<string>>()), Times.Never);
     }
 
@@ -170,7 +170,7 @@ public class UserCreateModelTests
         var userLookupResult = Result.Fail<User>("Error1");
         
         _mockUserService
-            .Setup(u => u.GetByUsernameAsync(createUserDto.Username))
+            .Setup(u => u.GetUserAsync(createUserDto.Username))
             .ReturnsAsync(userLookupResult);
         
         await _pageModel.OnPostAsync();

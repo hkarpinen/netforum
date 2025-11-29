@@ -125,7 +125,7 @@ namespace NETForum.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("NETForum.Models.Category", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -137,6 +137,7 @@ namespace NETForum.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
@@ -161,7 +162,7 @@ namespace NETForum.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("NETForum.Models.Forum", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Forum", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -207,7 +208,7 @@ namespace NETForum.Migrations
                     b.ToTable("Forums");
                 });
 
-            modelBuilder.Entity("NETForum.Models.Post", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Post", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -261,7 +262,7 @@ namespace NETForum.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("NETForum.Models.Reply", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Reply", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -294,7 +295,7 @@ namespace NETForum.Migrations
                     b.ToTable("Replies");
                 });
 
-            modelBuilder.Entity("NETForum.Models.Role", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Role", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -307,6 +308,7 @@ namespace NETForum.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("varchar(250)");
 
@@ -331,7 +333,7 @@ namespace NETForum.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("NETForum.Models.User", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -415,7 +417,7 @@ namespace NETForum.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("NETForum.Models.UserProfile", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.UserProfile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -454,7 +456,7 @@ namespace NETForum.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
-                    b.HasOne("NETForum.Models.Role", null)
+                    b.HasOne("NETForum.Models.Entities.Role", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -463,7 +465,7 @@ namespace NETForum.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
-                    b.HasOne("NETForum.Models.User", null)
+                    b.HasOne("NETForum.Models.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -472,7 +474,7 @@ namespace NETForum.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
-                    b.HasOne("NETForum.Models.User", null)
+                    b.HasOne("NETForum.Models.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -481,13 +483,13 @@ namespace NETForum.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.HasOne("NETForum.Models.Role", null)
+                    b.HasOne("NETForum.Models.Entities.Role", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NETForum.Models.User", null)
+                    b.HasOne("NETForum.Models.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -496,21 +498,21 @@ namespace NETForum.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
-                    b.HasOne("NETForum.Models.User", null)
+                    b.HasOne("NETForum.Models.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("NETForum.Models.Forum", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Forum", b =>
                 {
-                    b.HasOne("NETForum.Models.Category", "Category")
+                    b.HasOne("NETForum.Models.Entities.Category", "Category")
                         .WithMany("Forums")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("NETForum.Models.Forum", "ParentForum")
+                    b.HasOne("NETForum.Models.Entities.Forum", "ParentForum")
                         .WithMany("SubForums")
                         .HasForeignKey("ParentForumId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -520,32 +522,34 @@ namespace NETForum.Migrations
                     b.Navigation("ParentForum");
                 });
 
-            modelBuilder.Entity("NETForum.Models.Post", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Post", b =>
                 {
-                    b.HasOne("NETForum.Models.User", "Author")
-                        .WithMany()
+                    b.HasOne("NETForum.Models.Entities.User", "Author")
+                        .WithMany("Posts")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("NETForum.Models.Forum", null)
+                    b.HasOne("NETForum.Models.Entities.Forum", "Forum")
                         .WithMany("Posts")
                         .HasForeignKey("ForumId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Author");
+
+                    b.Navigation("Forum");
                 });
 
-            modelBuilder.Entity("NETForum.Models.Reply", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Reply", b =>
                 {
-                    b.HasOne("NETForum.Models.User", "Author")
-                        .WithMany()
+                    b.HasOne("NETForum.Models.Entities.User", "Author")
+                        .WithMany("Replies")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NETForum.Models.Post", "Post")
+                    b.HasOne("NETForum.Models.Entities.Post", "Post")
                         .WithMany("Replies")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -556,34 +560,38 @@ namespace NETForum.Migrations
                     b.Navigation("Post");
                 });
 
-            modelBuilder.Entity("NETForum.Models.UserProfile", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.UserProfile", b =>
                 {
-                    b.HasOne("NETForum.Models.User", null)
+                    b.HasOne("NETForum.Models.Entities.User", null)
                         .WithOne("UserProfile")
-                        .HasForeignKey("NETForum.Models.UserProfile", "UserId")
+                        .HasForeignKey("NETForum.Models.Entities.UserProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("NETForum.Models.Category", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Category", b =>
                 {
                     b.Navigation("Forums");
                 });
 
-            modelBuilder.Entity("NETForum.Models.Forum", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Forum", b =>
                 {
                     b.Navigation("Posts");
 
                     b.Navigation("SubForums");
                 });
 
-            modelBuilder.Entity("NETForum.Models.Post", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.Post", b =>
                 {
                     b.Navigation("Replies");
                 });
 
-            modelBuilder.Entity("NETForum.Models.User", b =>
+            modelBuilder.Entity("NETForum.Models.Entities.User", b =>
                 {
+                    b.Navigation("Posts");
+
+                    b.Navigation("Replies");
+
                     b.Navigation("UserProfile");
                 });
 #pragma warning restore 612, 618

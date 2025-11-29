@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using NETForum.Constants
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8" />
@@ -21,13 +22,13 @@
                     <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                         <ul class="navbar-nav flex-grow-1">
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
+                                <a class="nav-link" asp-area="" asp-page="@PageRoutes.ForumLanding">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Posts/Index">Posts</a>
+                                <a class="nav-link" asp-area="" asp-page="@PageRoutes.PostsLanding">Posts</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Members/Index">Members</a>
+                                <a class="nav-link" asp-area="" asp-page="@PageRoutes.MembersLanding">Members</a>
                             </li>
                     </ul>
                     <ul class="list-unstyled d-flex gap-2 m-0">
@@ -39,8 +40,8 @@
                             } 
                             else
                             {
-                                <li><a class="btn btn-secondary" asp-page="/Account/Login/Index">Login</a></li>
-                                <li><a class="btn btn-tertiary" asp-page="/Account/Register/Index">Register</a></li>
+                                <li><a class="btn btn-secondary" asp-page="@PageRoutes.Login">Login</a></li>
+                                <li><a class="btn btn-tertiary" asp-page="@PageRoutes.Register">Register</a></li>
                             }
                         }
                     </ul>

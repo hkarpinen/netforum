@@ -15,17 +15,14 @@ public class UserRegistrationModelTests
 {
     private readonly Mock<IUserProfileService> _mockUserProfileService;
     private readonly Mock<IUserService> _mockUserService;
-    private readonly Mock<IAuthenticationService> _mockAuthenticationService;
     private readonly IndexModel _pageModel;
 
     public UserRegistrationModelTests()
     {
         _mockUserProfileService = new Mock<IUserProfileService>();
         _mockUserService = new Mock<IUserService>();
-        _mockAuthenticationService = new Mock<IAuthenticationService>();
         _pageModel = new IndexModel(
             _mockUserService.Object,
-            _mockAuthenticationService.Object,
             _mockUserProfileService.Object
         );
     }
@@ -48,19 +45,19 @@ public class UserRegistrationModelTests
         var userLookupResult = Result.Fail<User>("User could not be found");
 
         _mockUserService
-            .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
+            .Setup(s => s.RegisterUserAsync(userRegistrationDto))
             .ReturnsAsync(userCreateResult);
 
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(username))
+            .Setup(s => s.GetUserAsync(username))
             .ReturnsAsync(userLookupResult);
 
         var result = await _pageModel.OnPostAsync();
         
         result.Should().BeOfType<PageResult>();
         _pageModel.ModelState.ErrorCount.Should().Be(1);
-        _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
-        _mockUserService.Verify(s => s.GetByUsernameAsync(username), Times.Once);
+        _mockUserService.Verify(s => s.RegisterUserAsync(userRegistrationDto), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(username), Times.Once);
     }
 
     [Fact]
@@ -80,7 +77,7 @@ public class UserRegistrationModelTests
         var userCreateResult = Result.Fail("User could not be created");
         
         _mockUserService
-            .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
+            .Setup(s => s.RegisterUserAsync(userRegistrationDto))
             .ReturnsAsync(userCreateResult);
         
         var result = await _pageModel.OnPostAsync();
@@ -88,8 +85,8 @@ public class UserRegistrationModelTests
         result.Should().BeOfType<PageResult>();
         _pageModel.ModelState.ErrorCount.Should().Be(1);
         
-        _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
-        _mockUserService.Verify(s => s.GetByUsernameAsync(username), Times.Never);
+        _mockUserService.Verify(s => s.RegisterUserAsync(userRegistrationDto), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(username), Times.Never);
     }
 
     [Fact]
@@ -135,11 +132,11 @@ public class UserRegistrationModelTests
         var addUserProfileResult = Result.Ok(expectedUserProfile);
         
         _mockUserService
-            .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
+            .Setup(s => s.RegisterUserAsync(userRegistrationDto))
             .ReturnsAsync(userCreateResult);
         
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(userRegistrationDto.Username))
+            .Setup(s => s.GetUserAsync(userRegistrationDto.Username))
             .ReturnsAsync(userLookupResult);
         
         _mockUserProfileService
@@ -149,8 +146,8 @@ public class UserRegistrationModelTests
         var result = await _pageModel.OnPostAsync();
         
         result.Should().BeOfType<RedirectToPageResult>();
-        _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
-        _mockUserService.Verify(s => s.GetByUsernameAsync(userRegistrationDto.Username), Times.Once);
+        _mockUserService.Verify(s => s.RegisterUserAsync(userRegistrationDto), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(userRegistrationDto.Username), Times.Once);
         _mockUserProfileService.Verify(s => s.AddUserProfileAsync(userProfileDto), Times.Once);
     }
 
@@ -187,11 +184,11 @@ public class UserRegistrationModelTests
         var userProfileAddResult = Result.Fail<UserProfile>("User profile could not be created");
         
         _mockUserService
-            .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
+            .Setup(s => s.RegisterUserAsync(userRegistrationDto))
             .ReturnsAsync(userCreateResult);
         
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(userRegistrationDto.Username))
+            .Setup(s => s.GetUserAsync(userRegistrationDto.Username))
             .ReturnsAsync(userLookupResult);
         
         _mockUserProfileService
@@ -202,8 +199,8 @@ public class UserRegistrationModelTests
         
         result.Should().BeOfType<PageResult>();
         _pageModel.ModelState.ErrorCount.Should().Be(1);
-        _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
-        _mockUserService.Verify(s => s.GetByUsernameAsync(userRegistrationDto.Username), Times.Once);
+        _mockUserService.Verify(s => s.RegisterUserAsync(userRegistrationDto), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(userRegistrationDto.Username), Times.Once);
         _mockUserProfileService.Verify(s => s.AddUserProfileAsync(userProfileDto), Times.Once);
     }
 
@@ -249,11 +246,11 @@ public class UserRegistrationModelTests
         var userProfileAddResult = Result.Ok(expectedUserProfile);
         
         _mockUserService
-            .Setup(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto))
+            .Setup(s => s.RegisterUserAsync(userRegistrationDto))
             .ReturnsAsync(userCreateResult);
         
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync(userRegistrationDto.Username))
+            .Setup(s => s.GetUserAsync(userRegistrationDto.Username))
             .ReturnsAsync(userLookupResult);
         
         _mockUserProfileService
@@ -268,8 +265,8 @@ public class UserRegistrationModelTests
         
         result.Should().BeOfType<PageResult>();
         _pageModel.ModelState.ErrorCount.Should().Be(1);
-        _mockUserService.Verify(s => s.CreateUserWithMemberRoleAsync(userRegistrationDto), Times.Once);
-        _mockUserService.Verify(s => s.GetByUsernameAsync(userRegistrationDto.Username), Times.Once);
+        _mockUserService.Verify(s => s.RegisterUserAsync(userRegistrationDto), Times.Once);
+        _mockUserService.Verify(s => s.GetUserAsync(userRegistrationDto.Username), Times.Once);
         _mockUserProfileService.Verify(s => s.AddUserProfileAsync(userProfileDto), Times.Once);
         _mockUserService.Verify(s => s.UpdateUserProfileImageAsync(expectedUser.Id, userProfileDto.ProfileImage));
         

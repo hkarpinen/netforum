@@ -1,0 +1,16 @@
+@page
+@model NETForum.Pages.Account.Register.Confirmation
+
+@{
+    ViewData["Title"] = "Registration Confirmation";
+}
+
+<div class="row">
+    <div class="col">
+        <h1>@ViewData["Title"]</h1>
+        <p>
+            We have sent a confirmation email to @Model.Email. Please click the link in the email to confirm your account.
+        </p>
+    </div>
+</div>
+

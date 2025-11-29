@@ -1,4 +1,5 @@
 @page
+@using NETForum.Constants
 @using NETForum.Pages.Shared.Components.UserPhoto
 @model NETForum.Pages.Members.IndexModel
 
@@ -24,21 +25,38 @@
                 Members
             </div>
             <div class="card-body">
-                @if (Model.Users.Items.Any())
+                @if (Model.Users != null && Model.Users.Items.Any())
                 {
-                    @foreach (var user in Model.Users.Items)
+                    @if (Model.Users.Items.Any())
                     {
-                        <div class="p-2">
-                            <div class="d-flex gap-2 align-items-center">
-                                @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
-                                {
-                                    PhotoUrl = user.ProfileImageUrl,
-                                    UserName = user.UserName
-                                })
-                                <a href="/Members/@user.UserName" class="link-primary">@user.UserName</a>
+                        @foreach (var user in Model.Users.Items)
+                        {
+                            <div class="p-2">
+                                <div class="d-flex gap-2 align-items-center">
+                                    @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
+                                    {
+                                        PhotoUrl = user.ProfileImageUrl,
+                                        UserName = user.UserName
+                                    })
+                                    <a 
+                                        class="link-primary"
+                                        asp-page="@PageRoutes.MemberView" 
+                                        asp-route-username="@user.UserName"
+                                    >
+                                        @user.UserName
+                                    </a>
+                                </div>
                             </div>
-                        </div>
+                        }
                     }
+                    else
+                    {
+                        <p>No users found.</p>
+                    }
+                }
+                else
+                {
+                    <p>Unable to load users.</p>
                 }
             </div>
         </div>
@@ -47,11 +65,11 @@
 <div class="row">
     <div class="d-flex mt-3">
         <p class="m-0 align-self-center">Page @Model.Users.PageNumber of @Model.Users.TotalPages</p>
-        <a asp-page="/Members/Index"
+        <a asp-page="@PageRoutes.MembersLanding"
            asp-route-PageNumber="@(Model.Users.PageNumber - 1)"
            asp-route-username="@(Model.Username)"
            class="btn btn-primary mx-2 @(Model.Users.HasPreviousPage ? "" : "disabled")">Previous</a>
-        <a asp-page="/Members/Index"
+        <a asp-page="@PageRoutes.MembersLanding"
            asp-route-PageNumber="@(Model.Users.PageNumber + 1)"
            asp-route-username="@(Model.Username)"
            class="btn btn-primary @(Model.Users.HasNextPage ? "" : "disabled")">Next</a>

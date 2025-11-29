@@ -1,10 +1,6 @@
-using EntityFramework.Exceptions.Sqlite;
 using FluentAssertions;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Moq;
-using NETForum.Data;
 using NETForum.Errors;
 using NETForum.Filters;
 using NETForum.Models.DTOs;
@@ -13,41 +9,20 @@ using NETForum.Services;
 
 namespace NETForum.IntegrationTests;
 
-public class ForumServiceTests : IDisposable
+public class ForumServiceTests : ServiceTests
 {
-    private readonly AppDbContext _context;
     private readonly IForumService _forumService;
     private readonly Mock<IMemoryCache> _mockMemoryCache;
-    private readonly SqliteConnection _connection;
 
     public ForumServiceTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open(); 
-        
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlite(_connection)
-            .UseExceptionProcessor() 
-            .Options;
-        
         _mockMemoryCache = new Mock<IMemoryCache>();
-        
-        _context = new AppDbContext(options);
-        
-        _context.Database.EnsureCreated();
-
         _forumService = new ForumService(
-            _context,
+            _db,
             _mockMemoryCache.Object
         );
         
         SeedDatabase();
-    }
-    
-    public void Dispose()
-    {
-        _context.Database.EnsureDeleted();
-        _context.Dispose();
     }
 
     private void SeedDatabase()
@@ -73,7 +48,7 @@ public class ForumServiceTests : IDisposable
             ProfileImageUrl = "test.com/image2.png"
         };
         
-        _context.Users.AddRange(user1, user2);
+        _db.Users.AddRange(user1, user2);
         
         // Add forums
         var rootForum = new Forum()
@@ -100,7 +75,7 @@ public class ForumServiceTests : IDisposable
             UpdatedAt = DateTime.UtcNow
         };
         
-        _context.Forums.AddRange(rootForum, subForum);
+        _db.Forums.AddRange(rootForum, subForum);
 
         // Add posts
         var rootForumPost1 = new Post()
@@ -135,7 +110,7 @@ public class ForumServiceTests : IDisposable
             ReplyCount = 1
         };
         
-        _context.Posts.AddRange(rootForumPost1, subForumPost1);
+        _db.Posts.AddRange(rootForumPost1, subForumPost1);
 
         var rootForumPost1Reply = new Reply()
         {
@@ -157,10 +132,10 @@ public class ForumServiceTests : IDisposable
             LastUpdatedAt = DateTime.UtcNow,
         };
         
-        _context.Replies.AddRange(rootForumPost1Reply, subForumPost1Reply);
+        _db.Replies.AddRange(rootForumPost1Reply, subForumPost1Reply);
         
         // Save changes to DB
-        _context.SaveChanges();
+        _db.SaveChanges();
     }
 
     [Fact]

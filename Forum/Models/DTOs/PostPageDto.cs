@@ -27,5 +27,6 @@ public class ReplyViewModel
     public string? AuthorName { get; set; }
     public string? AuthorAvatarImageUrl { get; set; }
     public DateTime CreatedAt { get; set; }
+    public required string PostTitle { get; set; }
     public required string Content { get; set; }
 }

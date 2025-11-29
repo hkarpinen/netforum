@@ -1,6 +1,6 @@
 ﻿@model TinyMceEditorModel
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
+<script src="~/lib/tinymce/tinymce.min.js"></script>
 <script>
     tinymce.init({
         selector: '#@Model.EditorId',
@@ -10,5 +10,6 @@
         menubar: '@Model.Menubar',
         resize: '@Model.Resize',
         paste_as_text: '@Model.PasteAsText',
+        license_key: 'gpl'
     });
 </script>

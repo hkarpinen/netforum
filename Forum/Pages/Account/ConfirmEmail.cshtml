@@ -1,0 +1,15 @@
+@page
+@model NETForum.Pages.Account.ConfirmEmailModel
+
+@{
+    ViewData["Title"] = "Confirm Email";
+}
+
+<div class="row">
+    <div class="row">
+        <h1>@ViewData["Title"]</h1>
+        <div class="alert @(Model.StatusMessage.Contains("Error") ? "alert-danger" : "alert-success")">
+            @Model.StatusMessage
+        </div>
+    </div>
+</div>

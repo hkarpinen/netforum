@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NETForum.Attributes;
+using NETForum.Constants;
 using NETForum.Models.DTOs;
 using NETForum.Services;
 
@@ -15,9 +16,12 @@ namespace NETForum.Pages.Account.Login
         public async Task<IActionResult> OnPostAsync()
         {
             var loginSuccessful = await authenticationService.SignInAsync(UserLoginDto);
-            if(loginSuccessful) return RedirectToPage("/Index");
+            if(loginSuccessful.IsSuccess) return RedirectToPage(PageRoutes.ForumLanding);
 
-            ModelState.AddModelError("", "Invalid username or password.");
+            foreach (var error in loginSuccessful.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Message);
+            }
             return Page();
         }
     }

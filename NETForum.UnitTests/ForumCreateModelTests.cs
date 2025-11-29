@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Moq;
 using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
-using NETForum.Pages.Forums;
 using NETForum.Services;
 using FluentResults;
+using NETForum.Pages.Admin.Forums;
 
 namespace NETForum.UnitTests;
 

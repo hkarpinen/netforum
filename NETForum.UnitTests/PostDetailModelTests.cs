@@ -53,7 +53,7 @@ public class PostDetailModelTests
         
         var user = new User { Id = authorId, UserName = "test", CreatedAt = DateTime.UtcNow.AddYears(-1) };
         _mockUserService
-            .Setup(s => s.GetByUsernameAsync("test"))
+            .Setup(s => s.GetUserAsync("test"))
             .ReturnsAsync(Result.Ok(user));
 
         // Setup post

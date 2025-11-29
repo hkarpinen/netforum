@@ -1,4 +1,5 @@
 ﻿@page
+@using NETForum.Constants
 @model NETForum.Pages.Admin.IndexModel
 
 @{
@@ -10,8 +11,8 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Forums</h5>
-                <a asp-page="/Forums" class="btn btn-primary">Visit</a>
-                <a asp-page="/Admin/Forums/Index" class="btn btn-secondary">Manage</a>
+                <a asp-page="@PageRoutes.ForumLanding" class="btn btn-primary">Visit</a>
+                <a asp-page="@PageRoutes.ManageForums" class="btn btn-secondary">Manage</a>
                 <a asp-page="/Admin/Forums/Hierarchy" class="btn btn-primary">Change Hierarchy</a>
             </div>
         </div>
@@ -20,12 +21,12 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Posts</h5>
-                <a asp-page="/Posts/Index" class="btn btn-primary">Visit</a>
+                <a asp-page="@PageRoutes.PostsLanding" class="btn btn-primary">Visit</a>
                 @if(User.Identity is { Name: not null })
                 {
                     <a class="btn btn-primary" asp-page="/Posts/User" asp-route-username="@User.Identity.Name">Your Posts</a>
                 } 
-                <a asp-page="/Manage/Posts" class="btn btn-secondary">Manage</a>
+                <a asp-page="@PageRoutes.ManagePosts" class="btn btn-secondary">Manage</a>
             </div>
         </div>
     </div>
@@ -35,7 +36,7 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Users</h5>
-                <a asp-page="/Admin/Users" class="btn btn-secondary">Manage</a>
+                <a asp-page="@PageRoutes.ManageMembers" class="btn btn-secondary">Manage</a>
             </div>
         </div>
     </div>

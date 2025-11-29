@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using NETForum.Constants;
 using NETForum.Pages.Account.Logout;
 using NETForum.Services;
 
@@ -25,7 +26,7 @@ public class UserLogoutModelTests
         _mockAuthenticationService.Verify(s => s.SignOutAsync(), Times.Once);
         result.Should().BeOfType<RedirectToPageResult>();
         var redirectResult = result as RedirectToPageResult;
-        redirectResult.PageName.Should().Be("/Index");
+        redirectResult.PageName.Should().Be(PageRoutes.ForumLanding);
     }
     
 }

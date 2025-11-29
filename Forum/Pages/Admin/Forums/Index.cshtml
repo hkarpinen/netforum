@@ -1,4 +1,5 @@
 ﻿@page
+@using NETForum.Constants
 @model NETForum.Pages.Admin.Forums.IndexModel
 
 @{
@@ -60,8 +61,8 @@
                 <td>@forum.ParentForum?.Name</td>
                 <td>@forum.Published</td>
                 <td>
-                    <a class="btn-link" href="/Forums/@forum.Id/Edit">Edit</a>
-                    <a class="btn-link" href="/Forums/@forum.Id/Delete">Delete</a>
+                    <a class="btn-link" asp-page="@PageRoutes.EditForum" asp-route-id="@forum.Id">Edit</a>
+                    <a class="btn-link" asp-page="@PageRoutes.DeleteForum" asp-route-id="@forum.Id">Delete</a>
                 </td>
             </tr>
         }
@@ -73,14 +74,14 @@
     <p>Page @Model.Forums.PageNumber of @Model.Forums.TotalPages</p>
     
     <div class="d-flex justify-content-center mt-3">
-        <a asp-page="/Admin/Forums/Index"
+        <a asp-page="@PageRoutes.ManageForums"
            asp-route-PageNumber="@(Model.Forums.PageNumber - 1)"
            asp-route-published="@Request.Query["published"]"
            asp-route-categoryId="@Request.Query["categoryId"]"
            asp-route-parentForumId="@Request.Query["parentForumId"]"
            class="btn btn-outline-primary me-2 @(!Model.Forums.HasPreviousPage ? "disabled" : "")">Previous</a>
 
-        <a asp-page="/Admin/Forums/Index"
+        <a asp-page="@PageRoutes.ManageForums"
            asp-route-PageNumber="@(Model.Forums.PageNumber + 1)"
            asp-route-published="@Request.Query["published"]"
            asp-route-categoryId="@Request.Query["categoryId"]"

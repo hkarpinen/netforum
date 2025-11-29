@@ -1,19 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NETForum.Models.Entities;
+using NETForum.Models.DTOs;
 using NETForum.Services;
 
 namespace NETForum.Pages.Members;
 
 public class ViewModel(IUserService userService) : PageModel
 {
-    public new User User { get; set; } = new();
+    public UserPageDto? UserPageDto { get; set; }
     
     public async Task<IActionResult> OnGetAsync(string username)
     {
-        var lookupResult = await userService.GetByUsernameAsync(username);
-        if (lookupResult.IsFailed) return NotFound();
-        User = lookupResult.Value;
+        var userPageDtoResult = await userService.GetUserPageDtoAsync(username);
+        if (userPageDtoResult.IsFailed) return NotFound();
+        UserPageDto = userPageDtoResult.Value;
         return Page();
     }
 }
