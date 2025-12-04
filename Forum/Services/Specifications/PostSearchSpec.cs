@@ -8,16 +8,20 @@ public class PostSearchSpec : Specification<Post>
 {
     public PostSearchSpec(PostFilterOptions filter)
     {
+        // Include author.
+        Query.Include(post => post.Author);
+        
         // Apply filters
         if (filter.ForumId.HasValue)
         {
             Query.Where(post => post.ForumId == filter.ForumId.Value);
         }
 
-        if (filter.AuthorId.HasValue)
+        if (!string.IsNullOrEmpty(filter.AuthorName))
         {
-            Query.Where(post => post.AuthorId == filter.AuthorId.Value);
+            Query.Where(post => post.Author.UserName.Contains(filter.AuthorName));
         }
+        
 
         if (filter.Pinned.HasValue)
         {

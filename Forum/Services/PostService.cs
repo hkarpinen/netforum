@@ -7,6 +7,7 @@ using NETForum.Models.Entities;
 using NETForum.Services.Specifications;
 using FluentResults;
 using NETForum.Errors;
+using NETForum.Models;
 
 namespace NETForum.Services
 {
@@ -15,7 +16,7 @@ namespace NETForum.Services
         Task<Result<EditPostDto>> GetPostForEditAsync(int id);
         Task<Result<Post>> AddPostAsync(string username, int forumId, CreatePostDto createPostDto);
         Task<Result> UpdatePostAsync(int id, EditPostDto editPostDto);
-        Task<PagedResult<PostSummaryDto>> GetPostSummariesPagedAsync(PostFilterOptions postFilterOptions);
+        Task<PagedList<PostSummaryDto>> GetPostSummariesPagedAsync(PostFilterOptions postFilterOptions);
         Task<Result<PostPageDto>> GetPostPageDto(int postId, string viewerUsername);
         Task<Result<Post>> GetPostAsync(int id);
     }
@@ -176,8 +177,8 @@ namespace NETForum.Services
             return Result.Ok(editPostDto);
         } 
         
-        public async Task<PagedResult<PostSummaryDto>> GetPostSummariesPagedAsync(PostFilterOptions postFilterOptions) {
-            
+        public async Task<PagedList<PostSummaryDto>> GetPostSummariesPagedAsync(PostFilterOptions postFilterOptions)
+        {
             var postSearchSpec = new PostSearchSpec(postFilterOptions);
             var totalPosts = await appDbContext.Posts.CountAsync();
             var posts = await appDbContext.Posts
@@ -202,14 +203,14 @@ namespace NETForum.Services
                         }).FirstOrDefault(),
                 })
                 .ToListAsync();
-            var pagedResult = new PagedResult<PostSummaryDto>
-            {
-                TotalCount = totalPosts,
-                PageSize = postFilterOptions.PageSize,
-                PageNumber = postFilterOptions.PageNumber,
-                Items = posts
-            };
-            return pagedResult;
+
+            var pagedList = new PagedList<PostSummaryDto>(
+                posts,
+                totalPosts,
+                postFilterOptions.PageNumber,
+                postFilterOptions.PageSize
+            );
+            return pagedList;
         }
     }
 }

@@ -201,9 +201,9 @@ public class ForumServiceTests : ServiceTests
         };
         
         var result = await _forumService.GetForumsPagedAsync(forumFilterOptions);
-        result.Items.Count.Should().Be(1);
+        result.Count.Should().Be(1);
         
-        var itemsToList = result.Items.ToList();
+        var itemsToList = result.ToList();
         itemsToList[0].Id.Should().Be(2);
         itemsToList[0].Name.Should().Be("Test Sub Forum");
         itemsToList[0].Description.Should().Be("Test Sub Forum Description");

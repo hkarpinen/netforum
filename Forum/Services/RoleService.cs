@@ -8,6 +8,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Services.Specifications;
 using FluentResults;
+using NETForum.Models;
 
 namespace NETForum.Services
 {
@@ -18,7 +19,7 @@ namespace NETForum.Services
         Task<IdentityResult?> DeleteRoleAsync(int id);
         Task<IdentityResult?> UpdateRoleAsync(int id, EditRoleDto editRoleDto);
         Task<Result<EditRoleDto>> GetRoleForEditAsync(int id);
-        Task<PagedResult<Role>> GetRolesPagedAsync(RoleFilterOptions roleFilterOptions);
+        Task<PagedList<Role>> GetRolesPagedAsync(RoleFilterOptions roleFilterOptions);
     }
 
     public class RoleService(
@@ -26,21 +27,21 @@ namespace NETForum.Services
         AppDbContext appDbContext
         ) : IRoleService
     {
-        public async Task<PagedResult<Role>> GetRolesPagedAsync(RoleFilterOptions roleFilterOptions) {
+        public async Task<PagedList<Role>> GetRolesPagedAsync(RoleFilterOptions roleFilterOptions) {
             var roleSearchSpec = new RoleSearchSpec(roleFilterOptions);
 
             var totalRoleCount = await appDbContext.Roles.CountAsync();
             var roles = await appDbContext.Roles
                 .WithSpecification(roleSearchSpec)
                 .ToListAsync();
-            var pagedResult = new PagedResult<Role>
-            {
-                PageNumber = roleFilterOptions.PageNumber,
-                PageSize = roleFilterOptions.PageSize,
-                TotalCount = totalRoleCount,
-                Items = roles
-            };
-            return pagedResult;
+
+            var pagedList = new PagedList<Role>(
+                roles,
+                totalRoleCount,
+                roleFilterOptions.PageNumber,
+                roleFilterOptions.PageSize
+            );
+            return pagedList;
         }
 
         public async Task<Result<EditRoleDto>> GetRoleForEditAsync(int id)

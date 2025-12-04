@@ -51,7 +51,7 @@
             <div class="card-body">
                 @await Component.InvokeAsync("PostList", new PostListViewModel
                 {
-                    Posts = Model.Posts.Items.ToList()
+                    Posts = Model.Posts.ToList()
                 })
             </div>
         </div>

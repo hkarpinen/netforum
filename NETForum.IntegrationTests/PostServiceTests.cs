@@ -224,7 +224,7 @@ public class PostServiceTests : ServiceTests
 
         var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
         
-        var items = result.Items.ToList();
+        var items = result.ToList();
         items.Count.Should().Be(1);
         items[0].Id.Should().Be(2);
         items[0].Title.Should().Be("Test Post 2");
@@ -238,11 +238,13 @@ public class PostServiceTests : ServiceTests
     {
         var postFilterOptions = new PostFilterOptions()
         {
-            ForumId = 1
+            ForumId = 1,
+            PageNumber = 1,
+            PageSize = 5
         };
         
         var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
-        var items = result.Items.ToList();
+        var items = result.ToList();
         
         items.Count.Should().Be(4);
         items.Any(i => i.Id == 1).Should().BeTrue();
@@ -256,11 +258,13 @@ public class PostServiceTests : ServiceTests
     {
         var postFilterOptions = new PostFilterOptions()
         {
-            AuthorId = 1
+            AuthorName = "test",
+            PageSize = 10,
+            PageNumber = 1
         };
         
         var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
-        var items = result.Items.ToList();
+        var items = result.ToList();
         
         items.Count.Should().Be(4);
         items.Any(i => i.Id == 1).Should().BeTrue();
@@ -279,7 +283,7 @@ public class PostServiceTests : ServiceTests
         
         var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
         
-        var items = result.Items.ToList();
+        var items = result.ToList();
         items.Count.Should().Be(1);
         items.Any(i => i.Id == 3).Should().BeTrue();
         items.Any(i => i.Title == "Test Post 3").Should().BeTrue();
@@ -295,7 +299,7 @@ public class PostServiceTests : ServiceTests
         
         var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
         
-        var items = result.Items.ToList();
+        var items = result.ToList();
         items.Count.Should().Be(1);
         items.Any(i => i.Id == 4).Should().BeTrue();
         items.Any(i => i.Title == "Test Post 4").Should().BeTrue();
@@ -370,10 +374,10 @@ public class PostServiceTests : ServiceTests
         };
         
         var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
-        result.Items.Count.Should().Be(1);
+        result.Count.Should().Be(1);
         
         
-        var items = result.Items.ToList();
+        var items = result.ToList();
         items.Count.Should().Be(1);
         items.Any(i => i.Id == 4).Should().BeTrue();
         items.Any(i => i.Title == "Test Post 4").Should().BeTrue();
@@ -389,7 +393,7 @@ public class PostServiceTests : ServiceTests
         
         var result = await _postService.GetPostSummariesPagedAsync(postFilterOptions);
         
-        var items = result.Items.ToList();
+        var items = result.ToList();
         items.Count.Should().Be(1);
         items.Any(i => i.Id == 4).Should().BeTrue();
         items.Any(i => i.Content == "Test Content 4").Should().BeTrue();

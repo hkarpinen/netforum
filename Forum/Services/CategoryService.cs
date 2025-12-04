@@ -8,6 +8,7 @@ using NETForum.Models.DTOs;
 using NETForum.Models.Entities;
 using NETForum.Services.Specifications;
 using FluentResults;
+using NETForum.Models;
 
 namespace NETForum.Services
 {
@@ -18,7 +19,7 @@ namespace NETForum.Services
         Task<Result<EditCategoryDto>> GetCategoryForEditAsync(int id);
         Task<Result> UpdateCategoryAsync(int id, EditCategoryDto editCategoryDto);
         Task DeleteCategoryByIdAsync(int id);
-        Task<PagedResult<Category>> GetCategoriesPagedAsync(CategoryFilterOptions categoryFilterOptions);
+        Task<PagedList<Category>> GetCategoriesPagedAsync(CategoryFilterOptions categoryFilterOptions);
     }
     
     public class CategoryService(AppDbContext appDbContext) : ICategoryService
@@ -117,21 +118,20 @@ namespace NETForum.Services
             }
         }
         
-        public async Task<PagedResult<Category>> GetCategoriesPagedAsync(CategoryFilterOptions categoryFilterOptions) {
+        public async Task<PagedList<Category>> GetCategoriesPagedAsync(CategoryFilterOptions categoryFilterOptions) {
             var categorySearchSpec = new CategorySearchSpec(categoryFilterOptions);
             
             var totalCategoryCount = await appDbContext.Categories.CountAsync();
             var categories = await appDbContext.Categories
                 .WithSpecification(categorySearchSpec)
                 .ToListAsync();
-            var pagedResult = new PagedResult<Category>
-            {
-                TotalCount = totalCategoryCount,
-                Items = categories,
-                PageNumber = categoryFilterOptions.PageNumber,
-                PageSize = categoryFilterOptions.PageSize
-            };
-            return pagedResult;
+            var pagedList = new PagedList<Category>(
+                categories,
+                totalCategoryCount,
+                categoryFilterOptions.PageNumber,
+                categoryFilterOptions.PageSize
+            );
+            return pagedList;
         }
     }
 }

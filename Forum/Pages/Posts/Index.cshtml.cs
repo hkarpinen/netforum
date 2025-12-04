@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NETForum.Filters;
+using NETForum.Models;
 using NETForum.Models.DTOs;
 using NETForum.Services;
 
 namespace NETForum.Pages.Posts
 {
-    public class IndexModel(IPostService postService, IForumService forumService, IUserService userService)
+    public class IndexModel(IPostService postService, IForumService forumService)
         : PageModel
     {
         [BindProperty(SupportsGet = true)] 
@@ -37,34 +38,25 @@ namespace NETForum.Pages.Posts
         [BindProperty(SupportsGet = true)]
         public string? ContentSearch { get; set; }
         public IEnumerable<SelectListItem> ForumSelectListItems { get; set; } = new List<SelectListItem>();
-        public PagedResult<PostSummaryDto> Posts { get; set; } = new();
+        public PagedList<PostSummaryDto> Posts { get; set; } = [];
 
         public async Task<IActionResult> OnGetAsync()
         {
             ForumSelectListItems = await forumService.GetForumSelectListItemsAsync();
 
-            int? authorId = null;
-            
-            if (AuthorName != null)
-            {
-                var author = await userService.GetUserAsync(AuthorName);
-                if (author.IsSuccess)
-                {
-                    authorId = author.Value.Id;
-                }
-            }
-
             Posts = await postService.GetPostSummariesPagedAsync(new PostFilterOptions
             {
                 ForumId = ForumId,
-                AuthorId = authorId,
+                AuthorName = AuthorName,
                 Pinned = Pinned,
                 Locked = Locked,
                 Published = Published,
                 Title = Title,
                 Content = ContentSearch,
                 SortBy = PostSortBy.CreatedAt,
-                Ascending = false
+                Ascending = false,
+                PageSize = PageSize,
+                PageNumber = PageNumber
             });
             
             return Page();

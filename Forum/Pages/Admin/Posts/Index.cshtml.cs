@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using NETForum.Models;
 using NETForum.Models.Entities;
 using NETForum.Services;
 
@@ -9,7 +10,7 @@ namespace NETForum.Pages.Admin.Posts
     [Authorize(Roles = "Admin")]
     public class IndexModel(IPostService postService) : PageModel
     {
-        public PagedResult<Post> Posts { get; set; }
+        public PagedList<Post> Posts { get; set; } = [];
         
         [BindProperty(SupportsGet = true)]
         public int PageNumber { get; set; } = 1;

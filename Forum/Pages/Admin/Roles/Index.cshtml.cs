@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NETForum.Filters;
+using NETForum.Models;
 using NETForum.Models.Entities;
 using NETForum.Services;
 
@@ -10,7 +11,7 @@ namespace NETForum.Pages.Admin.Roles
     [Authorize(Roles = "Admin")]
     public class IndexModel(IRoleService roleService) : PageModel
     {
-        public PagedResult<Role> Roles { get; set; } = new();
+        public PagedList<Role> Roles { get; set; } = [];
         
         [BindProperty(SupportsGet = true)]
         public int PageNumber { get; set; } = 1;

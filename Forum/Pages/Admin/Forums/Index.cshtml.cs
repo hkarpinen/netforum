@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using NETForum.Filters;
+using NETForum.Models;
 using NETForum.Models.Entities;
 using NETForum.Services;
 
@@ -14,7 +15,7 @@ namespace NETForum.Pages.Admin.Forums
     {
         public IEnumerable<SelectListItem> CategoryListItems { get; set; } = new List<SelectListItem>();
         public IEnumerable<SelectListItem> ParentForumListItems { get; set; } = new List<SelectListItem>();
-        public PagedResult<Forum> Forums { get; set; } = new();
+        public PagedList<Forum> Forums { get; set; } = new();
 
         [BindProperty(SupportsGet = true)] 
         public int PageNumber { get; set; } = 1;

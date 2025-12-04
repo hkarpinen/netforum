@@ -11,6 +11,7 @@ using NETForum.Services.Specifications;
 using FluentResults;
 using NETForum.Constants;
 using NETForum.Errors;
+using NETForum.Models;
 
 namespace NETForum.Services
 {
@@ -23,7 +24,7 @@ namespace NETForum.Services
         Task<IEnumerable<SelectListItem>> GetForumSelectListItemsAsync();
         Task<Result<Forum>> GetForumAsync(int id);
         Task<Result<Forum>> AddForumAsync(CreateForumDto createForumDto);
-        Task<PagedResult<Forum>> GetForumsPagedAsync(ForumFilterOptions filterOptions);
+        Task<PagedList<Forum>> GetForumsPagedAsync(ForumFilterOptions filterOptions);
         Task<Result<ForumPageDto>> GetForumPageDtoAsync(int forumId);
         Task<Result<ForumIndexPageDto>> GetForumIndexPageDtoAsync(int latestPostLimit = 5);
     }
@@ -311,21 +312,20 @@ namespace NETForum.Services
             }).ToList();
         }
         
-        public async Task<PagedResult<Forum>> GetForumsPagedAsync(ForumFilterOptions filterOptions) {
+        public async Task<PagedList<Forum>> GetForumsPagedAsync(ForumFilterOptions filterOptions) {
             var forumSearchSpec = new ForumSearchSpec(filterOptions);
             
             var totalForums = await appDbContext.Forums.CountAsync();
             var forums = await appDbContext.Forums
                 .WithSpecification(forumSearchSpec)
                 .ToListAsync();
-            var pagedResult = new PagedResult<Forum>
-            {
-                TotalCount = totalForums,
-                Items = forums,
-                PageSize = filterOptions.PageSize,
-                PageNumber = filterOptions.PageNumber
-            };
-            return pagedResult;
+            var pagedList = new PagedList<Forum>(
+                forums,
+                totalForums,
+                filterOptions.PageNumber,
+                filterOptions.PageSize
+            );
+            return pagedList;
         }
     }
 }

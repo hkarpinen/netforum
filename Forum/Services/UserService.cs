@@ -11,6 +11,7 @@ using FluentResults;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.WebUtilities;
 using NETForum.Errors;
+using NETForum.Models;
 
 namespace NETForum.Services
 {
@@ -28,7 +29,7 @@ namespace NETForum.Services
         Task<Result<User>> CreateUserAsync(CreateUserDto dto);
         Task<Result> RegisterUserAsync(UserRegistrationDto dto);
         Task<Result> DeleteUserAsync(int id);
-        Task<PagedResult<User>> GetUsersPagedAsync(UserFilterOptions userFilterOptions);
+        Task<PagedList<User>> GetUsersPagedAsync(UserFilterOptions userFilterOptions);
     }
 
     public class UserService(
@@ -160,7 +161,7 @@ namespace NETForum.Services
             }
         }
 
-        public async Task<PagedResult<User>> GetUsersPagedAsync(UserFilterOptions userFilterOptions)
+        public async Task<PagedList<User>> GetUsersPagedAsync(UserFilterOptions userFilterOptions)
         {
             var userSearchSpec = new UserSearchSpec(userFilterOptions);
 
@@ -168,14 +169,13 @@ namespace NETForum.Services
             var users = await appDbContext.Users
                 .WithSpecification(userSearchSpec)
                 .ToListAsync();
-            var pagedResult = new PagedResult<User>
-            {
-                Items = users,
-                PageNumber = userFilterOptions.PageNumber,
-                PageSize = userFilterOptions.PageSize,
-                TotalCount = totalUsers
-            };
-            return pagedResult;
+            var pagedList = new PagedList<User>(
+                users,
+                totalUsers,
+                userFilterOptions.PageNumber,
+                userFilterOptions.PageSize
+            );
+            return pagedList;
         }
 
         public async Task<IReadOnlyCollection<User>> GetUsersAsync() {

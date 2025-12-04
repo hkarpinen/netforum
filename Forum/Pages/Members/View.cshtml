@@ -78,7 +78,7 @@
                                         </div>
                                         <div class="d-flex flex-column post-details-block">
                                             <a
-                                                class="d-flex flex-column text-decoration-none link-tertiary"
+                                                class="d-flex flex-column text-decoration-none link-secondary"
                                                 asp-page="@PageRoutes.PostView"
                                                 asp-route-id="@post.Id">
                                                 <p class="m-0 post-title">@post.Title</p>
@@ -102,7 +102,7 @@
                                 <div class="reply-item @(lastItem ? "" : "border-bottom")">
                                     <div class="d-flex justify-content-between p-1">
                                         <div class="d-flex gap-3 align-items-center">
-                                            <span class="text-secondary">
+                                            <span class="text-secondary"> 
                                                 @await Component.InvokeAsync("UserPhoto", new UserPhotoViewModel()
                                                 {
                                                     PhotoUrl = reply.AuthorAvatarImageUrl,
@@ -115,13 +115,12 @@
                                                 asp-page="/Posts/Details"
                                                 asp-route-id="@reply.Id"
                                             >
-                                                <p class="m-0 post-title">@reply.PostTitle</p>
-                                                <small class="m-0 post-content">@HtmlHelpers.StripAndTruncateHtml(reply.Content, 100)</small>
+                                                       <small class="m-0 post-content">@HtmlHelpers.StripAndTruncateHtml(reply.Content, 100)</small>
                                             </a>
                                         </div>
                                     </div>
                                 </div>
-                            }
+                            }  
                         }
                     </div>
                     <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">

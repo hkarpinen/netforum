@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Moq;
 using NETForum.Filters;
+using NETForum.Models;
 using NETForum.Models.Entities;
 using NETForum.Pages.Admin.Categories;
 using NETForum.Services;
@@ -27,13 +28,12 @@ public class AdminCategoriesManagementTests
         _pageModel.Name = "Test";
         _pageModel.Published = false;
 
-        var expectedResult = new PagedResult<Category>()
-        {
-            Items = new List<Category>(),
-            PageNumber = _pageModel.PageNumber,
-            PageSize = _pageModel.PageSize,
-            TotalCount = 0
-        };
+        var expectedResult = new PagedList<Category>(
+            new List<Category>(),
+            0,
+            _pageModel.PageNumber,
+            _pageModel.PageSize
+        );
 
         var categoryFilterOptions = new CategoryFilterOptions
         {

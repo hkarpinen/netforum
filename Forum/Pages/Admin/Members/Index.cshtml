@@ -1,44 +1,88 @@
 ﻿@page
 @using NETForum.Constants
+@using NETForum.Filters
 @model IndexModel
 
 @{
     ViewData["Title"] = "Manage Members";
 }
 
-<h2 class="mt-2">Manage members here</h2>
+<h2 class="mt-2">@ViewData["Title"]</h2>
 <hr />
+
+
+<form method="get">
+    <div class="d-flex gap-3 align-items-end">
+        <div class="form-group">
+            <div class="form-check">
+                <label asp-for="Ascending">Ascending</label>
+                <input type="checkbox" 
+                       class="form-check-input" 
+                       name="Ascending"
+                       value="true"
+                       @(Model.Ascending ? "checked" : "") />
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="SortBy">Sort By</label>
+            <select
+                asp-for="SortBy"
+                class="form-select"
+                asp-items="Html.GetEnumSelectList<UserSortBy>()">
+                <option value="">Select Sort By</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" style="height: fit-content" type="submit">Filter</button>
+    </div>
+</form>
+
 <a class="btn btn-primary" asp-page="@PageRoutes.CreateMember">Create Member</a>
 
 <table class="table table-bordered table-striped">
     <thead>
-        <tr>
-            <th scope="col"></th>
-            <th scope="col">UserName</th>
-            <th scope="col">Email</th>
-            <th scope="col">Created At</th>
-            <th scope="col">Email Confirmed</th>
-            <th></th>
-            <th></th>
-        </tr>
+    <tr>
+        <th scope="col"></th>
+        <th scope="col">UserName</th>
+        <th scope="col">Email</th>
+        <th scope="col">Created At</th>
+        <th scope="col">Email Confirmed</th>
+        <th></th>
+        <th></th>
+    </tr>
     </thead>
     <tbody>
-        @if(Model.Users != null)
+    @if(Model.Users != null)
+    {
+        @foreach(var user in Model.Users)
         {
-            @foreach(var user in Model.Users)
-            {
-                <tr>
-                    <td>
-                        <input type="checkbox" class="form-check-input" />
-                    </td>
-                    <td>@user.UserName</td>
-                    <td>@user.Email</td>
-                    <td>@user.CreatedAt</td>
-                    <td>@user.EmailConfirmed</td>
-                    <td><a asp-page="@PageRoutes.EditMember" asp-route-id="@user.Id">Edit</a></td>
-                    <td><a asp-page="@PageRoutes.DeleteMember" asp-route-id="@user.Id">Delete</a></td>
-                </tr>
-            }
+            <tr>
+                <td>
+                    <input type="checkbox" class="form-check-input" />
+                </td>
+                <td>@user.UserName</td>
+                <td>@user.Email</td>
+                <td>@user.CreatedAt</td>
+                <td>@user.EmailConfirmed</td>
+                <td><a asp-page="@PageRoutes.EditMember" asp-route-id="@user.Id">Edit</a></td>
+                <td><a asp-page="@PageRoutes.DeleteMember" asp-route-id="@user.Id">Delete</a></td>
+            </tr>
         }
+    }
     </tbody>
 </table>
+
+<div class="d-flex mt-3">
+    <p>Page @Model.Users.PageNumber of @Model.Users.TotalPages</p>
+    
+    <div class="d-flex justify-content-center mt-3">
+        <a asp-page="@PageRoutes.ManageMembers"
+           asp-route-PageNumber="@(Model.Users.PageNumber - 1)"
+           asp-route-SortBy="@Request.Query["sortBy"]"
+           class="btn btn-outline-primary me-2 @(!Model.Users.HasPreviousPage ? "disabled" : "")">Previous</a>
+
+        <a asp-page="@PageRoutes.ManageMembers"
+           asp-route-PageNumber="@(Model.Users.PageNumber + 1)"
+           asp-route-SortBy="@Request.Query["sortBy"]"
+           class="btn btn-outline-primary ms-2 @(!Model.Users.HasNextPage ? "disabled" : "")">Next</a>
+    </div>
+</div>

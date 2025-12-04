@@ -1,3 +1,4 @@
+@using NETForum.Constants
 @using NETForum.Helpers
 @using NETForum.Pages.Shared.Components.UserPhoto
 @model PostListViewModel
@@ -16,7 +17,7 @@
                 </span>
                 <a 
                     class="d-flex flex-column text-decoration-none text-black"
-                   asp-page="/Posts/Details"
+                   asp-page="@PageRoutes.PostView"
                    asp-route-id="@post.Id"
                 >
                     <p class="m-0 post-title">@post.Title</p>
@@ -37,7 +38,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="d-flex flex-column">
                             <a
-                                asp-page="/Posts/Details"
+                                asp-page="@PageRoutes.PostView"
                                 asp-route-id="@post.Id">
                                 @post.LastReplySummary.AuthorName
                             </a>

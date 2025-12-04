@@ -2,14 +2,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using NETForum.Filters;
+using NETForum.Models;
 using NETForum.Services;
+using NETForum.Models.Entities;
 
 namespace NETForum.Pages.Admin.Categories;
 
 [Authorize(Roles = "Admin")]
 public class CategoriesModel(ICategoryService categoryService) : PageModel
 {
-    public PagedResult<Models.Entities.Category> CategoriesResult { get; set; } = new();
+    public PagedList<Category> CategoriesResult { get; set; } = new();
 
     [BindProperty(SupportsGet = true)] 
     public int PageNumber { get; set; } = 1;
